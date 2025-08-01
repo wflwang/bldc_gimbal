@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "name": "windows-gcc-x64",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/Inc",
+        "${workspaceFolder}/Mcu/HK32G003/Driver/CMSIS/HK32G003/Include",
+        "${workspaceFolder}/Mcu/HK32G003/Driver/CMSIS/CM0/Core",
+        "${workspaceFolder}/Mcu/HK32G003/Driver/HK32G003_StdPeriph_Driver",
+        "${workspaceFolder}/Mcu/HK32G003/Inc"
+      ],
+      "compilerPath": "E:/tool/complie/mingw-w64/mingw-w64-gcc-13.2-stable-r40/bin/gcc.exe",
+      "cStandard": "${default}",
+      "cppStandard": "${default}",
+      "intelliSenseMode": "windows-gcc-x64",
+      "compilerArgs": [
+        ""
+      ]
+    }
+  ],
+  "version": 4
+}
