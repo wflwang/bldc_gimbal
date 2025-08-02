@@ -31,7 +31,7 @@ extern "C" {
 /* Includes
  * ------------------------------------------------------------------*/
 #include "hk32g003.h"
-#include "stm32g0xx_ll_adc.h"
+#include "hk32g003_adc.h"
 #include "stm32g0xx_ll_bus.h"
 #include "stm32g0xx_ll_comp.h"
 #include "stm32g0xx_ll_cortex.h"

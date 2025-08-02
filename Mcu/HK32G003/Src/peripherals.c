@@ -116,148 +116,64 @@ void MX_TIM1_Init(void)
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
     TIM_TimeBaseStructure.Prescaler = 0;
     TIM_TimeBaseStructure.CounterMode = TIM_CounterMode_CenterAligned1;
-    TIM1_TimeBaseStructure.TIM_Period = ((PWM_PERIOD_CYCLES) / 2);
+    TIM_TimeBaseStructure.TIM_Period = ((PWM_PERIOD_CYCLES) / 2);
     //TIM_TimeBaseStructure.Autoreload = 3000;
     TIM_TimeBaseStructure.ClockDivision = TIM_CKD_DIV2;
-    TIM1_TimeBaseStructure.TIM_RepetitionCounter = (REP_COUNTER);
+    TIM_TimeBaseStructure.TIM_RepetitionCounter = (REP_COUNTER);
     TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
-    LL_TIM_Init(TIM1, &TIM_InitStruct);
-    LL_TIM_EnableARRPreload(TIM1);
-    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH1);
-#ifdef USE_SWAPPED_OUPUT
-    TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM2;
-#else
-    TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
-#endif
-    TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
-    TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-    TIM_OC_InitStruct.CompareValue = 0;
-    TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
-    TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
-    TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
-    TIM_OC_InitStruct.OCNIdleState = LL_TIM_OCIDLESTATE_LOW;
-    LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH1, &TIM_OC_InitStruct);
-    LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH1);
-    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH2);
-    TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
-    TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-    LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
-    LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH2);
-    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH3);
-    TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
-    TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-    LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH3, &TIM_OC_InitStruct);
-    LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH3);
+    TIM_OCStructInit(&TIM_OCInitStructure);
+	/* Channel 1, 2,3 in PWM mode */
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; 
+	TIM_OCInitStructure.TIM_Pulse = 0; //dummy value
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; 
+	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;         
+	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Reset;
+	TIM_OCInitStructure.TIM_OCNIdleState =TIM_OCNIdleState_Reset;  // LOW_SIDE_POLARITY;          
 
-    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH4);
-    TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
-    TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-    LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH4, &TIM_OC_InitStruct);
-    LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH4);
+	TIM_OC1Init(TIM1, &TIM_OCInitStructure); 
+	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
+	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
 
-    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH5);
-    TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
-    TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-    LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH5, &TIM_OC_InitStruct);
-    LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH5);
+	TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	TIM_OC4PreloadConfig(TIM1, TIM_OCPreload_Enable);
 
-    LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_RESET);
-    LL_TIM_SetTriggerOutput2(TIM1, LL_TIM_TRGO2_RESET);
-    LL_TIM_DisableMasterSlaveMode(TIM1);
-    TIM_BDTRInitStruct.OSSRState = LL_TIM_OSSR_DISABLE;
-    TIM_BDTRInitStruct.OSSIState = LL_TIM_OSSI_DISABLE;
-    TIM_BDTRInitStruct.LockLevel = LL_TIM_LOCKLEVEL_OFF;
-    TIM_BDTRInitStruct.DeadTime = DEAD_TIME;
-    TIM_BDTRInitStruct.BreakState = LL_TIM_BREAK_DISABLE;
-    TIM_BDTRInitStruct.BreakPolarity = LL_TIM_BREAK_POLARITY_HIGH;
-    TIM_BDTRInitStruct.BreakFilter = LL_TIM_BREAK_FILTER_FDIV1;
-    TIM_BDTRInitStruct.BreakAFMode = LL_TIM_BREAK_AFMODE_INPUT;
-    TIM_BDTRInitStruct.Break2State = LL_TIM_BREAK2_DISABLE;
-    TIM_BDTRInitStruct.Break2Polarity = LL_TIM_BREAK2_POLARITY_HIGH;
-    TIM_BDTRInitStruct.Break2Filter = LL_TIM_BREAK2_FILTER_FDIV1;
-    TIM_BDTRInitStruct.Break2AFMode = LL_TIM_BREAK_AFMODE_INPUT;
-    TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_DISABLE;
-    LL_TIM_BDTR_Init(TIM1, &TIM_BDTRInitStruct);
-    /* USER CODE BEGIN TIM1_Init 2 */
+	TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_OC4Ref);
+	TIM_OCStructInit(&TIM_OCInitStructure);
+	/* Channel 4 Configuration in OC */
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;  
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable; 
+	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;                  
+	TIM_OCInitStructure.TIM_Pulse = (((PWM_PERIOD_CYCLES) / 2) - (HTMIN));
 
-    /* USER CODE END TIM1_Init 2 */
-    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
-    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
-    /**TIM1 GPIO Configuration
-    PA7   ------> TIM1_CH1N
-    PB0   ------> TIM1_CH2N
-    PB1   ------> TIM1_CH3N
-    PA8   ------> TIM1_CH1
-    PA9 [PA11]   ------> TIM1_CH2
-    PA10 [PA12]   ------> TIM1_CH3
-    */
-#ifdef PWM_ENABLE_BRIDGE
-#define PHASE_C_GPIO_LOW PHASE_C_GPIO_ENABLE
-#define PHASE_B_GPIO_LOW PHASE_B_GPIO_ENABLE
-#define PHASE_A_GPIO_LOW PHASE_A_GPIO_ENABLE
-#define PHASE_C_GPIO_PORT_LOW PHASE_C_GPIO_PORT_ENABLE
-#define PHASE_B_GPIO_PORT_LOW PHASE_B_GPIO_PORT_ENABLE
-#define PHASE_A_GPIO_PORT_LOW PHASE_A_GPIO_PORT_ENABLE
+	TIM_OC4Init(TIM1, &TIM1_OCInitStructure);
+    /* CC4 ENABLE */
 
-#define PHASE_C_GPIO_HIGH PHASE_C_GPIO_PWM
-#define PHASE_B_GPIO_HIGH PHASE_B_GPIO_PWM
-#define PHASE_A_GPIO_HIGH PHASE_A_GPIO_PWM
-#define PHASE_C_GPIO_PORT_HIGH PHASE_C_GPIO_PORT_PWM
-#define PHASE_B_GPIO_PORT_HIGH PHASE_B_GPIO_PORT_PWM
-#define PHASE_A_GPIO_PORT_HIGH PHASE_A_GPIO_PORT_PWM
-#endif
-#ifndef OPEN_DRAIN_PWM
-#define PWM_OUTPUT_TYPE LL_GPIO_OUTPUT_PUSHPULL
-#else
-#define PWM_OUTPUT_TYPE LL_GPIO_OUTPUT_OPENDRAIN
-#endif
+    TIM_CCxCmd(TIM1,TIM_Channel_4,TIM_CCx_Enable);
+	/* CC4_TO_ADC_SELConfig  */
+    TIM_CC_TRIGADC(TIM1,TIM_Channel_4, CC_TRIGADC_OCREF);
+    //TIM_BrakInputRemap(TIM1, TIM_Break_Remap_COMP1OUT);
+}
 
-    GPIO_InitStruct.Pin = PHASE_C_GPIO_LOW;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
-    LL_GPIO_Init(PHASE_C_GPIO_PORT_LOW, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = PHASE_B_GPIO_LOW;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
-    LL_GPIO_Init(PHASE_B_GPIO_PORT_LOW, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = PHASE_A_GPIO_LOW;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
-    LL_GPIO_Init(PHASE_A_GPIO_PORT_LOW, &GPIO_InitStruct);
-
-    // high side gate / PWM outputs
-    GPIO_InitStruct.Pin = PHASE_C_GPIO_HIGH;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.OutputType = PWM_OUTPUT_TYPE;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
-    LL_GPIO_Init(PHASE_C_GPIO_PORT_HIGH, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = PHASE_B_GPIO_HIGH;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.OutputType = PWM_OUTPUT_TYPE;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
-    LL_GPIO_Init(PHASE_B_GPIO_PORT_HIGH, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = PHASE_A_GPIO_HIGH;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.OutputType = PWM_OUTPUT_TYPE;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_2;
-    LL_GPIO_Init(PHASE_A_GPIO_PORT_HIGH, &GPIO_InitStruct);
+/**
+ * @brief ADC initial
+ * @param   None
+ * @retval  None
+ * 采样电压 电流 两路霍尔的AD
+*/
+void MX_ADC_Init(void){
+    GPIO_InitTypeDef GPIO_InitStruct;
+    ADC_InitTypeDef ADC_InitStructure;
+    Queue_InitType
+	RCC_AHBPeriphClockCmd(PHASE_A_GPIO_CLK|PHASE_B_GPIO_CLK|PHASE_C_GPIO_CLK, ENABLE);	
+    /* USER CODE BEGIN TIM1_Init 1 */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;		
+	GPIO_InitStructure.GPIO_Pin = PHASE_A_GPIO_PIN;
+	GPIO_Init(PHASE_A_GPIO_PORT, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = PHASE_B_GPIO_PIN;
+	GPIO_Init(PHASE_B_GPIO_PORT, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = PHASE_C_GPIO_PIN;
+	GPIO_Init(PHASE_C_GPIO_PORT, &GPIO_InitStructure);
 }
