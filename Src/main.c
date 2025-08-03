@@ -17,6 +17,8 @@ int main(void){
     MX_GPIO_init();
     //初始化AD
     MX_ADC_init();
+    //初始化TIM
+    MX_TIM_init();
     //初始化gyro 60aixs
     MX_GYRO_init();
     //初始化hall 

@@ -80,11 +80,11 @@ void MX_GPIO_Init(void){
 }
 
 /**
- * @brief TIM1 Initialization Function
+ * @brief TIM Initialization Function
  * @param None
  * @retval None
  */
-void MX_TIM1_Init(void)
+void MX_TIM_Init(void)
 {
     /* USER CODE BEGIN TIM1_Init 0 */
 
@@ -150,9 +150,9 @@ void MX_TIM1_Init(void)
 	TIM_OC4Init(TIM1, &TIM1_OCInitStructure);
     /* CC4 ENABLE */
 
-    TIM_CCxCmd(TIM1,TIM_Channel_4,TIM_CCx_Enable);
+    TIM_CCxCmd(TIM1,ADC_TrigTIMCH,TIM_CCx_Enable);
 	/* CC4_TO_ADC_SELConfig  */
-    TIM_CC_TRIGADC(TIM1,TIM_Channel_4, CC_TRIGADC_OCREF);
+    TIM_CC_TRIGADC(TIM1,ADC_TrigTIMCH, CC_TRIGADC_OCREF);
     //TIM_BrakInputRemap(TIM1, TIM_Break_Remap_COMP1OUT);
 }
 
@@ -165,15 +165,30 @@ void MX_TIM1_Init(void)
 void MX_ADC_Init(void){
     GPIO_InitTypeDef GPIO_InitStruct;
     ADC_InitTypeDef ADC_InitStructure;
-    Queue_InitType
-	RCC_AHBPeriphClockCmd(PHASE_A_GPIO_CLK|PHASE_B_GPIO_CLK|PHASE_C_GPIO_CLK, ENABLE);	
+	RCC_AHBPeriphClockCmd(Voltage_ADC_CLK|Hall_x_GPIO_CLK|Hall_y_GPIO_CLK, ENABLE);	
+      /* ADC Periph clock enable */
+    RCC_APBPeriph2ClockCmd(RCC_APBPeriph2_ADC, ENABLE);
     /* USER CODE BEGIN TIM1_Init 1 */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;		
-	GPIO_InitStructure.GPIO_Pin = PHASE_A_GPIO_PIN;
-	GPIO_Init(PHASE_A_GPIO_PORT, &GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin = PHASE_B_GPIO_PIN;
-	GPIO_Init(PHASE_B_GPIO_PORT, &GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin = PHASE_C_GPIO_PIN;
-	GPIO_Init(PHASE_C_GPIO_PORT, &GPIO_InitStructure);
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AN;
+    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Pin = Voltage_ADC_PIN;
+	GPIO_Init(Voltage_ADC_PORT, &GPIO_InitStruct);
+	GPIO_InitStructure.GPIO_Pin = Hall_x_GPIO_PIN;
+	GPIO_Init(Hall_x_GPIO_PORT, &GPIO_InitStruct);
+	GPIO_InitStructure.GPIO_Pin = Hall_y_GPIO_PIN;
+	GPIO_Init(Hall_y_GPIO_PORT, &GPIO_InitStruct);
+    ADC_DeInit(ADC);
+    ADC_StructInit(&ADC_InitStructure);
+    ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+    ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
+    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExtTrig;
+    ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+    ADC_InitStructure.ADC_ScanDirection = ADC_ScanDirection_Upward;
+    ADC_Init(ADC, &ADC_InitStructure);
+    /* Convert the ADC1 Channel4 with 239.5 Cycles as sampling time */
+    ADC_ChannelConfig(ADC, Voltage_ADC_CH, ADC_SampleTime_239_5Cycles);
+    ADC_ChannelConfig(ADC, Hall_x_CH, ADC_SampleTime_239_5Cycles);
+    ADC_ChannelConfig(ADC, Hall_y_CH, ADC_SampleTime_239_5Cycles);
+    /* Enable the ADC peripheral */
+    ADC_Cmd(ADC, ENABLE);
 }

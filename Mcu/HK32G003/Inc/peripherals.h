@@ -13,6 +13,8 @@
 
 //init GPIO
 void MX_GPIO_Init(void);
+//init tim
+void MX_TIM_Init(void);
 
 
 #endif
