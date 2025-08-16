@@ -20,7 +20,7 @@
 
 /*************************  IRQ Handler Mapping  *********************/														  
 #define CURRENT_REGULATION_IRQHandler          ADC_IRQHandler
-#define TIMx_UP_BRK_M1_IRQHandler              TIM1_IRQHandler
+//#define TIMx_UP_BRK_M1_IRQHandler              TIM1_IRQHandler
 
 
 /**********  AUXILIARY TIMER (SINGLE SHUNT) *************/

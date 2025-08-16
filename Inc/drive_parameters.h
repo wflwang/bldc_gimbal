@@ -198,32 +198,35 @@
 /* PWM generation and current reading */
 #define PWM_FREQUENCY                        25000 //10000 //10000 //8000  //10000
 #define LOW_SIDE_SIGNALS_ENABLING            LS_PWM_TIMER
-#define SW_DEADTIME_NS                       1000  //800   //1400   /*!< Dead-time to be inserted by FW, only if low side signals are enabled */
+#define SW_DEADTIME_NS                       0  //800   //1400   /*!< Dead-time to be inserted by FW, only if low side signals are enabled */
 
 /* Torque and flux regulation loops */
 #define REGULATION_EXECUTION_RATE     1    
 /*!< FOC execution rate in 
                                                            number of PWM cycles */     
 /* Gains values for torque and flux control loops */
-#define PID_TORQUE_KP_DEFAULT                1000  //5800  //9800 //5800  //4200  //3100   //1300  //1200   //800   //1600	//3040
-#define PID_TORQUE_KI_DEFAULT                1000   //1300  //2200  //2200  //1684  //1300   //1000  //600   //450   //500  //2584
+//#define PID_TORQUE_KP_DEFAULT                1000  //5800  //9800 //5800  //4200  //3100   //1300  //1200   //800   //1600	//3040
+//#define PID_TORQUE_KI_DEFAULT                1000   //1300  //2200  //2200  //1684  //1300   //1000  //600   //450   //500  //2584
 
-#define PID_FLUX_KP_DEFAULT                  1000  //5800  //9800  //5900  //4200  //3100    //1300  //1200   //800   //1600	//3040
-#define PID_FLUX_KI_DEFAULT                  1000   //1300   //2200  //2200  //1684  //1300   //1000   //600   //450   //500  //2584
+//#define PID_FLUX_KP_DEFAULT                  1000  //5800  //9800  //5900  //4200  //3100    //1300  //1200   //800   //1600	//3040
+//#define PID_FLUX_KI_DEFAULT                  1000   //1300   //2200  //2200  //1684  //1300   //1000   //600   //450   //500  //2584
 
 
 /* Torque/Flux control loop gains dividers*/
-#define TF_KPDIV                             8192
-#define TF_KIDIV                             8192
+//#define TF_KPDIV                             8192
+//#define TF_KIDIV                             8192
 
 /* Speed control loop */ 
 #define SPEED_LOOP_FREQUENCY_HZ       1000   //300 
 /*!<Execution rate of speed   
                                                       regulation loop (Hz) */
-#define PID_SPEED_KP_DEFAULT                 175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_SPEED_KI_DEFAULT                 1650  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_SPEED_KD_DEFAULT                 0  //#1500
+//#define PID_SPEED_KP_DEFAULT                 175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+//#define PID_SPEED_KI_DEFAULT                 1650  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+//#define PID_SPEED_KD_DEFAULT                 0  //#1500
 
+#define PID_Pos_KP_DEFAULT                 175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 1650  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 0  //#1500
 /* Speed PID parameter dividers */
 #define SP_KPDIV                       64
 #define SP_KIDIV                       16384
@@ -234,7 +237,7 @@
 /* USER CODE END PID_SPEED_INTEGRAL_INIT_DIV */
 
 /* Default settings */
-#define DEFAULT_CONTROL_MODE           STC_SPEED_MODE   //STC_SPEED_MODE //STC_TORQUE_MODE //STC_SPEED_MODE	//STC_SPEED_MODE 
+#define DEFAULT_CONTROL_MODE           STC_TORQUE_MODE   //STC_SPEED_MODE //STC_TORQUE_MODE //STC_SPEED_MODE	//STC_SPEED_MODE 
 /*!< STC_TORQUE_MODE or 
                                                         STC_SPEED_MODE */  
 #define DEFAULT_TARGET_SPEED_RPM             60 //420   //300   //150   //1000

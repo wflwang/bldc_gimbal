@@ -1,0 +1,44 @@
+/******
+ * @file button.h
+ *  
+ * @date Created on: Aug. 16, 2025
+ * @author  MaxwellWang
+ */
+#ifndef __BUTTON_H
+#define __BUTTON_H
+
+#include    "main.h"
+#include    "mc_type.h"
+
+#define bt_pwrEn    0x01
+#define bt_LREn     0x02
+#define bt_RREn     0x04    
+
+//消抖时间
+#define debouneTime     10
+//长安开关机时间
+#define longONOFF       1500    
+#define longReLearn     3000
+
+
+typedef struct
+{
+    //按键buff
+    uint8_t lastbt; //上次按键值
+    uint8_t nowbt; //当前按键值
+    uint8_t BtCount;   //按键计数
+    uint16_t deboune;   //消抖
+    uint16_t BtTime;   //稳定按键计时
+}button_t;
+
+
+
+//扫描按键
+void ScanButton(button_t *bt);
+
+
+
+
+
+
+#endif

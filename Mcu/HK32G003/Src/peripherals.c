@@ -1,18 +1,24 @@
-/*
- * peripherals.c
- *
- *  Created on: July. 28, 2025
- *      Author: MaxwellWang
+/****
+ * @file peripherals.c
+ * @date Created on: July. 28, 2025
+ * @author MaxwellWang
  */
 
 #include "peripherals.h"
 
-#include "targets.h"
+//#include "targets.h"
 /**
  * system init
 */
 void initCorePeripherals(void){
+    //设置tick time
+    SysTick_Config(SystemCoreClock /SYS_TICK_FREQUENCY);
+    //EE_Read();
     MX_GPIO_Init();
+    MX_ADC_Init();
+    MX_TIM_Init();
+    //qmi8658x_init(GYPO_SDA_GPIO_PORT,GYPO_SDA_GPIO_PIN,GYPO_SCL_GPIO_PORT,GYPO_SCL_GPIO_PIN);
+    //SysTick_Config(SystemCoreClock /SYS_TICK_FREQUENCY);
 }
 /**
  * 初始化 跳转
@@ -76,7 +82,30 @@ void SystemClock_Config(void)
  * IO口配置 ->power set..
 */
 void MX_GPIO_Init(void){
-
+    GPIO_InitTypeDef GPIO_InitStructure;
+    RCC_AHBPeriphClockCmd(Button_PWR_GPIO_CLK|Button_LR_GPIO_CLK|Button_RR_GPIO_CLK|PowerEn_GPIO_CLK|LEDG_GPIO_CLK|LEDR_GPIO_CLK, ENABLE);
+    /* Configure Button pin as input */
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_InitStructure.GPIO_Pin = PowerEn_GPIO_PIN;
+	GPIO_Init(PowerEn_GPIO_PORT, &GPIO_InitStructure);
+    PowerEn_Write(1);
+    GPIO_InitStructure.GPIO_Pin = LEDR_GPIO_PIN;
+	GPIO_Init(LEDR_GPIO_PORT, &GPIO_InitStructure);
+    LEDR_Write(0);
+    GPIO_InitStructure.GPIO_Pin = LEDG_GPIO_PIN;
+	GPIO_Init(LEDG_GPIO_PORT, &GPIO_InitStructure);
+    LEDR_Write(0);
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+    GPIO_InitStructure.GPIO_Pin = Button_PWR_GPIO_PIN;
+    GPIO_Init(Button_PWR_GPIO_PORT, &GPIO_InitStructure); 
+    GPIO_InitStructure.GPIO_Pin = Button_LR_GPIO_PIN;
+    GPIO_Init(Button_LR_GPIO_PORT, &GPIO_InitStructure); 
+    GPIO_InitStructure.GPIO_Pin = Button_RR_GPIO_PIN;
+    GPIO_Init(Button_RR_GPIO_PORT, &GPIO_InitStructure); 
 }
 
 /**
@@ -114,11 +143,11 @@ void MX_TIM_Init(void)
     RCC_APBPeriph2ClockCmd(RCC_APBPeriph2_TIM1, ENABLE);
     TIM_DeInit(TIM1);
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
-    TIM_TimeBaseStructure.Prescaler = 0;
-    TIM_TimeBaseStructure.CounterMode = TIM_CounterMode_CenterAligned1;
+    TIM_TimeBaseStructure.TIM_Prescaler = 0;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned1;
     TIM_TimeBaseStructure.TIM_Period = ((PWM_PERIOD_CYCLES) / 2);
     //TIM_TimeBaseStructure.Autoreload = 3000;
-    TIM_TimeBaseStructure.ClockDivision = TIM_CKD_DIV2;
+    TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV2;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = (REP_COUNTER);
     TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
     TIM_OCStructInit(&TIM_OCInitStructure);
@@ -147,13 +176,37 @@ void MX_TIM_Init(void)
 	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;                  
 	TIM_OCInitStructure.TIM_Pulse = (((PWM_PERIOD_CYCLES) / 2) - (HTMIN));
 
-	TIM_OC4Init(TIM1, &TIM1_OCInitStructure);
+	TIM_OC4Init(TIM1, &TIM_OCInitStructure);
     /* CC4 ENABLE */
 
     TIM_CCxCmd(TIM1,ADC_TrigTIMCH,TIM_CCx_Enable);
 	/* CC4_TO_ADC_SELConfig  */
     TIM_CC_TRIGADC(TIM1,ADC_TrigTIMCH, CC_TRIGADC_OCREF);
     //TIM_BrakInputRemap(TIM1, TIM_Break_Remap_COMP1OUT);
+}
+//关闭所有PWM
+void PWMC_OFFPWM(void){
+    PHASE_A_duty(0);
+    PHASE_B_duty(0);
+    PHASE_C_duty(0);
+    //关闭PWM
+    TIM1->BDTR &= ( uint32_t )~TIM_BDTR_MOE;
+}
+//开启PWM 处于刹车状态
+void PWMC_ONPWM(void){
+    TIM_ClearFlag_UPDATE( TIM1 );
+    while ( TIM_IsActiveFlag_UPDATE( TIM1 ) == RESET )
+    {}
+    /* Clear Update Flag */
+    TIM_ClearFlag_UPDATE( TIM1 );
+    PHASE_A_duty(PWM_PERIOD_CYCLES/2);
+    PHASE_B_duty(PWM_PERIOD_CYCLES/2);
+    PHASE_C_duty(PWM_PERIOD_CYCLES/2);
+    while ( TIM_IsActiveFlag_UPDATE( TIM1 ) == RESET )
+    {}
+    //开启PWM
+    TIM1->BDTR |= TIM_OSSIState_Enable;  //不工作时候输出空闲电平
+    TIM1->BDTR |= TIM_BDTR_MOE;
 }
 
 /**
@@ -171,11 +224,11 @@ void MX_ADC_Init(void){
     /* USER CODE BEGIN TIM1_Init 1 */
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AN;
     GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_InitStructure.GPIO_Pin = Voltage_ADC_PIN;
+	GPIO_InitStruct.GPIO_Pin = Voltage_ADC_PIN;
 	GPIO_Init(Voltage_ADC_PORT, &GPIO_InitStruct);
-	GPIO_InitStructure.GPIO_Pin = Hall_x_GPIO_PIN;
+	GPIO_InitStruct.GPIO_Pin = Hall_x_GPIO_PIN;
 	GPIO_Init(Hall_x_GPIO_PORT, &GPIO_InitStruct);
-	GPIO_InitStructure.GPIO_Pin = Hall_y_GPIO_PIN;
+	GPIO_InitStruct.GPIO_Pin = Hall_y_GPIO_PIN;
 	GPIO_Init(Hall_y_GPIO_PORT, &GPIO_InitStruct);
     ADC_DeInit(ADC);
     ADC_StructInit(&ADC_InitStructure);
@@ -186,9 +239,70 @@ void MX_ADC_Init(void){
     ADC_InitStructure.ADC_ScanDirection = ADC_ScanDirection_Upward;
     ADC_Init(ADC, &ADC_InitStructure);
     /* Convert the ADC1 Channel4 with 239.5 Cycles as sampling time */
-    ADC_ChannelConfig(ADC, Voltage_ADC_CH, ADC_SampleTime_239_5Cycles);
-    ADC_ChannelConfig(ADC, Hall_x_CH, ADC_SampleTime_239_5Cycles);
-    ADC_ChannelConfig(ADC, Hall_y_CH, ADC_SampleTime_239_5Cycles);
+    // (sampletime+12.5)*ADC CLK
+    ADC_ChannelConfig(ADC, Voltage_ADC_CH, ADC_SampleTime_1_5Cycles);
+    ADC_ChannelConfig(ADC, Hall_x_CH, ADC_SampleTime_1_5Cycles);
+    ADC_ChannelConfig(ADC, Hall_y_CH, ADC_SampleTime_1_5Cycles);
     /* Enable the ADC peripheral */
+    ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
     ADC_Cmd(ADC, ENABLE);
+}
+/**
+ * @brief Hall initial
+ * @param   None
+ * @retval  None
+ * 初始化霍尔?
+*/
+void MX_Hall_init(void){
+
+}
+/**
+ * 
+ * delay function
+*/
+static __IO uint32_t msTick=0;
+void Delay_ms(__IO uint32_t Delay)
+{
+  uint32_t tickstart = msTick;
+  uint32_t wait = Delay;
+  
+  while((msTick - tickstart) < wait)
+  {
+  }
+}
+/**
+  * @brief NVIC Configuration.
+  * @retval None
+  */
+void MX_NVIC_Init(void)
+{
+    NVIC_InitTypeDef NVIC_InitStruct;
+    /* TIM1_BRK_UP_TRG_COM_IRQn interrupt configuration */
+    //NVIC_InitStruct.NVIC_IRQChannel=TIM1_IRQn;
+    //NVIC_InitStruct.NVIC_IRQChannelPriority = 1;  //0;
+    //NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;	
+    //NVIC_Init(&NVIC_InitStruct);
+    /* TIM2_IRQn interrupt configuration */
+    //NVIC_InitStruct.NVIC_IRQChannel=TIM6_IRQn;
+    //NVIC_InitStruct.NVIC_IRQChannelPriority = 2;
+    //NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;	
+    //NVIC_Init(&NVIC_InitStruct);	
+    /* ADC interrupt configuration */
+    NVIC_InitStruct.NVIC_IRQChannel=ADC1_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPriority = 0;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;		
+    NVIC_Init(&NVIC_InitStruct);
+
+    /* UART1_IRQn interrupt configuration */
+    //NVIC_InitStruct.NVIC_IRQChannel=UART1_IRQn;
+    //NVIC_InitStruct.NVIC_IRQChannelPriority = 3;
+    //NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;	
+    //NVIC_Init(&NVIC_InitStruct);
+
+    /* EXTI2_3_IRQn interrupt configuration */
+    //NVIC_InitStruct.NVIC_IRQChannel=PIN_plus_EXTI_IRQn;  //EXTI4_15_IRQn;
+    //NVIC_InitStruct.NVIC_IRQChannelPriority = 0;
+    //NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    //NVIC_Init(&NVIC_InitStruct);
+	
 }

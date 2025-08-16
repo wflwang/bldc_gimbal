@@ -8,7 +8,12 @@
         "${workspaceFolder}/Mcu/HK32G003/Driver/CMSIS/HK32G003/Include",
         "${workspaceFolder}/Mcu/HK32G003/Driver/CMSIS/CM0/Core",
         "${workspaceFolder}/Mcu/HK32G003/Driver/HK32G003_StdPeriph_Driver",
-        "${workspaceFolder}/Mcu/HK32G003/Inc"
+        "${workspaceFolder}/Mcu/HK32G003/Inc",
+        "${workspaceFolder}/sensor",
+        "${workspaceFolder}/FLASH",
+        "${workspaceFolder}/motor",
+        "${workspaceFolder}/EEPROM",
+        "${workspaceFolder}/BUTTON"
       ],
       "compilerPath": "E:/tool/complie/mingw-w64/mingw-w64-gcc-13.2-stable-r40/bin/gcc.exe",
       "cStandard": "${default}",

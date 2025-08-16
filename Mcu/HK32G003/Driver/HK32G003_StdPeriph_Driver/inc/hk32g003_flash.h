@@ -50,7 +50,8 @@ typedef enum
   FLASH_ERROR_WRP,
   FLASH_ERROR_PROGRAM,
   FLASH_COMPLETE,
-  FLASH_TIMEOUT
+  FLASH_TIMEOUT,
+  FLASH_ERASE_PAGE_OVER   //page 超出
 }FLASH_Status;
 /**
   * @}

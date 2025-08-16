@@ -24,6 +24,7 @@
   */
 #define SQRT_2  1.4142
 #define SQRT_3  1.732
+#define SQRT3FACTOR (uint16_t) 0xDDB4 /* = (16384 * 1.732051 * 2) sqrt3/2*/
 /**
   * @brief  Macro to compute logarithm of two
   */
@@ -64,7 +65,7 @@ typedef struct
   * @param  Curr_Input: stator current Ia and Ib in Curr_Components format
   * @retval Stator current Ialpha and Ibeta in Curr_Components format
   */
-Curr_Components MCM_Clarke( Curr_Components Curr_Input );
+//Curr_Components MCM_Clarke( Curr_Components Curr_Input );
 
 /**
   * @brief  This function transforms stator currents Ialpha and Ibeta, which
@@ -76,7 +77,7 @@ Curr_Components MCM_Clarke( Curr_Components Curr_Input );
   * @param  Theta: rotating frame angular position in q1.15 format
   * @retval Stator current Iq and Id in Curr_Components format
   */
-Curr_Components MCM_Park( Curr_Components Curr_Input, int16_t Theta );
+//Curr_Components MCM_Park( Curr_Components Curr_Input, int16_t Theta );
 
 /**
   * @brief  This function transforms stator voltage qVq and qVd, that belong to
@@ -89,7 +90,7 @@ Curr_Components MCM_Park( Curr_Components Curr_Input, int16_t Theta );
   * @retval Stator voltage Valpha and Vbeta in Volt_Components format
   */
 Volt_Components MCM_Rev_Park( Volt_Components Volt_Input, int16_t Theta );
-
+void PWMC_SetPhaseVoltage( PWMC_Handle * pHandle, Volt_Components Valfa_beta );
 
 /**
   * @brief  This function returns cosine and sine functions of the angle fed in
@@ -114,6 +115,13 @@ int32_t MCM_Sqrt( int32_t wInput );
   * @retval uint32_t Coded 32bit integer.
   */
 uint32_t MCM_floatToIntBit( float x );
+
+//search tan
+int16_t arctanSearch(int16_t pr);
+//arctan
+int16_t arctan(int16_t x, int16_t y);
+//最大最小赋值
+void MaxMinUpDate(uint16_t *now,uint16_t *max,uint16_t *min);
 
 /**
   * @}

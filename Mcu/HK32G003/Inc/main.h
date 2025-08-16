@@ -30,25 +30,38 @@ extern "C" {
 
 /* Includes
  * ------------------------------------------------------------------*/
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <math.h>
+#include "targets.h"
+#include    "datatypes.h"
 #include "hk32g003.h"
-#include "hk32g003_adc.h"
-#include "stm32g0xx_ll_bus.h"
-#include "stm32g0xx_ll_comp.h"
-#include "stm32g0xx_ll_cortex.h"
-#include "stm32g0xx_ll_dma.h"
-#include "stm32g0xx_ll_exti.h"
-#include "hk32g003_gpio.h"
-#include "stm32g0xx_ll_iwdg.h"
-#include "stm32g0xx_ll_pwr.h"
-#include "stm32g0xx_ll_rcc.h"
-#include "stm32g0xx_ll_system.h"
-#include "hk32g003_tim.h"
-#include "stm32g0xx_ll_usart.h"
-#include "stm32g0xx_ll_utils.h"
+#include "system_hk32g003.h"
+#include "button.h"
+#include "peripherals.h"
+#include "mcpwm_foc.h"
+#include    "qmi8658b.h"
+//#include "hk32g003_adc.h"
+//#include "stm32g0xx_ll_bus.h"
+//#include "stm32g0xx_ll_comp.h"
+//#include "stm32g0xx_ll_cortex.h"
+//#include "stm32g0xx_ll_dma.h"
+//#include "stm32g0xx_ll_exti.h"
+//#include "hk32g003_gpio.h"
+//#include "hk32g003_flash.h"
+//#include "stm32g0xx_ll_iwdg.h"
+//#include "stm32g0xx_ll_pwr.h"
+//#include "stm32g0xx_ll_rcc.h"
+//#include "stm32g0xx_ll_system.h"
+//#include "hk32g003_tim.h"
+//#include "stm32g0xx_ll_usart.h"
+//#include "stm32g0xx_ll_utils.h"
 
-#if defined(USE_FULL_ASSERT)
-#include "stm32_assert.h"
-#endif /* USE_FULL_ASSERT */
+//#if defined(USE_FULL_ASSERT)
+//#include "stm32_assert.h"
+//#endif /* USE_FULL_ASSERT */
 
 /* Private includes
  * ----------------------------------------------------------*/
@@ -71,8 +84,25 @@ extern "C" {
 /* Exported macro
  * ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+/***
+ * 
+ * main variable 
+ * 
+*/
+typedef struct 
+{
+    /* data */
+    uint8_t IspowerON;  //开机标志
+}mainState;
+
+extern mainState mainState_t;
+
 
 /* USER CODE END EM */
+
+uint8_t GetONOFF(void); //获取开关机状态
+void poweron(void);  //开机
+void poweroff(void); //关机
 
 /* Exported functions prototypes
  * ---------------------------------------------*/
@@ -96,3 +126,4 @@ void Error_Handler(void);
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF
  * FILE****/
+ 
