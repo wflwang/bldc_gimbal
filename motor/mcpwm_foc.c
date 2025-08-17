@@ -10,6 +10,8 @@
 #include    "mc_config.h"
 #include    "pid_regulator.h"
 #include    "mc_math.h"
+#include    "EEPROM.h"
+#include "peripherals.h"
 
 static uint8_t Aligned_hall = 0;
 static uint8_t IsMCCompleted = 0;
@@ -62,9 +64,7 @@ void SysTick_Handler(void)
  * 采样时候不停的采样平均角度值
 */
 int16_t Get_HallAngle(FOC_Component *fc){
-    int16_t hX,hY;
-    int32_t hElAngle;
-    int16_t hMecAngle;
+    uint32_t hElAngle;
     if(FOC_Component_M1.lc.LearnFinish==0){
         if(fc->learnXYFin==0){
             fc->x_now = ((GetHallxAD()&0xFFF)<<4);  //获取X轴的最大值,最小值
@@ -93,7 +93,7 @@ int16_t Get_HallAngle(FOC_Component *fc){
 */
 uint32_t GetRealElAngle(FOC_Component *fc){
     int16_t hX,hY;
-    int32_t hElAngle;
+    uint32_t hElAngle;
     hX = (int16_t)(((GetHallxAD()&0xFFF)<<4)-fc->lc.x_offset);
 	hY = (int16_t)(((GetHallyAD()&0xFFF)<<4)-fc->lc.y_offset);
     GetHallXYScale(&fc->lc,&hX,&hY);
@@ -135,9 +135,9 @@ Err_FOC MotorRunControl(FOC_Component *fc){
     static uint8_t CountTime=0;
     static uint32_t  offsetErr1;
     static uint32_t  offsetErr2;
-    uint32_t  offsetErrTmp1; 
-    uint32_t  offsetErrTmp2; 
-    uint32_t hElAngle;
+    uint32_t  offsetErrTmp1=0; 
+    uint32_t  offsetErrTmp2=0; 
+    uint32_t hElAngle=0;
     
     if(fc->lc.LearnFinish==0){
         //是否没有学习,没有学习要学习角度 给一个固定力旋转
@@ -215,7 +215,7 @@ Err_FOC MotorRunControl(FOC_Component *fc){
                             fc->lc.ElAngele_offset = (int16_t)offsetErr2;
                         }
                         fc->lc.LearnFinish  =   1;  //学习完成
-                        EE_Write(); //把学习的参数写入EEPROM
+                        EE_WriteFOC(&fc->lc); //把学习的参数写入EEPROM
                     }
                 }
             }
@@ -246,7 +246,7 @@ void MC_RunMotorControlTasks(void){
     //马达一直动作? 
     if(IsMCCompleted==1){
     //初始化完成
-
+        MotorRunControl(&FOC_Component_M1);
     }
 
 }

@@ -10,7 +10,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "mc_math.h"
-#include "mc_type.h"
+//#include "mc_type.h"
 
 /** @addtogroup MCSDK
   * @{
@@ -64,7 +64,7 @@
 //第3象限 倒数 225-270 正数: 180-225
 //第4象限 倒数 270-315 正数: 315-360
 #define tan_Table { \
-0x0000, 0x0192, 0x0324, 0x04b6, 0x0648, 0x07db, 0x096d, 0x0b00, \ 
+0x0000, 0x0192, 0x0324, 0x04b6, 0x0648, 0x07db, 0x096d, 0x0b00, \
 0x0c93, 0x0e26, 0x0fba, 0x114e, 0x12e2, 0x1476, 0x160b, 0x17a0, \
 0x1936, 0x1acd, 0x1c63, 0x1dfb, 0x1f93, 0x212b, 0x22c4, 0x245e, \
 0x25f9, 0x2794, 0x2930, 0x2acd, 0x2c6b, 0x2e0a, 0x2fa9, 0x314a, \
@@ -360,7 +360,7 @@ Volt_Components MCM_Rev_Park( Volt_Components Volt_Input, int16_t Theta )
   * @retval Returns #MC_NO_ERROR if no error occurred or #MC_FOC_DURATION if the duty cycles were
   *         set too late for being taken into account in the next PWM cycle.
   */
-void PWMC_SetPhaseVoltage( PWMC_Handle * pHandle, Volt_Components Valfa_beta )
+void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
 {
   int32_t wX, wY, wZ, wUAlpha, wUBeta, wTimePhA, wTimePhB, wTimePhC;
   //PWMC_SetSampPointSectX_Cb_t pSetADCSamplingPoint;

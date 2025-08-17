@@ -94,16 +94,16 @@ typedef struct
 {
   int16_t qV_Component1;
   int16_t qV_Component2;
-} Volt_Components;
+}Volt_Components;
 
 /**
   * @brief  ADConv_t type definition, it is used by PWMC_ADC_SetSamplingTime method of PWMnCurrFdbk class for user defined A/D regular conversions
   */
-typedef struct
-{
-  uint8_t Channel;   /*!< Integer channel number, from 0 to 15 */
-  uint8_t SamplTime; /*!< Sampling time selection, ADC_SampleTime_nCycles5 */
-} ADConv_t;
+//typedef struct
+//{
+//  uint8_t Channel;   /*!< Integer channel number, from 0 to 15 */
+//  uint8_t SamplTime; /*!< Sampling time selection, ADC_SampleTime_nCycles5 */
+//} ADConv_t;
 
 /**
   * @brief  SensorType_t type definition, it's used in BusVoltageSensor and TemperatureSensor component parameters structures
@@ -135,10 +135,10 @@ typedef struct
     uint8_t LearnFinish;  //学习完成
     uint8_t M_dir;    //马达旋转的方向
     uint8_t xyScaleDir;  //XY 对应比例关系方向 X>Y 0 / X<Y 1  增益永远小于1
+		int16_t ElAngele_offset;  //电角度的偏差
     uint16_t x_offset;
     uint16_t y_offset;
-    uint16_t xy_scale;  //X对应Y的比例关系
-    int16_t ElAngele_offset;  //电角度的偏差
+    uint16_t xy_scale;  //X对应Y的比例关系  
 }Learn_Componets; //学习组件
 
 typedef struct 

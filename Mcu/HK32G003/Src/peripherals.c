@@ -194,16 +194,16 @@ void PWMC_OFFPWM(void){
 }
 //开启PWM 处于刹车状态
 void PWMC_ONPWM(void){
-    TIM_ClearFlag_UPDATE( TIM1 );
-    while ( TIM_IsActiveFlag_UPDATE( TIM1 ) == RESET )
-    {}
+    //TIM_ClearFlag_UPDATE( TIM1 );
+    //while ( TIM_IsActiveFlag_UPDATE( TIM1 ) == RESET )
+    //{}
     /* Clear Update Flag */
-    TIM_ClearFlag_UPDATE( TIM1 );
+    //TIM_ClearFlag_UPDATE( TIM1 );
     PHASE_A_duty(PWM_PERIOD_CYCLES/2);
     PHASE_B_duty(PWM_PERIOD_CYCLES/2);
     PHASE_C_duty(PWM_PERIOD_CYCLES/2);
-    while ( TIM_IsActiveFlag_UPDATE( TIM1 ) == RESET )
-    {}
+    //while ( TIM_IsActiveFlag_UPDATE( TIM1 ) == RESET )
+    //{}
     //开启PWM
     TIM1->BDTR |= TIM_OSSIState_Enable;  //不工作时候输出空闲电平
     TIM1->BDTR |= TIM_BDTR_MOE;

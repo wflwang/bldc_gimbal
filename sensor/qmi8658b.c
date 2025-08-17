@@ -79,7 +79,7 @@ float accelTCBias[3] = { 0.0f, 0.0f, 0.0f };
 //int16andUint8_t rawAccel[3];
 //********************************************
 
-void qmi8658x_init(GPIO_InitTypeDef *sda_gpio,int sda_pin,GPIO_InitTypeDef *scl_gpio,int scl_pin){
+void qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_gpio,uint32_t scl_pin){
     GPIO_InitTypeDef GPIO_InitStructure;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
@@ -87,8 +87,10 @@ void qmi8658x_init(GPIO_InitTypeDef *sda_gpio,int sda_pin,GPIO_InitTypeDef *scl_
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_InitStructure.GPIO_Pin = sda_pin;
 	GPIO_Init(sda_gpio, &GPIO_InitStructure);
+	GYPO_SDA_Set();
     GPIO_InitStructure.GPIO_Pin = scl_pin;
 	GPIO_Init(scl_gpio, &GPIO_InitStructure);
+	GYPO_SCL_Set();
 }
 
 #if 0

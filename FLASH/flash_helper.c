@@ -31,14 +31,12 @@
 //#define ERASE_VOLTAGE_RANGE						(uint8_t)((PWR->CSR & PWR_CSR_PVDO) ? VoltageRange_2 : VoltageRange_3)
 
 // Private functions
-static FLASH_Status write_data(uint32_t base, uint8_t *data, uint32_t len);
-static FLASH_Status erase_page(uint32_t start_addr_page,uint32_t new_app_size);
 
 /**
  * @param new_app_size  max is 64 page
  * 擦除目标APP FLASH 数据
 */
-static FLASH_Status erase_page(uint32_t start_addr_page,uint32_t new_app_size) {
+FLASH_Status erase_page(uint32_t start_addr_page,uint32_t new_app_size) {
 	if(new_app_size>64){
 		return FLASH_ERASE_PAGE_OVER;
 	}
@@ -47,7 +45,7 @@ static FLASH_Status erase_page(uint32_t start_addr_page,uint32_t new_app_size) {
   	FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR);
 	//timeout_configure_IWDT_slowest();
 
-	for (int i = 0;i < new_app_size ;i++) {
+	for (uint32_t i = 0;i < new_app_size ;i++) {
     	if(FLASH_ErasePage(ADDR_FLASH_START_PAGE+((start_addr_page+i)*FLASH_PAGE_SIZE)) != FLASH_COMPLETE)
     	{
     	  /* Error occurred while sector erase.
@@ -68,7 +66,7 @@ static FLASH_Status erase_page(uint32_t start_addr_page,uint32_t new_app_size) {
  * @param new_app_size  max is 64 page
  * 写 目标 APP FLASH 数据
 */
-static FLASH_Status write_data(uint32_t base, uint8_t *data, uint32_t len) {
+FLASH_Status write_data(uint32_t base, uint8_t *data, uint32_t len) {
 	FLASH_Unlock();
 	FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR);
 	/* 
@@ -81,7 +79,7 @@ static FLASH_Status write_data(uint32_t base, uint8_t *data, uint32_t len) {
 	//utils_sys_lock_cnt();
 	//timeout_configure_IWDT_slowest();
 
-	for (uint32_t i = 0;i < len;i+4) {
+	for (uint32_t i = 0;i < len;i=i+4) {
 		if(FLASH_ProgramWord(base + i, data[i])!=FLASH_COMPLETE){
 			break;
 		}

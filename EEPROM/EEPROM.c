@@ -6,7 +6,7 @@
     */
    #include     "EEPROM.h"
    //#include   "mc_type.h"
-   //#include   <stdio.h>
+   #include   <stdio.h>
 /**
  * 
  * 初始化EEPROM 

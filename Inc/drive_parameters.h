@@ -24,7 +24,7 @@
 
 
 /***************** MOTOR ELECTRICAL PARAMETERS  ******************************/
-#define POLE_PAIR_NUM          2 //4 //7 //4 /* Number of motor pole pairs */
+#define POLE_PAIR_NUM          7 //4 //7 //4 /* Number of motor pole pairs */
 #define RS                     0.561   //0.465   //3.806 //0.031   //3.08 /* Stator resistance , ohm*/
 #define LS                     0.0003  //0.0002304  //0.0023 //@0.000022   //0.00061 
 /* Stator inductance, H

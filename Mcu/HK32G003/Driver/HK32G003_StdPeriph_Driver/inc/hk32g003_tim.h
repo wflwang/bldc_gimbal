@@ -72,9 +72,6 @@ typedef struct
                                    This parameter can be a value of @ref TIM_Output_Compare_N_state
                                    @note This parameter is valid only for TIM1. */
 
-  uint32_t TIM_Pulse;         /*!< Specifies the pulse value to be loaded into the Capture Compare Register. 
-                                   This parameter can be a number between 0x0000 and 0xFFFF ( or 0xFFFFFFFF 
-                                   for TIM2) */
 
   uint16_t TIM_OCPolarity;    /*!< Specifies the output polarity.
                                    This parameter can be a value of @ref TIM_Output_Compare_Polarity */
@@ -90,6 +87,9 @@ typedef struct
   uint16_t TIM_OCNIdleState;  /*!< Specifies the TIM Output Compare pin state during Idle state.
                                    This parameter can be a value of @ref TIM_Output_Compare_N_Idle_State
                                    @note This parameter is valid only for TIM1. */
+	uint32_t TIM_Pulse;         /*!< Specifies the pulse value to be loaded into the Capture Compare Register. 
+                                   This parameter can be a number between 0x0000 and 0xFFFF ( or 0xFFFFFFFF 
+                                   for TIM2) */																 
 } TIM_OCInitTypeDef;
 
 /** 

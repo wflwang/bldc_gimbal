@@ -55,6 +55,11 @@ typedef struct
   int16_t hCos;
   int16_t hSin;
 } Trig_Components;
+//typedef struct
+//{
+//  int16_t qV_Component1;
+//  int16_t qV_Component2;
+//}Volt_Components;
 
 /**
   * @brief  This function transforms stator currents Ia and qIb (which are
@@ -89,8 +94,9 @@ typedef struct
   * @param  Theta: rotating frame angular position in q1.15 format
   * @retval Stator voltage Valpha and Vbeta in Volt_Components format
   */
+	
 Volt_Components MCM_Rev_Park( Volt_Components Volt_Input, int16_t Theta );
-void PWMC_SetPhaseVoltage( PWMC_Handle * pHandle, Volt_Components Valfa_beta );
+void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta );
 
 /**
   * @brief  This function returns cosine and sine functions of the angle fed in
@@ -122,6 +128,7 @@ int16_t arctanSearch(int16_t pr);
 int16_t arctan(int16_t x, int16_t y);
 //最大最小赋值
 void MaxMinUpDate(uint16_t *now,uint16_t *max,uint16_t *min);
+
 
 /**
   * @}

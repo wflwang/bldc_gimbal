@@ -9,7 +9,7 @@
 #include    "main.h"
 
 
-void qmi8658x_init(GPIO_InitTypeDef *sda_gpio,int sda_pin,GPIO_InitTypeDef *scl_gpio,int scl_pin);
+void qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_gpio,uint32_t scl_pin);
 
 
 #endif

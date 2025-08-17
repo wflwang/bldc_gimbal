@@ -386,7 +386,7 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
 
   return ( ( int16_t )( wOutput_32 ) );
 }
-
+#if 0
 /**
  * @brief  This function compute the output of a PI regulator sum of its
  *         proportional and integral terms
@@ -400,7 +400,7 @@ int32_t LowSpeedPI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError 
 {
   int64_t wProportional_Term, wIntegral_Term, wOutput_32, wIntegral_sum_temp;
   //int32_t wProportional_Term, wIntegral_Term, wOutput_32, wIntegral_sum_temp;
-  int32_t wDischarge = 0;
+  //int32_t wDischarge = 0;
   int16_t hUpperOutputLimit = pHandle->hUpperOutputLimit;
   int16_t hLowerOutputLimit = pHandle->hLowerOutputLimit;
 
@@ -469,7 +469,7 @@ int32_t LowSpeedPI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError 
 
   return ((uint32_t)( wOutput_32 ) );
 }
-
+#endif
 #if 1
 #if defined (CCMRAM)
 #if defined (__ICCARM__)

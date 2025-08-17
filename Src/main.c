@@ -4,15 +4,17 @@
  * @date Created on: July 28, 2025
  * @author: MaxwellWang
  */
-//#include    "main.h"
-#include    "peripherals.h"
+#include    "main.h"
+#include "button.h"
+#include "peripherals.h"
+#include "mcpwm_foc.h"
+#include    "qmi8658b.h"
 //#include    "ADC.h"
 //#include    "IO.h"
 //#include    "common.h"
 //#include    "sensor.h"
 
 mainState mainState_t={0};
-button_t bt={0};
 
 int main(void){
     initCorePeripherals();
@@ -39,7 +41,8 @@ int main(void){
     MX_NVIC_init();
     while(1){
         //Scan_GYPO();    //扫描陀螺仪控制
-        ScanButton(&bt);   //扫描按键功能
+        Delay_ms(1);  //增加延迟方便SWD debug
+        fScanButton();   //扫描按键功能
         //LEDControl();   //LED控制
     }
 }

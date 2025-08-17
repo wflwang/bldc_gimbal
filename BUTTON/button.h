@@ -16,6 +16,8 @@
 
 //消抖时间
 #define debouneTime     10
+#define shortLTime      1  //(1+1)*10 = 20ms
+#define shortHTime      40  //41*10 = 410ms
 //长安开关机时间
 #define longONOFF       1500    
 #define longReLearn     3000
@@ -34,11 +36,7 @@ typedef struct
 
 
 //扫描按键
-void ScanButton(button_t *bt);
-
-
-
-
-
+//void ScanButton(button_t *bt);
+void fScanButton(void);
 
 #endif

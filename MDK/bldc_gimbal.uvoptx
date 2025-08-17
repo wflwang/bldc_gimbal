@@ -120,7 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>UL2CM3</Key>
-          <Name>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0HK32G003XX_16 -FS08000000 -FL04000 -FP0($$Device:HK32G003F4P7$Flash\HK32G003XX_16.FLM))</Name>
+          <Name>-U -O206 -S0 -C0 -P00 -TO65554 -TC10000000 -TT10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO7 -FD20000000 -FC1000 -FN1 -FF0HK32G003XX_16.FLM -FS08000000 -FL04000 -FP0($$Device:HK32G003F4P7$Flash\HK32G003XX_16.FLM)</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
       <Breakpoint/>

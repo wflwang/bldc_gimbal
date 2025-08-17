@@ -36,13 +36,10 @@ extern "C" {
 #include <stdio.h>
 #include <math.h>
 #include "targets.h"
-#include    "datatypes.h"
+//#include    "datatypes.h"
 #include "hk32g003.h"
 #include "system_hk32g003.h"
-#include "button.h"
-#include "peripherals.h"
-#include "mcpwm_foc.h"
-#include    "qmi8658b.h"
+#include "parameters_conversion.h"
 //#include "hk32g003_adc.h"
 //#include "stm32g0xx_ll_bus.h"
 //#include "stm32g0xx_ll_comp.h"
@@ -124,6 +121,7 @@ void Error_Handler(void);
 
 #endif /* __MAIN_H */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF
- * FILE****/
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF* FILE****/
+
  
+
