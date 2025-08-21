@@ -7,6 +7,8 @@
  */
 
 #include    "button.h"
+#include    "mc_config.h"
+#include    "mcpwm_foc.h"
 
 button_t bt={0};
 void fScanButton(void){
@@ -19,7 +21,7 @@ void fScanButton(void){
  * 
  * 
 */
-static void ScanButton(button_t *bt){
+void ScanButton(button_t *bt){
     //有按键按下 长按开关机 短按水平/垂直 双击旋转模式
     uint8_t tmp;
     tmp = (!GetButonPWR())|((!GetButonLR())<<1)|((!GetButonLR())<<2);
@@ -36,7 +38,7 @@ static void ScanButton(button_t *bt){
         switch(tmp){
             case 0:
                 if(bt->BtTime<60000)
-                bt->BtTime++;   //长安计时
+                bt->BtTime++;   //长按计时
                 if((bt->BtTime==shortHTime)&&((bt->BtCount&0xf0))){
                     //执行单机动作
                     switch (bt->BtCount&0xf0)
@@ -68,15 +70,15 @@ static void ScanButton(button_t *bt){
                     {
                         case bt_pwrEn:
                             //特定旋转动作
-                            Hor_Turn_Ver();
+                            HorOrVerRoll();
                         break;
                         case bt_LREn:
                             //左转360度
-                            SetTurnLeft();
+                            SetTurnLeftCycle();
                         break;
                         case bt_RREn:
                             //右转360度
-                            SetTurnRight();
+                            SetTurnRightCycle();
                         break;
                         default:
                         break;

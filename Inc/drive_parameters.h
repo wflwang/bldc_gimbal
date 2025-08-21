@@ -196,9 +196,9 @@
 
 /**************************    DRIVE SETTINGS SECTION   **********************/
 /* PWM generation and current reading */
-#define PWM_FREQUENCY                        25000 //10000 //10000 //8000  //10000
+#define PWM_FREQUENCY                        16000 //25000 //10000 //10000 //8000  //10000
 #define LOW_SIDE_SIGNALS_ENABLING            LS_PWM_TIMER
-#define SW_DEADTIME_NS                       0  //800   //1400   /*!< Dead-time to be inserted by FW, only if low side signals are enabled */
+#define SW_DEADTIME_NS                       200  //800   //1400   /*!< Dead-time to be inserted by FW, only if low side signals are enabled */
 
 /* Torque and flux regulation loops */
 #define REGULATION_EXECUTION_RATE     1    
@@ -224,13 +224,17 @@
 //#define PID_SPEED_KI_DEFAULT                 1650  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
 //#define PID_SPEED_KD_DEFAULT                 0  //#1500
 
-#define PID_Pos_KP_DEFAULT                 175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 1650  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 0  //#1500
+#define PID_Pos_KP_DEFAULT                 450  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 31200  //#1500
 /* Speed PID parameter dividers */
-#define SP_KPDIV                       64
-#define SP_KIDIV                       16384
-#define SP_KDDIV                       8192
+#define SP_KPDIV                       128   //64
+#define SP_KIDIV                       8192  //16384
+#define SP_KDDIV                       128   //512  //8192
+//PID 间隔时间
+#define cPIDDiff        6 
+#define filterAV 
+#define filterAVDeep    32
 
 /* USER CODE BEGIN PID_SPEED_INTEGRAL_INIT_DIV */
 #define PID_SPEED_INTEGRAL_INIT_DIV 1 /*  */
@@ -268,11 +272,12 @@
 /******************************   START-UP PARAMETERS   **********************/
 /* Encoder alignment */
 //-> 这里电流的配置全部直接转换位电压输出控制  大约70%的力 动到0度位置
+#define ALIGN_TimeOnce        10    //每次对齐变化时间
 #define ALIGNMENT_DURATION              800  //500 //700 /*!< milliseconds */
 #define ALIGNMENT_ANGLE_DEG             270  //90 /*!< degrees [0...359] */
-#define FINAL_I_ALIGNMENT               7000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
-#define FINAL_I3_ALIGNMENT               5600 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
-#define FINAL_I4_ALIGNMENT               4700 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
+#define FINAL_I_ALIGNMENT               15000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
+//#define FINAL_I3_ALIGNMENT               5600 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
+//#define FINAL_I4_ALIGNMENT               4700 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 // With ALIGNMENT_ANGLE_DEG equal to 90 degrees final alignment 
 // phase current = (FINAL_I_ALIGNMENT * 1.65/ Av)/(32767 * Rshunt)  
 // being Av the voltage gain between Rshunt and A/D input

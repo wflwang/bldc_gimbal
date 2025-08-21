@@ -9,6 +9,7 @@
 #include "peripherals.h"
 #include "mcpwm_foc.h"
 #include    "qmi8658b.h"
+#include "LED.h"
 //#include    "ADC.h"
 //#include    "IO.h"
 //#include    "common.h"
@@ -17,7 +18,7 @@
 mainState mainState_t={0};
 
 int main(void){
-    initCorePeripherals();
+      initCorePeripherals();
     //初始化IO
     //MX_GPIO_init();
     //初始化AD
@@ -38,12 +39,12 @@ int main(void){
     //EEPROM_init();  
     Delay_ms(200);  //增加延迟方便SWD debug
     //初始化中断
-    MX_NVIC_init();
+    //MX_NVIC_init();
     while(1){
         //Scan_GYPO();    //扫描陀螺仪控制
         Delay_ms(1);  //增加延迟方便SWD debug
         fScanButton();   //扫描按键功能
-        //LEDControl();   //LED控制
+        LEDControl();   //LED控制
     }
 }
 /**
@@ -61,3 +62,22 @@ void poweroff(void){
     mainState_t.IspowerON = 0;
     PowerEn_Reset();    //关机
 }
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(char* file , uint32_t line)
+{
+  /* User can add his own implementation to report the file name and line number,
+     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */	
+       /* Infinite loop */
+	
+	while (1)
+  {		
+  }
+}
+#endif /* USE_FULL_ASSERT */

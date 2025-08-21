@@ -53,6 +53,8 @@
 #define PHASE_C_GPIO_AF     GPIO_AF_3
 #define PHASE_C_duty(x)     TIM1->CCR3 = x
 
+#define ADC_PHASE_duty(x)   TIM1->CCR4 = x
+
 #define Hall_x_GPIO_PIN     GPIO_Pin_2
 #define Hall_x_GPIO_PORT    GPIOD
 #define Hall_x_GPIO_CLK     RCC_AHBPeriph_GPIOD
@@ -117,6 +119,7 @@
 #define LEDR_GPIO_PORT          GPIOC
 #define LEDR_GPIO_CLK           RCC_AHBPeriph_GPIOC
 #define LEDR_GPIO_SOURCE        GPIO_PinSource3
+#define LEDR_Xor()          GPIO_Toggle(LEDR_GPIO_PORT,LEDR_GPIO_PIN)
 #define LEDR_Set()          (LEDR_GPIO_PORT->BSRR = LEDR_GPIO_PIN)
 #define LEDR_Reset()        (LEDR_GPIO_PORT->BRR = LEDR_GPIO_PIN)
 #define LEDR_Write(x)       ((x)?LEDR_Set():LEDR_Reset())
@@ -125,6 +128,7 @@
 #define LEDG_GPIO_PORT          GPIOB
 #define LEDG_GPIO_CLK           RCC_AHBPeriph_GPIOB
 #define LEDG_GPIO_SOURCE        GPIO_PinSource4
+#define LEDG_Xor()          GPIO_Toggle(LEDG_GPIO_PORT,LEDG_GPIO_PIN)
 #define LEDG_Set()          (LEDG_GPIO_PORT->BSRR = LEDG_GPIO_PIN)
 #define LEDG_Reset()        (LEDG_GPIO_PORT->BRR = LEDG_GPIO_PIN)
 #define SetLEDG(x)          ((x)?LEDG_Set():LEDG_Reset())

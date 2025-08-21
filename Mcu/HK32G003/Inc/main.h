@@ -36,6 +36,7 @@ extern "C" {
 #include <stdio.h>
 #include <math.h>
 #include "targets.h"
+#include    "mc_type.h"
 //#include    "datatypes.h"
 #include "hk32g003.h"
 #include "system_hk32g003.h"

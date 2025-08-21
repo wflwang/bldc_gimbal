@@ -111,7 +111,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 const int16_t hSin_Cos_Table[256] = SIN_COS_TABLE;
-const int16_t hTan_Table[128] = tan_table_half256;  //0-45
+const uint16_t hTan_Table[128] = tan_table_half256;  //0-45
 
 #if defined (CCMRAM)
 #if defined (__ICCARM__)
@@ -530,11 +530,11 @@ Trig_Components MCM_Trig_Functions( int16_t hAngle )
  * @param pr = y/x*65536
  * 
 */
-int16_t arctanSearch(int16_t pr){
-  int16_t index;
-  int max = 128;  //实在表格中不存在
-  int min = 0;
-  while(max>min){
+int16_t arctanSearch(uint16_t pr){
+  int16_t max = 128;  //实在表格中不存在
+  int16_t min = 0;
+  int16_t index = 0x40;
+  while(max>(min+1)){
     index = (max+min)>>1;
     if(pr<hTan_Table[index]){
       max = index;
@@ -588,7 +588,7 @@ int16_t arctan(int16_t x, int16_t y){
     } else { 
         // 第一象限 >45° 的情况：用 90° - arctan(|x|/|y|)
         ratio = ((int32_t)abs_x << 16) / abs_y; // Q16: x/y
-        base_angle = (arctanSearch((int16_t)ratio) << 6); // 90° - 锐角
+        base_angle = (arctanSearch((uint16_t)ratio) << 6); // 90° - 锐角
         if(x>0){
           if(y>0){
             return 0x4000-base_angle; //1

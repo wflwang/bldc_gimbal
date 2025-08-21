@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hk32g003.h"
-#include "main.h"
+//#include "main.h"
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -150,6 +150,7 @@ typedef struct
     //uint32_t hLastElAngle;   //上次完整电角度
     volatile int16_t hMecAngle;  //物理角度
     int16_t hTargetAngle; //目标物理角度
+    int16_t endAngle; //结束角度
     //uint8_t x_step; //hallx 动作步骤
     uint16_t x_now;
     //uint16_t x_Start;
@@ -197,11 +198,11 @@ typedef enum
   * @brief  STC_Modality_t type definition, it's used by STC_SetControlMode and STC_GetControlMode methods in
   *         SpeednTorqCtrl class to specify the control modality type
   */
-typedef enum
-{
-  STC_TORQUE_MODE, /**< @brief Torque mode.*/
-  STC_SPEED_MODE   /**< @brief Speed mode.*/
-} STC_Modality_t;
+//typedef enum
+//{
+//  STC_TORQUE_MODE, /**< @brief Torque mode.*/
+//  STC_SPEED_MODE   /**< @brief Speed mode.*/
+//} STC_Modality_t;
 
 
 /**
@@ -217,10 +218,10 @@ typedef struct
 /**
   * @brief  Current references source type, internal or external to FOCDriveClass
   */
-typedef enum
-{
-  INTERNAL, EXTERNAL
-} CurrRefSource_t ;
+//typedef enum
+//{
+//  INTERNAL, EXTERNAL
+//} CurrRefSource_t ;
 
 #if 0
 /**

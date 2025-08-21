@@ -66,7 +66,7 @@ FLASH_Status erase_page(uint32_t start_addr_page,uint32_t new_app_size) {
  * @param new_app_size  max is 64 page
  * 写 目标 APP FLASH 数据
 */
-FLASH_Status write_data(uint32_t base, uint8_t *data, uint32_t len) {
+FLASH_Status write_data(uint32_t base, uint32_t *data, uint32_t len) {
 	FLASH_Unlock();
 	FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR);
 	/* 
@@ -79,8 +79,8 @@ FLASH_Status write_data(uint32_t base, uint8_t *data, uint32_t len) {
 	//utils_sys_lock_cnt();
 	//timeout_configure_IWDT_slowest();
 
-	for (uint32_t i = 0;i < len;i=i+4) {
-		if(FLASH_ProgramWord(base + i, data[i])!=FLASH_COMPLETE){
+	for (uint32_t i = 0;i < len;i++) {
+		if(FLASH_ProgramWord(base + i*4, data[i])!=FLASH_COMPLETE){
 			break;
 		}
 	}
@@ -105,7 +105,7 @@ FLASH_Status flash_helper_erase_bootloader(void) {
 	return erase_page(ADDR_FLASH_BOOTLOADER_PAGE,BOOTLOADER_SIZE);
 }
 
-FLASH_Status flash_helper_write_new_app_data(uint32_t offset, uint8_t *data, uint32_t len) {
+FLASH_Status flash_helper_write_new_app_data(uint32_t offset, uint32_t *data, uint32_t len) {
 	return write_data(ADDR_FLASH_APP_PAGE + offset, data, len);
 }
 

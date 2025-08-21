@@ -46,8 +46,19 @@ void EE_ReadState(void){
 */
 int EE_ReadFOC(Learn_Componets *lc){
 	// Read flash
-  memcpy(lc, (uint8_t *)ADDR_FLASH_EEPROM_PAGE, sizeof(Learn_Componets));
+  //memcpy(lc, (uint8_t *)ADDR_FLASH_EEPROM_PAGE, sizeof(Learn_Componets));
+  uint32_t data = *(__IO uint32_t *)ADDR_FLASH_EEPROM_PAGE;
+  lc->LearnFinish =  (uint8_t)((data>>24)&0xff);
+  lc->M_dir =  (uint8_t)((data>>16)&0xff);
+  lc->xyScaleDir =  (uint8_t)((data>>8)&0xff);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+4);
+  lc->ElAngele_offset = (int16_t)(data>>16);
+  lc->x_offset = (int16_t)(data&0xffff);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+8);
+  lc->y_offset = (int16_t)(data>>16);
+  lc->xy_scale = (int16_t)(data&0xffff);
   if(lc->LearnFinish!=1){
+    lc->LearnFinish = 0;
     return -1;
   }
   return 0;
@@ -66,8 +77,17 @@ int EE_ReadFOC(Learn_Componets *lc){
 }
 
 void EE_WriteFOC(Learn_Componets *lc){  
-  uint8_t data[10];
-  memcpy(data, (uint8_t *)lc, sizeof(Learn_Componets));
-  erase_page(ADDR_FLASH_EEPROM_PAGE,1);
-  write_data(ADDR_FLASH_EEPROM_PAGE, data, sizeof(Learn_Componets));
+  uint32_t data[3];
+  data[0] = ((lc->LearnFinish<<24)|(lc->M_dir<<16)|(lc->xyScaleDir<<8));
+  data[1] = ((lc->ElAngele_offset<<16)|(lc->x_offset));
+  data[2] = ((lc->y_offset<<16)|(lc->xy_scale));
+  //memcpy(data, (uint8_t *)lc, sizeof(Learn_Componets));
+  uint32_t primask = __get_PRIMASK();  // 读取PRIMASK寄存器[1](@ref)
+  __disable_irq();                     // 强制关闭中断
+  erase_page(EEPROM_BASE,1);
+  write_data(ADDR_FLASH_EEPROM_PAGE, data, 3);
+  // 智能恢复中断状态
+  if ((primask & 0x1) == 0) {          // 判断原状态是否为开启
+    __enable_irq();                   // 原开启则恢复开启[4](@ref)
+  }
 }

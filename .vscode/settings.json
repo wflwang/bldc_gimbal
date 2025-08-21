@@ -60,6 +60,7 @@
     ".fantomasignore": "ignore",
     "hk32g003_def.h": "c",
     "system_hk32g003.h": "c",
-    "button.h": "c"
+    "button.h": "c",
+    "mc_type.h": "c"
   }
 }

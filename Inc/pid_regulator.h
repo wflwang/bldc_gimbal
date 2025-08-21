@@ -14,6 +14,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "mc_type.h"
+//#include "mc_type.h"
 
 /** @addtogroup MCSDK
   * @{

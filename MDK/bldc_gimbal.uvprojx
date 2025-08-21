@@ -80,9 +80,9 @@
             <nStopB2X>0</nStopB2X>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
+            <UserProg1Name>fromelf.exe --bin -o ".\bin\app.bin" "#L"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -134,11 +134,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>-1</DriverSelection>
+            <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -276,7 +276,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x4000</Size>
+                <Size>0x3e00</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>2</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\BUTTON;..\EEPROM;..\FLASH;..\hwconf;..\Inc;..\Mcu\HK32G003\Inc;..\Mcu\HK32G003\Driver\HK32G003_StdPeriph_Driver\inc;..\Mcu\HK32G003\Driver\CMSIS\HK32G003\Include;..\Mcu\HK32G003\Driver\CMSIS\CM0\Core;..\motor;..\sensor</IncludePath>
+              <IncludePath>..\BUTTON;..\EEPROM;..\FLASH;..\hwconf;..\Inc;..\Mcu\HK32G003\Inc;..\Mcu\HK32G003\Driver\HK32G003_StdPeriph_Driver\inc;..\Mcu\HK32G003\Driver\CMSIS\HK32G003\Include;..\Mcu\HK32G003\Driver\CMSIS\CM0\Core;..\motor;..\sensor;..\LEDControl</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -492,6 +492,21 @@
               <FileName>qmi8658b.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\sensor\qmi8658b.c</FilePath>
+            </File>
+            <File>
+              <FileName>hk32g003_rcc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Mcu\HK32G003\Driver\HK32G003_StdPeriph_Driver\src\hk32g003_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>hk32g003_misc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Mcu\HK32G003\Driver\HK32G003_StdPeriph_Driver\src\hk32g003_misc.c</FilePath>
+            </File>
+            <File>
+              <FileName>LED.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\LEDControl\LED.c</FilePath>
             </File>
           </Files>
         </Group>

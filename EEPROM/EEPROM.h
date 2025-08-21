@@ -8,7 +8,7 @@
 #define __EEPROM_H
    #include "main.h"
    #include "flash_helper.h"
-   #include "mc_type.h"
+   //#include "mc_type.h"
 
 //hall state & angle(256) tanɵ = hally/hallx actan hally/hallx = @(-1 - 1)
 #define ADDR_HALL_Ready     ADDR_FLASH_EEPROM_PAGE

@@ -13,7 +13,8 @@
 #define __MC_MATH_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "mc_type.h"
+//#include "mc_type.h"
+#include "main.h"
 
 /** @addtogroup MCSDK
   * @{
@@ -123,7 +124,7 @@ int32_t MCM_Sqrt( int32_t wInput );
 uint32_t MCM_floatToIntBit( float x );
 
 //search tan
-int16_t arctanSearch(int16_t pr);
+int16_t arctanSearch(uint16_t pr);
 //arctan
 int16_t arctan(int16_t x, int16_t y);
 //最大最小赋值

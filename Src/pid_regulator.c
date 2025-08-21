@@ -15,7 +15,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "pid_regulator.h"
 
-#include "mc_type.h"
+//#include "mc_type.h"
 
 /** @addtogroup MCSDK
  * @{
@@ -507,10 +507,23 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     logical shift right)*/
     wDifferential_Term >>= pHandle->hKdDivisorPOW2;
 #endif
+    //if((wProcessVarError^wDeltaError)&0x80000000){
+    //  pHandle->wIntegralTerm = 0;
+    //}
 
     pHandle->wPrevProcessVarError = wProcessVarError;
-
-    wTemp_output = PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
+    if(((wProcessVarError^wDifferential_Term)&0x80000000)&&((wDifferential_Term>0x60)||(wDifferential_Term<-0x60))){
+      //微分和比例方向不一致时候积分减半
+      pHandle->wIntegralTerm = (pHandle->wIntegralTerm *180)>>8;
+      wTemp_output = PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
+    }else{
+      wTemp_output = PI_Controller( pHandle, wProcessVarError );
+    }
+    //wTemp_output = PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
+    if((wProcessVarError^wTemp_output)&0x80000000){
+      //pHandle->wIntegralTerm = 0;
+      wTemp_output = 0;
+    }
 
     if ( wTemp_output > pHandle->hUpperOutputLimit )
     {

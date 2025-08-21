@@ -8,7 +8,9 @@
 #ifndef PERIPHERALS_H_
 #define PERIPHERALS_H_
 
-#include "main.h"
+#include    "mc_type.h"
+//#include <stdint.h>
+//#include "main.h"
 //#include "parameters_conversion.h"
 
 //init GPIO
@@ -17,7 +19,7 @@ void MX_GPIO_Init(void);
 void MX_TIM_Init(void);
 void MX_ADC_Init(void);
 void MX_Hall_init(void);
-void MX_NVIC_Init(void);
+void MX_NVIC_init(void);
 void initCorePeripherals(void);
 void Delay_ms(__IO uint32_t Delay);
 void PWMC_OFFPWM(void);

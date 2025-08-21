@@ -7,7 +7,7 @@
   */
 
 #include "main.h"
-#include "mc_type.h"
+//#include "mc_type.h"
 #include "parameters_conversion.h"
 //#include "mc_parameters.h"
 #include "mc_config.h"
@@ -74,6 +74,10 @@ FOC_Component FOC_Component_M1 ={
 Volt_Components GetVqd(void){
   return FOC_Component_M1.Vqd;
 }
+//获取学习状态
+uint8_t GetLearnState(void){
+  return FOC_Component_M1.lc.LearnFinish;
+}
 //设置扭矩
 void SetTorque(int16_t hTorque){
   FOC_Component_M1.Vqd.qV_Component1 = hTorque;
@@ -88,9 +92,9 @@ void SetFlux(int16_t hFlux){
 */
 void Hor_Turn_Ver(void){
   if(FOC_Component_M1.hTargetAngle!=0)
-    FOC_Component_M1.hTargetAngle = 0;  //不是水平切换到水平
+    SetHorizontal();
   else
-    FOC_Component_M1.hTargetAngle = 0x4000; //水平 切换到垂直
+    SetVertical();
 }
 /**
  * 
@@ -98,6 +102,7 @@ void Hor_Turn_Ver(void){
 */
 void SetHorizontal(void){
     FOC_Component_M1.hTargetAngle = 0;
+    FOC_Component_M1.endAngle = 0;
 }
 /**
  * 
@@ -105,6 +110,7 @@ void SetHorizontal(void){
 */
 void SetVertical(void){
     FOC_Component_M1.hTargetAngle = 0x4000;
+    FOC_Component_M1.endAngle = 0x4000;
 }
 /***
  * 
@@ -112,6 +118,7 @@ void SetVertical(void){
 */
 void SetTurnLeft(void){
     FOC_Component_M1.hTargetAngle += 0x4000;
+    FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }
 /***
  * 
@@ -119,7 +126,15 @@ void SetTurnLeft(void){
 */
 void SetTurnRight(void){
     FOC_Component_M1.hTargetAngle -= 0x4000;
+    FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }
+/***
+ * 
+ * 正转360度, 每次比当前增加0x1000度 达到再增加 每=
+ * 
+*/
+//void SetTurnLeftCycle(void){
+//}
 //重新开始学习参数
 void MC_initLearn(void){
     MC_learnHall(&FOC_Component_M1);

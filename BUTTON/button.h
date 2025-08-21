@@ -8,7 +8,7 @@
 #define __BUTTON_H
 
 #include    "main.h"
-#include    "mc_type.h"
+//#include    "mc_type.h"
 
 #define bt_pwrEn    0x01
 #define bt_LREn     0x02
@@ -19,8 +19,8 @@
 #define shortLTime      1  //(1+1)*10 = 20ms
 #define shortHTime      40  //41*10 = 410ms
 //长安开关机时间
-#define longONOFF       1500    
-#define longReLearn     3000
+#define longONOFF       150    
+#define longReLearn     300
 
 
 typedef struct
@@ -36,7 +36,7 @@ typedef struct
 
 
 //扫描按键
-//void ScanButton(button_t *bt);
+void ScanButton(button_t *bt);
 void fScanButton(void);
 
 #endif

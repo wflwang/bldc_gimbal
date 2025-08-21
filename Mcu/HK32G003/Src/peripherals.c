@@ -5,7 +5,14 @@
  */
 
 #include "peripherals.h"
+#include "main.h"
+#include "button.h"
+#include    "mcpwm_foc.h"
+//#include    "EEPROM.h"
 
+
+static __IO uint32_t msTick=0;
+//extern FOC_Component FOC_Component_M1;
 //#include "targets.h"
 /**
  * system init
@@ -15,11 +22,46 @@ void initCorePeripherals(void){
     SysTick_Config(SystemCoreClock /SYS_TICK_FREQUENCY);
     //EE_Read();
     MX_GPIO_Init();
+
+    while(GetONOFF()==0){
+        //LEDG_Xor();
+        Delay_ms(1);
+        fScanButton();   //扫描按键功能
+    }
+		//EE_WriteFOC(&FOC_Component_M1.lc);
+		//EE_ReadFOC(&FOC_Component_M1.lc);
+		
     MX_ADC_Init();
     MX_TIM_Init();
+    MX_NVIC_init();
     //qmi8658x_init(GYPO_SDA_GPIO_PORT,GYPO_SDA_GPIO_PIN,GYPO_SCL_GPIO_PORT,GYPO_SCL_GPIO_PIN);
     //SysTick_Config(SystemCoreClock /SYS_TICK_FREQUENCY);
 }
+/**
+  * @brief  This function handles SysTick exception,Run MotorControl Tasks.
+  * @param  None
+  * @retval None
+  */
+void SysTick_Handler(void)
+{
+    //static uint8_t SystickDividerCounter = SYSTICK_DIVIDER;
+    //if (SystickDividerCounter == SYSTICK_DIVIDER)
+    //{
+        msTick++;
+    //    SystickDividerCounter = 0;
+    //}
+    ////if(Enable_start_button == 0)
+    ////{
+    ////    button_delay++;
+    ////    if(button_delay>500)
+    ////    Enable_start_button = 1;   
+    ////}
+    //SystickDividerCounter++;  
+    //if(IsMCCompleted==1){
+        MC_RunMotorControlTasks();
+    //}
+}
+/**/
 /**
  * 初始化 跳转
 */
@@ -127,7 +169,8 @@ void MX_TIM_Init(void)
 	RCC_AHBPeriphClockCmd(PHASE_A_GPIO_CLK|PHASE_B_GPIO_CLK|PHASE_C_GPIO_CLK, ENABLE);	
     /* USER CODE BEGIN TIM1_Init 1 */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;		
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;	
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;	
 	GPIO_InitStructure.GPIO_Pin = PHASE_A_GPIO_PIN;
 	GPIO_Init(PHASE_A_GPIO_PORT, &GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Pin = PHASE_B_GPIO_PIN;
@@ -141,11 +184,11 @@ void MX_TIM_Init(void)
     /* USER CODE END TIM1_Init 1 */
     /* TIM1 clock enable */
     RCC_APBPeriph2ClockCmd(RCC_APBPeriph2_TIM1, ENABLE);
-    TIM_DeInit(TIM1);
-    TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
+    //TIM_DeInit(TIM1);
+    //TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
     TIM_TimeBaseStructure.TIM_Prescaler = 0;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned1;
-    TIM_TimeBaseStructure.TIM_Period = ((PWM_PERIOD_CYCLES) / 2);
+    TIM_TimeBaseStructure.TIM_Period = ((PWM_PERIOD_CYCLES) >> 1);
     //TIM_TimeBaseStructure.Autoreload = 3000;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV2;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = (REP_COUNTER);
@@ -153,6 +196,8 @@ void MX_TIM_Init(void)
     TIM_OCStructInit(&TIM_OCInitStructure);
 	/* Channel 1, 2,3 in PWM mode */
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; 
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; 
+	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;                  
 	TIM_OCInitStructure.TIM_Pulse = 0; //dummy value
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; 
 	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;         
@@ -162,6 +207,7 @@ void MX_TIM_Init(void)
 	TIM_OC1Init(TIM1, &TIM_OCInitStructure); 
 	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
 	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
+	//TIM_OC4Init(TIM1, &TIM_OCInitStructure);
 
 	TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
 	TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
@@ -172,9 +218,9 @@ void MX_TIM_Init(void)
 	TIM_OCStructInit(&TIM_OCInitStructure);
 	/* Channel 4 Configuration in OC */
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;  
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable; 
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable;  //TIM_OutputState_Disable; 
 	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;                  
-	TIM_OCInitStructure.TIM_Pulse = (((PWM_PERIOD_CYCLES) / 2) - (HTMIN));
+	TIM_OCInitStructure.TIM_Pulse = (((PWM_PERIOD_CYCLES) >> 1) - (HTMIN));
 
 	TIM_OC4Init(TIM1, &TIM_OCInitStructure);
     /* CC4 ENABLE */
@@ -183,6 +229,8 @@ void MX_TIM_Init(void)
 	/* CC4_TO_ADC_SELConfig  */
     TIM_CC_TRIGADC(TIM1,ADC_TrigTIMCH, CC_TRIGADC_OCREF);
     //TIM_BrakInputRemap(TIM1, TIM_Break_Remap_COMP1OUT);
+    /* TIM1 counter enable */
+    TIM_Cmd(TIM1, ENABLE);
 }
 //关闭所有PWM
 void PWMC_OFFPWM(void){
@@ -191,6 +239,7 @@ void PWMC_OFFPWM(void){
     PHASE_C_duty(0);
     //关闭PWM
     TIM1->BDTR &= ( uint32_t )~TIM_BDTR_MOE;
+    //TIM_CtrlPWMOutputs(TIM1, DISABLE);
 }
 //开启PWM 处于刹车状态
 void PWMC_ONPWM(void){
@@ -199,14 +248,23 @@ void PWMC_ONPWM(void){
     //{}
     /* Clear Update Flag */
     //TIM_ClearFlag_UPDATE( TIM1 );
-    PHASE_A_duty(PWM_PERIOD_CYCLES/2);
-    PHASE_B_duty(PWM_PERIOD_CYCLES/2);
-    PHASE_C_duty(PWM_PERIOD_CYCLES/2);
+    PHASE_A_duty(PWM_PERIOD_CYCLES>>2);
+    PHASE_B_duty(PWM_PERIOD_CYCLES>>2);
+    PHASE_C_duty(PWM_PERIOD_CYCLES>>2);
+    ADC_PHASE_duty((PWM_PERIOD_CYCLES>>1)-5u);
     //while ( TIM_IsActiveFlag_UPDATE( TIM1 ) == RESET )
     //{}
     //开启PWM
     TIM1->BDTR |= TIM_OSSIState_Enable;  //不工作时候输出空闲电平
     TIM1->BDTR |= TIM_BDTR_MOE;
+    //TIM_CtrlPWMOutputs(TIM1, ENABLE);
+    //ADC_ExtTrigConfig(ADC, QUEUE_0, EXT_TIM1_CC4, EXT_TRIG_RISING);
+    //ADC_ITConfig(ADC,ADC_IT_EOC,ENABLE);  
+    //ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
+    ADC_ITConfig(ADC,ADC_IT_EOSEQ,ENABLE);  
+    ADC_ClearITPendingBit(ADC, ADC_IT_EOSEQ);
+    ADC_Cmd(ADC, ENABLE);
+    ADC_StartOfConversion(ADC);
 }
 
 /**
@@ -230,7 +288,7 @@ void MX_ADC_Init(void){
 	GPIO_Init(Hall_x_GPIO_PORT, &GPIO_InitStruct);
 	GPIO_InitStruct.GPIO_Pin = Hall_y_GPIO_PIN;
 	GPIO_Init(Hall_y_GPIO_PORT, &GPIO_InitStruct);
-    ADC_DeInit(ADC);
+    //ADC_DeInit(ADC);
     ADC_StructInit(&ADC_InitStructure);
     ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
     ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
@@ -240,12 +298,12 @@ void MX_ADC_Init(void){
     ADC_Init(ADC, &ADC_InitStructure);
     /* Convert the ADC1 Channel4 with 239.5 Cycles as sampling time */
     // (sampletime+12.5)*ADC CLK
-    ADC_ChannelConfig(ADC, Voltage_ADC_CH, ADC_SampleTime_1_5Cycles);
-    ADC_ChannelConfig(ADC, Hall_x_CH, ADC_SampleTime_1_5Cycles);
-    ADC_ChannelConfig(ADC, Hall_y_CH, ADC_SampleTime_1_5Cycles);
+    //ADC_ChannelConfig(ADC, Voltage_ADC_CH, ADC_SampleTime_1_5Cycles);
+    //ADC_ChannelConfig(ADC, Hall_x_CH, ADC_SampleTime_1_5Cycles);
+    ADC_ChannelConfig(ADC, Hall_y_CH|Hall_x_CH|Voltage_ADC_CH, ADC_SampleTime_1_5Cycles);
     /* Enable the ADC peripheral */
-    ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
-    ADC_Cmd(ADC, ENABLE);
+    //ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
+    //ADC_Cmd(ADC, ENABLE);
 }
 /**
  * @brief Hall initial
@@ -260,7 +318,6 @@ void MX_Hall_init(void){
  * 
  * delay function
 */
-static __IO uint32_t msTick=0;
 void Delay_ms(__IO uint32_t Delay)
 {
   uint32_t tickstart = msTick;
@@ -274,7 +331,7 @@ void Delay_ms(__IO uint32_t Delay)
   * @brief NVIC Configuration.
   * @retval None
   */
-void MX_NVIC_Init(void)
+void MX_NVIC_init(void)
 {
     NVIC_InitTypeDef NVIC_InitStruct;
     /* TIM1_BRK_UP_TRG_COM_IRQn interrupt configuration */
