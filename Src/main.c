@@ -10,7 +10,7 @@
 #include "mcpwm_foc.h"
 #include    "qmi8658b.h"
 #include "LED.h"
-//#include    "ADC.h"
+//#include    "ADC.h" 
 //#include    "IO.h"
 //#include    "common.h"
 //#include    "sensor.h"
@@ -33,7 +33,7 @@ int main(void){
     //初始化马达
     //MX_Motor_init();
     mcpwm_foc_init();
-    //初始化串口
+    //初始化串口 
     //MX_Uart_init();
     //初始化EEPROM
     //EEPROM_init();  
@@ -45,6 +45,7 @@ int main(void){
         Delay_ms(1);  //增加延迟方便SWD debug
         fScanButton();   //扫描按键功能
         LEDControl();   //LED控制
+        GetUartDebug(); //获取串口调试数据
     }
 }
 /**

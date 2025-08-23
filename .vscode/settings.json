@@ -61,6 +61,9 @@
     "hk32g003_def.h": "c",
     "system_hk32g003.h": "c",
     "button.h": "c",
-    "mc_type.h": "c"
+    "mc_type.h": "c",
+    "hk32g003.h": "c",
+    "parameters_conversion.h": "c",
+    "hk32g003_conf.h": "c"
   }
 }

@@ -132,6 +132,21 @@
 #define LEDG_Set()          (LEDG_GPIO_PORT->BSRR = LEDG_GPIO_PIN)
 #define LEDG_Reset()        (LEDG_GPIO_PORT->BRR = LEDG_GPIO_PIN)
 #define SetLEDG(x)          ((x)?LEDG_Set():LEDG_Reset())
+
+#define UartTX_PIN      GPIO_Pin_5
+#define UartTX_PORT     GPIOD
+#define UartTX_CLK      RCC_AHBPeriph_GPIOD
+#define UartTX_SOURCE   GPIO_PinSource5
+#define UartTX_GPIO_AF     GPIO_AF_1
+
+#define UartRX_PIN      GPIO_Pin_5
+#define UartRX_PORT     GPIOB
+#define UartRX_CLK      RCC_AHBPeriph_GPIOB
+#define UartRX_SOURCE   GPIO_PinSource5
+#define UartRX_GPIO_AF     GPIO_AF_1
+
+#define bps_rate        115200
+
 #endif
 //*******************************************
 #ifndef FIRMWARE_NAME

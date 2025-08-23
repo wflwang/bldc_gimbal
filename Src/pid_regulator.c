@@ -485,6 +485,20 @@ __attribute__( ( section ( ".ccmram" ) ) )
  * @param  wProcessVarError: current process variable error, intended as the
  *         reference value minus the present process variable value
  * @retval PID computed output
+ * 角度误差PID控制 D进行一阶滤波,抑制噪声 有D时候刚开始小 慢慢逼近真实误差
+ * 小于积分阈值才开始积分 大误差不对积分进行积分
+ */
+//int16_t PosPID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError ){
+//}
+
+
+/**
+ * @brief  This function compute the output of a PID regulator sum of its
+ *         proportional, integral and derivative terms
+ * @param  pHandle: handler of the current instance of the PID component
+ * @param  wProcessVarError: current process variable error, intended as the
+ *         reference value minus the present process variable value
+ * @retval PID computed output
  */
 
 int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )

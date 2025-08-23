@@ -104,7 +104,7 @@
   */
 	
 	
-#define USE_FULL_ASSERT    
+//#define USE_FULL_ASSERT    
 
 #ifdef  USE_FULL_ASSERT
 /**

@@ -12,6 +12,7 @@
 
 
 static __IO uint32_t msTick=0;
+UartRxBufDef Uart_t;
 //extern FOC_Component FOC_Component_M1;
 //#include "targets.h"
 /**
@@ -30,7 +31,7 @@ void initCorePeripherals(void){
     }
 		//EE_WriteFOC(&FOC_Component_M1.lc);
 		//EE_ReadFOC(&FOC_Component_M1.lc);
-		
+    MX_Uart_Init();
     MX_ADC_Init();
     MX_TIM_Init();
     MX_NVIC_init();
@@ -305,14 +306,148 @@ void MX_ADC_Init(void){
     //ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
     //ADC_Cmd(ADC, ENABLE);
 }
+///**
+// * @brief Hall initial
+// * @param   None
+// * @retval  None
+// * 初始化霍尔?
+//*/
+//void MX_Hall_init(void){
+// 
+//}
 /**
- * @brief Hall initial
+ * @brief uart initial
  * @param   None
  * @retval  None
- * 初始化霍尔?
+ * 
 */
-void MX_Hall_init(void){
+void MX_Uart_Init(void){
+    UART_InitTypeDef UART_InitStructure;
+    /* Enable UART1 clock */
+    RCC_AHBPeriphClockCmd(UartTX_CLK | UartRX_CLK, ENABLE);
+    GPIO_PinAFConfig(UartTX_PORT, UartTX_SOURCE, UartTX_GPIO_AF);
+    GPIO_PinAFConfig(UartRX_PORT, UartRX_SOURCE, UartRX_GPIO_AF);
+    RCC_APBPeriph2ClockCmd(RCC_APBPeriph2_UART1, ENABLE);
+    UART_InitStructure.UART_BaudRate = bps_rate;
+    UART_InitStructure.UART_WordLength = UART_WordLength_8b;
+    UART_InitStructure.UART_StopBits = UART_StopBits_1;
+    UART_InitStructure.UART_Parity = UART_Parity_No;
+    UART_InitStructure.UART_Mode = UART_Mode_Rx | UART_Mode_Tx;
+    UART_Init(UART1, &UART_InitStructure);
+    UART_ITConfig(UART1, UART_IT_RXNE, ENABLE);
+    UART_ITConfig(UART1, UART_IT_IDLE, DISABLE);
+    Uart_t.Index = 0;
+    Uart_t.Len = 0;
+    Uart_t.FinishedFlag = RESET;
+    //Uart1Rx.Index = 0;
+    //Uart1Rx.Len = 0;
+    //Uart1Rx.FinishedFlag = RESET;
+    /* Enable the UART1 */
+    UART_Cmd(UART1, ENABLE);
+}
+/**
+  * @brief  This function handles UART1 global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void UART1_IRQHandler(void)
+{
+	if( UART_GetITStatus(UART1, UART_IT_RXNE) != RESET )
+	{
+		UART_ClearITPendingBit(UART1, UART_IT_RXNE);
+        /* receive data */
+        Uart_t.Index = (Uart_t.Index+1)%RX_BUFFER_SIZE;
+        Uart_t.Data[Uart_t.Index] = UART_ReceiveData(UART1);
+		
+		if(Uart_t.Index == 1)
+		{
+			UART_ITConfig(UART1, UART_IT_IDLE, ENABLE);
+		}
+	}
+	
+	if(UART_GetITStatus(UART1, UART_IT_IDLE) != RESET)
+	{
+		UART_ClearITPendingBit(UART1, UART_IT_IDLE);
+		UART_ITConfig(UART1, UART_IT_IDLE, DISABLE);
+		Uart_t.Len = Uart_t.Index;
+		Uart_t.Index = 0;
+		Uart_t.FinishedFlag = SET;
+	}
+}
+/**
+  * @brief  UART1 Send some data.
+  * @param  p - the start address of data to be send
+  * @param  len - the len of data to be send
+  * @retval None
+  */
+void UartSendDatas(uint8_t *p, uint8_t len)
+{
+  while( len -- )
+  {
+    UART_SendData(UART1, *p++);
 
+    while( UART_GetFlagStatus(UART1, UART_FLAG_TC) == RESET )
+    {
+    }
+  }
+}
+/***
+ * @brief 获取串口调试信息 P/I/D
+ * 
+ * 
+*/
+void GetUartDebug(void){
+
+}
+/**
+  * @brief  Configure SWDIO pin to GPIO function
+  * @param  None
+  * @retval None
+  */
+void SWD_Pin_To_PB5_PD5_Configuration(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  /* Enable IOMUX clock */
+  RCC_APBPeriph1ClockCmd(RCC_APBPeriph1_IOMUX, ENABLE);
+
+  /* Enable GPIOB adn GPIOD clock */
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD, ENABLE);
+
+  /* Configure SWDIO to PD5 */
+#if defined (HK32F0301MJ4M7C) /* for SOP8 - PIN8*/
+  GPIO_IOMUX_ChangePin(IOMUX_PIN8, IOMUX_PD5_SEL_PD5);
+#elif defined (HK32F0301MD4P7C) /*for TSSOP16 - PIN 15*/
+  GPIO_IOMUX_ChangePin(IOMUX_PIN15, IOMUX_PD5_SEL_PD5);
+#elif defined (HK32G003F4P7) /* for TSSOP20 - PIN 2 */
+  GPIO_IOMUX_ChangePin(IOMUX_PIN2, IOMUX_PD5_SEL_PD5);
+#elif defined (HK32F0301MF4N7C)  /* for QFN20 - PIN19*/
+  GPIO_IOMUX_ChangePin(IOMUX_PIN19, IOMUX_PD5_SEL_PD5);
+#endif
+
+  /* Configure SWCLK to PB5 */
+#if defined (HK32F0301MJ4M7C) /* for SOP8 - PIN5*/
+  GPIO_IOMUX_ChangePin(IOMUX_PIN5, IOMUX_PB5_SEL_PB5);
+#elif defined (HK32F0301MD4P7C) /*for TSSOP16 - PIN 9*/
+  GPIO_IOMUX_ChangePin(IOMUX_PIN9, IOMUX_PB5_SEL_PB5);
+#elif defined (HK32G003F4P7) /* for TSSOP20 - PIN 11 */
+  GPIO_IOMUX_ChangePin(IOMUX_PIN11, IOMUX_PB5_SEL_PB5);
+#elif defined (HK32F0301MF4N7C)  /* for QFN20 - PIN8*/
+  GPIO_IOMUX_ChangePin(IOMUX_PIN8, IOMUX_PB5_SEL_PB5);
+#endif
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
 }
 /**
  * 
@@ -326,6 +461,21 @@ void Delay_ms(__IO uint32_t Delay)
   while((msTick - tickstart) < wait)
   {
   }
+}
+/***
+ * @brief 
+ * @param us_x10 微秒*10 提高描述精度
+*/
+void delay_us(uint16_t us_x10){
+   // 动态计算所需循环次数（主频单位MHz）
+    uint32_t cycles = (uint32_t)us_x10 * (SystemCoreClock / 300000) ; // 每循环3周期
+    __asm volatile (
+        "MOV R0, %0 \n"      // 通过%0传入循环次数
+        "1: SUBS R0, #1 \n"   // 1周期
+        "BNE 1b \n"           // 2周期（跳转时）
+        : : "r" (cycles)      // 输入操作数，将cycles值赋给R0
+        : "r0"                // 声明R0被修改
+    );
 }
 /**
   * @brief NVIC Configuration.
@@ -347,6 +497,11 @@ void MX_NVIC_init(void)
     /* ADC interrupt configuration */
     NVIC_InitStruct.NVIC_IRQChannel=ADC1_IRQn;
     NVIC_InitStruct.NVIC_IRQChannelPriority = 0;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;		
+    NVIC_Init(&NVIC_InitStruct);
+    /* UART1 IRQ Channel configuration */
+    NVIC_InitStruct.NVIC_IRQChannel = UART1_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPriority = 0x01;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;		
     NVIC_Init(&NVIC_InitStruct);
 

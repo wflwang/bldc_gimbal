@@ -225,14 +225,14 @@
 //#define PID_SPEED_KD_DEFAULT                 0  //#1500
 
 #define PID_Pos_KP_DEFAULT                 450  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 31200  //#1500
+#define PID_Pos_KI_DEFAULT                 0 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 0 //31200  //#1500
 /* Speed PID parameter dividers */
 #define SP_KPDIV                       128   //64
 #define SP_KIDIV                       8192  //16384
-#define SP_KDDIV                       128   //512  //8192
+#define SP_KDDIV                       256   //512  //8192
 //PID 间隔时间
-#define cPIDDiff        6 
+#define cPIDDiff        8 
 #define filterAV 
 #define filterAVDeep    32
 
