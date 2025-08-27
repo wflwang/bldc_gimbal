@@ -7,8 +7,33 @@
 
 #include "qmi8658b.h"
 #include "peripherals.h"
+#include "filter.h"
 //#include	"i2c.h"
-
+//陀螺仪参数滤波主要滤掉低频 低误差时候滤波系数小 高误差时候滤波系数大
+//陀螺仪滤波系数表格 只需要过滤掉 变化大的  ?/65536(滤波系数)=>每次增加的滤波系数
+const int16_t gyroFilter[] = {
+    80,220,820,1500,5000,10000
+};
+//对应不同误差的滤波系数增量
+const int16_t gyroFilterV[]={
+    312,622,900,1500,3000,6000,9000
+};
+//加速度滤波 滤波系数要大,不能增长过快
+//加速率滤波表格
+const int16_t accFilter[] = {
+    80,160,820,2640,8500
+};
+const int16_t accFilterV[] = {
+    360,500,700,1500,3500,8000
+};
+//互补滤波 误差越大滤波系数快速增大
+//互补滤波表格 误差越大 陀螺仪占比越多 误差越小 加速度占比越多
+const int16_t complementFilter[]={
+    80,360,820,2640,6500
+};
+const int16_t complementFilterV[]={
+    300,600,1200,3200,7000,12500
+};
 ///////////////////////////////////////////////////////////////////////////////
 // MPU6050 Defines and Variables
 ///////////////////////////////////////////////////////////////////////////////
@@ -90,6 +115,16 @@ float accelOneG = 9.8065;           //
 int16_t accelData500Hz[3];
 
 float accelTCBias[3] = { 0.0f, 0.0f, 0.0f };
+static i2c_t it;
+static int16_t GYRO_vZ = 0;
+static int16_t ACC_vX = 0;
+static int16_t ACC_vY = 0;
+static int16_t ACC_vZ = 0;
+static int16_t TEMP = 0;
+filter_t accXft;
+filter_t accYft;
+filter_t gyroZft;
+filter_t copft;	//互补滤波参数
 
 //int16andUint8_t rawAccel[3];
 //********************************************
@@ -106,13 +141,11 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
     GPIO_InitStructure.GPIO_Pin = scl_pin;
 	GPIO_Init(scl_gpio, &GPIO_InitStructure);
 	GPIO_SetBits(scl_gpio,scl_pin);
-	i2c_t it={
-		.scl_gpio = scl_gpio,
-		.scl_pin = scl_pin,
-		.sda_gpio = sda_gpio,
-		.sda_pin = sda_pin,
-		.iic_adr = QMI8658B_ADDRESS,
-	};
+	it.scl_gpio = scl_gpio;
+	it.scl_pin = scl_pin;
+	it.sda_gpio = sda_gpio;
+	it.sda_pin = sda_pin;
+	it.iic_adr = QMI8658B_ADDRESS;
 	it.len =1;
 	it.data_adr = QMI8658B_RESET;
 	it.data = QMI8658B_RESET_V;
@@ -150,9 +183,80 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	///////////////////////////////////
 
 	delay_ms(100);
+	readQmi8658b();	//读出参数
+	//初始化所有滤波参数
+	accXft.alpha_diff = accFilter;
+	accXft.alpha_diff_addV = accFilterV;
+	accXft.alpha_diff_len = sizeof(accFilter)/sizeof(int16_t);
+    accXft.alpha_raw = 6000;
+    accXft.alpha_min= 6000;
+    accXft.alpha_max= 65535;
+	accXft.filter = ACC_vX;
 
-	computeMPU6050RTData();
+	accYft.alpha_diff = accFilter;
+	accYft.alpha_diff_addV = accFilterV;
+	accYft.alpha_diff_len = sizeof(accFilter)/sizeof(int16_t);
+    accYft.alpha_raw = 6000;
+    accYft.alpha_min= 6000;
+    accYft.alpha_max= 65535;
+	accYft.filter = ACC_vY;
+
+	gyroZft.alpha_diff = gyroFilter;
+	gyroZft.alpha_diff_addV = gyroFilterV;
+	gyroZft.alpha_diff_len = sizeof(gyroFilter)/sizeof(int16_t);
+	gyroZft.alpha_raw = 1000;
+	gyroZft.alpha_min = 1000;	//3%
+	gyroZft.alpha_max = 65535;
+	gyroZft.filter = GYRO_vZ;
+	//互补滤波参数
+	//raw -> 陀螺仪参数(误差越大越灵敏占比多) filter-> 加速度(误差越小占比越大)
+	copft.alpha_diff = complementFilter;
+	copft.alpha_diff_addV = complementFilterV;
+	copft.alpha_diff_len = sizeof(complementFilter)/sizeof(int16_t);
+	copft.alpha_raw = 0;
+	copft.alpha_min = 1000;	//3%
+	copft.alpha_max = 65535;
+	copft.filter = GYRO_vZ;		//加速度
+    //filterInit = 1;
+	//开机校准陀螺仪和加速计
+	//computeMPU6050RTData();
 	return 0;
+}
+/**
+ * @brief 从qmi8658b 读出陀螺仪 和 加速度数据 和后面函数配合使用读出对应数据
+ * 
+*/
+void readQmi8658b(void){
+	uint8_t data[14];
+	it.len =14;
+	it.data_adr = QMI8658B_TEMP_OUT_L;
+	it.data = data;
+	i2cRead(&it);
+	TEMP	= (int16_t)(it.data[0]|((uint16_t)it.data[1]<<8));
+	ACC_vX	= (int16_t)(it.data[2]|((uint16_t)it.data[3]<<8));
+	ACC_vY	= (int16_t)(it.data[4]|((uint16_t)it.data[5]<<8));
+	ACC_vZ	= (int16_t)(it.data[6]|((uint16_t)it.data[7]<<8));
+	GYRO_vZ	= (int16_t)(it.data[12]|((uint16_t)it.data[13]<<8));
+	//中值滤波加一阶滤波 滤波 ACC&GYRO
+	//accXft.alpha_diff = accFilter;
+	//accYft.alpha_diff = accFilter;
+	//gyroZft.alpha_diff = gyroFilter;
+	//firstOrderFilter(&accXft);
+	//firstOrderFilter(&accYft);
+	//firstOrderFilter(&gyroZft);
+
+}
+int16_t GetACC_X(void){
+	return ACC_vX;
+}
+int16_t GetACC_Y(void){
+	return ACC_vY;
+}
+int16_t GetACC_Z(void){
+	return ACC_vZ;
+}
+int16_t GetGYRO_Z(void){
+	return GYRO_vZ;
 }
 /***
  * @brief 陀螺仪初始化 ；连续采样陀螺仪和加速度 算出平均值 当检测到误差过大时候fail 用以前的校准数据
@@ -168,7 +272,7 @@ void initOrientation()
 
 	for (i = 0; i < initLoops; i++)
 	{
-		readQmi8658b();//从MPU6050得到加速度和陀螺仪数据，并进行 与初始化方位估计矩阵（根据IMU单元的方位确定的矩阵A ） 相乘后的数据
+		readQmi8658b();//从QMI8658b得到加速度和陀螺仪数据，并进行 与初始化方位估计矩阵（根据IMU单元的方位确定的矩阵A ） 相乘后的数据
 
 		computeMPU6050TCBias();//计算温度补偿偏差值
 

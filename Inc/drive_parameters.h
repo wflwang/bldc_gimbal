@@ -233,7 +233,8 @@
 #define SP_KDDIV                       256   //512  //8192
 //PID 间隔时间
 #define cPIDDiff        8 
-#define filterAV 
+#define filterFirstOrder      //一阶滤波
+//#define filterAV 
 #define filterAVDeep    32
 
 /* USER CODE BEGIN PID_SPEED_INTEGRAL_INIT_DIV */

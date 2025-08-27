@@ -65,16 +65,24 @@ void CURRENT_REGULATION_IRQHandler(void){
 int16_t Get_HallAngle(FOC_Component *fc){
     uint32_t hElAngle;
     uint16_t maxtemp = fc->x_Max;
-    uint16_t mintemp = fc->x_Min;
+    uint16_t mintemp = fc->x_Min;    
+    #ifdef filterFirstOrder
+    HallXYs hxy = MX_Hall_Sample((GetHallxAD()&0xFFF)<<4,(GetHallyAD()&0xFFF)<<4);
+    fc->x_now = hxy.Hallx;
+    fc->y_now = hxy.Hally;
+    #else
+    fc->x_now = (GetHallxAD()&0xFFF)<<4;
+    fc->y_now = (GetHallyAD()&0xFFF)<<4;
+    #endif
     if(fc->lc.LearnFinish==0){
         if(fc->learnXYFin==0){
-            fc->x_now = ((GetHallxAD()&0xFFF)<<4);  //获取X轴的最大值,最小值
+            //fc->x_now = ((GetHallxAD()&0xFFF)<<4);  //获取X轴的最大值,最小值
             MaxMinUpDate(&fc->x_now,&maxtemp,&mintemp);
             fc->x_Max = maxtemp;
             fc->x_Min = mintemp;
             maxtemp = fc->y_Max;
             mintemp = fc->y_Min;
-            fc->y_now = ((GetHallyAD()&0xFFF)<<4);  //获取Y轴的最大值,最小值
+            //fc->y_now = ((GetHallyAD()&0xFFF)<<4);  //获取Y轴的最大值,最小值
             MaxMinUpDate(&fc->y_now,&maxtemp,&mintemp);
             fc->y_Max = maxtemp;
             fc->y_Min = mintemp;
@@ -102,9 +110,11 @@ uint32_t GetRealElAngle(FOC_Component *fc){
     static int32_t hX=0,hY=0,hcount=0;
     int16_t hx1,hy1;
     uint32_t hElAngle;
+
     #ifdef filterAV
-    hX += (int32_t)(((GetHallxAD()&0xFFF)<<4)-fc->lc.x_offset);
-	hY += (int32_t)(((GetHallyAD()&0xFFF)<<4)-fc->lc.y_offset);
+    //MX_Hall_init(int16_t xRaw,int16_t yRaw);
+    hX += (int32_t)(fc->x_now-fc->lc.x_offset);
+	hY += (int32_t)(fc->y_now-fc->lc.y_offset);
     hcount++;
     if(hcount>=filterAVDeep){
         hcount = 0;
@@ -117,8 +127,8 @@ uint32_t GetRealElAngle(FOC_Component *fc){
         fc->hMecAngle = arctan(hx1,hy1);
     }
     #else
-    hx1 = (int16_t)(((GetHallxAD()&0xFFF)<<4)-fc->lc.x_offset);
-	hy1 = (int16_t)(((GetHallyAD()&0xFFF)<<4)-fc->lc.y_offset);
+    hx1 = (int16_t)(fc->x_now-fc->lc.x_offset);
+	hy1 = (int16_t)(fc->y_now-fc->lc.y_offset);
     GetHallXYScale(&fc->lc,&hx1,&hy1);
     fc->hMecAngle = arctan(hx1,hy1);
     #endif
@@ -293,6 +303,7 @@ void MC_RunMotorControlTasks(void){
     if((IsMCCompleted==1)&&(GetONOFF())){
         //初始化完成
         if(RunModeEn){
+            //学习时候自动增加角度功能
             RunModeEn = UpNextRunModeAngle(&urm);
         }
     #if 0

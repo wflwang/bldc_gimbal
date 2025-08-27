@@ -96,6 +96,21 @@ typedef struct
   int16_t qV_Component2;
 }Volt_Components;
 
+typedef struct 
+{
+  int16_t Hallx;
+  int16_t Hally;
+}HallXYs;
+//单轴ACC XY gyro Z 合集
+typedef struct 
+{
+  int16_t TEMP;   //温度
+  int16_t ACC_vX; //加速X
+  int16_t ACC_vY; //加速Y
+  int16_t GYRO_vZ;  //陀螺仪Z
+}sensorAxyGz_t;
+
+
 /**
   * @brief  ADConv_t type definition, it is used by PWMC_ADC_SetSamplingTime method of PWMnCurrFdbk class for user defined A/D regular conversions
   */

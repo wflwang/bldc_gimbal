@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\BUTTON;..\EEPROM;..\FLASH;..\hwconf;..\Inc;..\Mcu\HK32G003\Inc;..\Mcu\HK32G003\Driver\HK32G003_StdPeriph_Driver\inc;..\Mcu\HK32G003\Driver\CMSIS\HK32G003\Include;..\Mcu\HK32G003\Driver\CMSIS\CM0\Core;..\motor;..\sensor;..\LEDControl</IncludePath>
+              <IncludePath>..\BUTTON;..\EEPROM;..\FLASH;..\hwconf;..\Inc;..\Mcu\HK32G003\Inc;..\Mcu\HK32G003\Driver\HK32G003_StdPeriph_Driver\inc;..\Mcu\HK32G003\Driver\CMSIS\HK32G003\Include;..\Mcu\HK32G003\Driver\CMSIS\CM0\Core;..\motor;..\sensor;..\LEDControl;..\drv</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

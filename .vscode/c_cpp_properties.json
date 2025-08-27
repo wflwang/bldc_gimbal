@@ -13,7 +13,8 @@
         "${workspaceFolder}/FLASH",
         "${workspaceFolder}/motor",
         "${workspaceFolder}/EEPROM",
-        "${workspaceFolder}/BUTTON"
+        "${workspaceFolder}/BUTTON",
+        "${workspaceFolder}/drv"
       ],
       "compilerPath": "E:/tool/complie/mingw-w64/mingw-w64-gcc-13.2-stable-r40/bin/gcc.exe",
       "cStandard": "${default}",

@@ -8,11 +8,23 @@
 #include "main.h"
 #include "button.h"
 #include    "mcpwm_foc.h"
+#include "filter.h"
 //#include    "EEPROM.h"
 
 
 static __IO uint32_t msTick=0;
+static uint8_t filterInit=0;   //一阶滤波是否初始化完成
 UartRxBufDef Uart_t;
+filter_t hallXft;
+filter_t hallYft;
+//霍尔滤波主要是过滤掉低频杂波和瞬间脉冲
+//hall 滤波表格
+const int16_t hallFilter[] = {
+    80,260,700,1000,1500,2500
+};
+const int16_t hallFilterV[] = {
+    400,700,900,1400,3800,8500,12000
+};
 //extern FOC_Component FOC_Component_M1;
 //#include "targets.h"
 /**
@@ -306,15 +318,46 @@ void MX_ADC_Init(void){
     //ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
     //ADC_Cmd(ADC, ENABLE);
 }
-///**
-// * @brief Hall initial
-// * @param   None
-// * @retval  None
-// * 初始化霍尔?
-//*/
-//void MX_Hall_init(void){
-// 
-//}
+/**
+ * @brief Hall initial
+ * @param   None
+ * @retval  None
+ * 初始化霍尔? 初始化hall变量 XY 霍尔一阶值
+*/
+void MX_Hall_init(int16_t xRaw,int16_t yRaw){
+    hallXft.alpha_diff = hallFilter;
+    hallXft.alpha_diff_addV = hallFilterV;
+    hallXft.alpha_diff_len = sizeof(hallFilter)/sizeof(int16_t);
+    hallXft.alpha_raw = 9000;
+    hallXft.alpha_min = 9000;
+    hallXft.alpha_max = 65535;
+    hallXft.filter = xRaw;
+    hallYft.alpha_diff = hallFilter;
+    hallYft.alpha_diff_addV = hallFilterV;
+    hallYft.alpha_diff_len = sizeof(hallFilter)/sizeof(int16_t);
+    hallYft.alpha_raw = 9000;
+    hallYft.alpha_min = 9000;
+    hallYft.alpha_max = 65535;
+    hallYft.filter = yRaw;
+    filterInit = 1;
+}
+/**
+ * @brief hall sample  Out filter value
+ * @param xRaw 本次采样的Xhall
+ * @param yRaw 本次采样的Yhall
+ * 
+*/
+HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw){
+    HallXYs hxy_t;
+    if(filterInit==0){
+        MX_Hall_init(xRaw,yRaw);
+        hxy_t.Hallx = hallXft.filter;
+        hxy_t.Hally = hallYft.filter;
+    }else{
+        hxy_t.Hallx = firstOrderFilter(&hallXft,xRaw);
+        hxy_t.Hally = firstOrderFilter(&hallYft,yRaw);
+    }
+}
 /**
  * @brief uart initial
  * @param   None
