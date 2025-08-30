@@ -129,6 +129,7 @@ int16_t arctanSearch(uint16_t pr);
 int16_t arctan(int16_t x, int16_t y);
 //最大最小赋值
 void MaxMinUpDate(uint16_t *now,uint16_t *max,uint16_t *min);
+int dataRangeMov(int in_raw,int in_min,int in_max,int out_min,int out_max);
 
 
 /**

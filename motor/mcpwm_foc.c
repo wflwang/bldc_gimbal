@@ -306,6 +306,10 @@ void MC_RunMotorControlTasks(void){
             //学习时候自动增加角度功能
             RunModeEn = UpNextRunModeAngle(&urm);
         }
+        #ifndef testQMI
+        //当前陀螺仪多少度 目标角度要马达移到它镜像的角度 1 -> 65536-1  2 ->65536-2
+        FOC_Component_M1.hTargetAngle -= getOrientation_1ms();    //当前陀螺仪的角度
+        #endif
     #if 0
         switch(mc_cmd_t){
             case lock:
@@ -424,7 +428,7 @@ void mcpwm_foc_init(void) {
     //PWM 输出刹车
     PWMC_ONPWM();   //开启PWM ADC 采样
     //EE_WriteFOC(&FOC_Component_M1.lc);
-    EE_ReadFOC(&FOC_Component_M1.lc);
+    //EE_ReadFOC(&FOC_Component_M1.lc);
     IsMCCompleted = 1;
     //if(Aligned_hall==0){
         //霍尔 对应角度位置没有校准 要进行一次校准

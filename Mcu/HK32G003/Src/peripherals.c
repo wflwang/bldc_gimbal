@@ -9,7 +9,8 @@
 #include "button.h"
 #include    "mcpwm_foc.h"
 #include "filter.h"
-//#include    "EEPROM.h"
+#include "mc_config.h"
+#include    "EEPROM.h"
 
 
 static __IO uint32_t msTick=0;
@@ -42,7 +43,7 @@ void initCorePeripherals(void){
         fScanButton();   //扫描按键功能
     }
 		//EE_WriteFOC(&FOC_Component_M1.lc);
-		//EE_ReadFOC(&FOC_Component_M1.lc);
+		EE_ReadFOC(&FOC_Component_M1.lc);   //读取存储的FOC 参数
     MX_Uart_Init();
     MX_ADC_Init();
     MX_TIM_Init();
@@ -357,6 +358,7 @@ HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw){
         hxy_t.Hallx = firstOrderFilter(&hallXft,xRaw);
         hxy_t.Hally = firstOrderFilter(&hallYft,yRaw);
     }
+		return hxy_t;
 }
 /**
  * @brief uart initial

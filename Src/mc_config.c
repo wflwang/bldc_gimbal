@@ -128,6 +128,14 @@ void SetTurnRight(void){
     FOC_Component_M1.hTargetAngle -= 0x4000;
     FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }
+//获取学习的Z轴中点
+int16_t GetLearnGyroZBais(void){
+  return FOC_Component_M1.lc.gyroVz_Bais;
+}
+//设置校准的Z轴值
+void SetLearnGyroZBais(int16_t vZ){
+  FOC_Component_M1.lc.gyroVz_Bais = vZ;
+}
 /***
  * 
  * 正转360度, 每次比当前增加0x1000度 达到再增加 每=

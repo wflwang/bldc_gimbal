@@ -48,6 +48,8 @@ void SetTurnRight(void);
 void SetHorizontal(void);
 void SetVertical(void);
 uint8_t GetLearnState(void);
+int16_t GetLearnGyroZBais(void);
+void SetLearnGyroZBais(int16_t vZ);
 //extern PID_Handle_t PIDSpeedHandle_M1;
 //extern PID_Handle_t PIDIqHandle_M1;
 //extern PID_Handle_t PIDIdHandle_M1;

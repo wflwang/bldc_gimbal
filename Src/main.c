@@ -27,7 +27,14 @@ int main(void){
     //MX_TIM_init();
     //初始化gyro 60aixs
     //MX_GYRO_init();
+    //初始化陀螺仪
     qmi8658x_init(GYPO_SDA_GPIO_PORT,GYPO_SDA_GPIO_PIN,GYPO_SCL_GPIO_PORT,GYPO_SCL_GPIO_PIN);
+    #ifdef testQMI
+    while(1){
+      Delay_ms(1);
+      getOrientation_1ms(); //获取当前角度值
+    }
+    #endif
     //初始化hall 
     //MX_Hall_init();
     //初始化马达
@@ -45,7 +52,7 @@ int main(void){
         Delay_ms(1);  //增加延迟方便SWD debug
         fScanButton();   //扫描按键功能
         LEDControl();   //LED控制
-        GetUartDebug(); //获取串口调试数据
+        //GetUartDebug(); //获取串口调试数据
     }
 }
 /**

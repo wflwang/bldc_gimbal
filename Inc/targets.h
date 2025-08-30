@@ -11,6 +11,7 @@
 #define FIRMWARE_NAME   "gimbal"
 #define FILE_NAME   "bldc_gimbal_singal"
 #define DEAD_TIME   10
+#define testQMI //仅仅测试陀螺仪
 //#define Current_ADC_PIN 
 //#define Current_ADC_PORT    GPIOC
 #define ResPu       10  //上拉电阻

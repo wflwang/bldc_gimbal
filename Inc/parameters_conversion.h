@@ -22,7 +22,7 @@
 #define INRUSH_CURRLIMIT_DELAY_COUNTS  (uint16_t)(INRUSH_CURRLIMIT_DELAY_MS * \
                                   ((uint16_t)SPEED_LOOP_FREQUENCY_HZ)/1000u -1u)
 
-#define SYS_TICK_FREQUENCY          1000
+#define SYS_TICK_FREQUENCY          1000  //1000 1ms->1024us
 #define UI_TASK_FREQUENCY_HZ        10
 #define SERIAL_COM_TIMEOUT_INVERSE  25
 #define SERIAL_COM_ATR_TIME_MS 20

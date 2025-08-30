@@ -27,7 +27,6 @@ void MX_GPIO_Init(void);
 //init tim
 void MX_TIM_Init(void);
 void MX_ADC_Init(void);
-void MX_Hall_init(void);
 HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw);
 void MX_NVIC_init(void);
 void initCorePeripherals(void);
@@ -39,6 +38,7 @@ void SWD_Pin_To_PB5_PD5_Configuration(void);
 void MX_Uart_Init(void);
 void UartSendDatas(uint8_t *p, uint8_t len);
 void delay_us(uint16_t us_x10);
+void MX_Hall_init(int16_t xRaw,int16_t yRaw);
 
 
 #endif

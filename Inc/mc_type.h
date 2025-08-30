@@ -145,6 +145,14 @@ typedef struct
   TIM_TypeDef *TIMx;
 }PWMC_Handle;
 
+//陀螺仪校准的参数
+//typedef struct 
+//{
+//    int16_t gyroVz_Bais;  //Z轴中点
+//}GyroCalibration;
+
+
+//马达学习的参数
 typedef struct 
 {
     uint8_t LearnFinish;  //学习完成
@@ -154,6 +162,7 @@ typedef struct
     uint16_t x_offset;
     uint16_t y_offset;
     uint16_t xy_scale;  //X对应Y的比例关系  
+    int16_t gyroVz_Bais;  //Z轴中点
 }Learn_Componets; //学习组件
 
 typedef struct 

@@ -508,6 +508,16 @@
               <FileType>1</FileType>
               <FilePath>..\LEDControl\LED.c</FilePath>
             </File>
+            <File>
+              <FileName>filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\drv\filter.c</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\drv\i2c.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

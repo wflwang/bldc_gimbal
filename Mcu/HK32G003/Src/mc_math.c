@@ -665,6 +665,34 @@ int16_t arctan(int16_t x, int16_t y){
   */
 }
 /***
+ * @brief 范围平移 输入一个范围之间的数比例对应到另一个输入范围之间的数
+ * @param in_min
+ * @param in_max
+ * @param in_raw
+ * @param out_min
+ * @param out_max
+ * @return out_value
+ * 
+*/
+int dataRangeMov(int in_raw,int in_min,int in_max,int out_min,int out_max){
+  if(in_raw<=in_min)
+    return out_min;
+  if(in_raw>=in_max)
+    return out_max;
+  if(in_min>in_max)
+    return dataRangeMov(in_raw,in_min,in_max,out_min,out_max);
+  if(in_min==in_max)
+    return out_min;
+  const int in_mid = (in_max+in_min)>>1;
+  const int out_mid = (out_max+out_min)>>1;
+  if(in_min==in_mid)
+    return out_mid;
+  if(in_raw<=in_mid)
+    return dataRangeMov(in_raw,in_min,in_mid,out_min,out_mid);
+  else
+    return dataRangeMov(in_raw,in_mid+1,in_max,out_mid,out_max);
+}
+/***
  * @brief 更新最大最小值
  * 
  * 
