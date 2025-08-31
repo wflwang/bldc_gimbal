@@ -64,6 +64,7 @@
     "mc_type.h": "c",
     "hk32g003.h": "c",
     "parameters_conversion.h": "c",
-    "hk32g003_conf.h": "c"
+    "hk32g003_conf.h": "c",
+    "peripherals.h": "c"
   }
 }

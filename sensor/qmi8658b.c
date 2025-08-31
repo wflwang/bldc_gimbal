@@ -155,27 +155,33 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	it.scl_pin = scl_pin;
 	it.sda_gpio = sda_gpio;
 	it.sda_pin = sda_pin;
-	it.iic_adr = QMI8658B_ADDRESS;
-	it.len =1;
-	it.data_adr = QMI8658B_RESET;
-	it.data = &QMI8658B_RESET_V;
-	i2cWrite(&it);		//reset
+	//it.iic_adr = QMI8658B_ADDRESS;
+	//it.len =1;
+	//it.data_adr = QMI8658B_RESET;
+	//it.data = &dat;
+	//i2cWrite(&it);		//reset
+	writeQMIregInit(&it);
+	writeQMIreg(&it,QMI8658B_RESET,QMI8658B_RESET_V);
 	Delay_ms(150);
-	it.data_adr = QMI8658B_ACC_Set;
-	it.data = &(QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_896HZ);
-	i2cWrite(&it);		//reset
-	it.data_adr = QMI8658B_GYRO_Set;
-	it.data = &(QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ);
-	i2cWrite(&it);		//reset
-	it.data_adr = QMI8658B_EN_Sensors;
-	it.data = &(QMI8658B_GYRO_EN|QMI8658B_ACC_EN);
-	i2cWrite(&it);		//reset
+	//it.data_adr = QMI8658B_ACC_Set;
+	//dat = (QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_896HZ);
+	//it.data = &dat;
+	//i2cWrite(&it);		//reset
+	writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_896HZ));
+	//it.data_adr = QMI8658B_GYRO_Set;
+	//it.data = (QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ);
+	//i2cWrite(&it);		//reset
+	writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ));
+	//it.data_adr = QMI8658B_EN_Sensors;
+	//it.data = (QMI8658B_GYRO_EN|QMI8658B_ACC_EN);
+	//i2cWrite(&it);		//reset
+	writeQMIreg(&it,QMI8658B_EN_Sensors,(QMI8658B_GYRO_EN|QMI8658B_ACC_EN));
 	it.data_adr = QMI8658B_WHOAMI;
 	uint8_t ret = 0;
 	it.data = &ret;
 	i2cRead(&it);
-	if(it.data != QMI8658B_WHOAMI_V){
-		return -1;	//fail
+	if(it.data[0] != QMI8658B_WHOAMI_V){
+		return 0xff;	//fail
 	}
 	//it.data_adr = QMI8658B_LP_config;	//配置低通滤波
 	//it.data = QMI8658B_GYRO_LP_EN|QMI8658B_ACC_LP_EN;
@@ -192,7 +198,7 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 
 	///////////////////////////////////
 
-	delay_ms(100);
+	Delay_ms(100);
 	readQmi8658b();	//读出参数
 	//初始化所有滤波参数
 	accXft.alpha_diff = accFilter;
@@ -228,6 +234,20 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	calibrationGyro();
 
 	return 0;
+}
+/***
+ * @brief 写qmi 的寄存器参数
+ * 
+ * 
+*/
+void writeQMIregInit(i2c_t *it){
+	it->iic_adr = QMI8658B_ADDRESS;
+	it->len =1;
+}
+void writeQMIreg(i2c_t *it,uint8_t adr,uint8_t dat){
+	it->data_adr = adr;
+	it->data = &dat;
+	i2cWrite(it);		//reset
 }
 /***
  * @brief 校准陀螺仪
@@ -285,7 +305,7 @@ void readQmi8658b(void){
 	it.data_adr = QMI8658B_TEMP_OUT_L;
 	it.data = data;
 	i2cRead(&it);
-	TEMP	= (int16_t)(it.data[0]|((uint16_t)it.data[1]<<8));
+	//TEMP	= (int16_t)(it.data[0]|((uint16_t)it.data[1]<<8));
 	ACC_vX	= (int16_t)(it.data[2]|((uint16_t)it.data[3]<<8));
 	ACC_vY	= (int16_t)(it.data[4]|((uint16_t)it.data[5]<<8));
 	ACC_vZ	= (int16_t)(it.data[6]|((uint16_t)it.data[7]<<8));

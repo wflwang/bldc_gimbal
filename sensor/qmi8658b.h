@@ -46,5 +46,6 @@ int16_t GetACC_Z(void);
 int16_t GetGYRO_Z(void);
 void calibrationGyro(void); //校准陀螺仪
 int16_t getOrientation_1ms(void);
-
+void writeQMIregInit(i2c_t *it);
+void writeQMIreg(i2c_t *it,uint8_t adr,uint8_t dat);
 #endif

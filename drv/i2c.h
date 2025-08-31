@@ -34,5 +34,7 @@ void i2cOncClock(i2c_t *it);
 void i2cBitWrite(i2c_t *it,uint8_t data);
 uint8_t i2cBitRead(i2c_t *it);
 #define IIC_delay(x)    delay_us(x);
+void i2cSDA_IN(i2c_t *it);
+void i2cSDA_OUT(i2c_t *it);
 
 #endif

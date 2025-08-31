@@ -17,9 +17,9 @@ void i2cRead(i2c_t* it){
     i2cStart(it);
     i2cBitWrite(it,(it->iic_adr<<1)|0x01);
     for(uint8_t i=0;i<it->len;i++){
-        i2cSDA_IN();
+        i2cSDA_IN(it);
         *(it->data+i) = i2cBitRead(it);
-        i2cSDA_OUT();
+        i2cSDA_OUT(it);
         if(i==(it->len-1))
         i2cNoAck(it);
         else
@@ -124,4 +124,25 @@ uint8_t i2cBitRead(i2c_t *it){
         GPIO_ResetBits(it->scl_gpio,it->scl_pin);
         IIC_delay(it->delay);
     }
+		return data;
 }
+/***
+ * @brief sda-<input
+ * 
+*/
+void i2cSDA_IN(i2c_t *it){
+    it->sda_gpio->MODER &= ~(GPIO_MODER_MODER0 << (GYPO_SDA_SOURCE * 2));
+}
+
+/***
+ * @brief sda-< output
+ * 
+*/
+void i2cSDA_OUT(i2c_t *it){
+    it->sda_gpio->MODER &= ~(GPIO_MODER_MODER0 << (GYPO_SDA_SOURCE * 2));
+    it->sda_gpio->MODER |= (GPIO_Mode_OUT << (GYPO_SDA_SOURCE * 2));
+}
+
+
+
+

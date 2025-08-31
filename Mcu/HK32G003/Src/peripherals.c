@@ -511,16 +511,20 @@ void Delay_ms(__IO uint32_t Delay)
  * @brief 
  * @param us_x10 微秒*10 提高描述精度
 */
-void delay_us(uint16_t us_x10){
-   // 动态计算所需循环次数（主频单位MHz）
-    uint32_t cycles = (uint32_t)us_x10 * (SystemCoreClock / 300000) ; // 每循环3周期
-    __asm volatile (
-        "MOV R0, %0 \n"      // 通过%0传入循环次数
-        "1: SUBS R0, #1 \n"   // 1周期
-        "BNE 1b \n"           // 2周期（跳转时）
-        : : "r" (cycles)      // 输入操作数，将cycles值赋给R0
-        : "r0"                // 声明R0被修改
-    );
+void delay_us(uint16_t us_x10)
+{
+    // 假设主频是 48 MHz
+    // 每个循环大概 3 个周期左右（具体看编译器和架构）
+    // 48,000,000 / 1,000,000 = 48 cycles per us
+    // 假如你希望每个 count 对应 1us，那么 count ≈ 48
+    // 但为了更安全，我们使用一个经验公式，并通过调试校准
+
+    volatile uint32_t i;  // 关键：使用 volatile 防止优化
+    uint32_t count = (uint32_t)us_x10 * (SystemCoreClock / 300000);  // 调整此系数以接近真实 us
+
+    for (i = 0; i < count; i++) {
+        __NOP();  // 确保插入一条空指令
+    }
 }
 /**
   * @brief NVIC Configuration.
