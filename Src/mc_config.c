@@ -36,6 +36,23 @@ PID_Handle_t PIDPosHandle_M1 =
 {
   .hDefKpGain          = (int16_t)PID_Pos_KP_DEFAULT,
   .hDefKiGain          = (int16_t)PID_Pos_KI_DEFAULT, 
+  .wUpperIntegralLimit = (int32_t)IQMAX * (int32_t)Pos_KIDIV,
+  .wLowerIntegralLimit = -(int32_t)IQMAX * (int32_t)Pos_KIDIV,
+  .hUpperOutputLimit       = (int16_t)IQMAX, 
+  .hLowerOutputLimit       = -(int16_t)IQMAX,
+  .hKpDivisor          = (uint16_t)Pos_KPDIV,
+  .hKiDivisor          = (uint16_t)Pos_KIDIV,
+  .hKpDivisorPOW2      = (uint16_t)Pos_KPDIV_LOG,
+  .hKiDivisorPOW2      = (uint16_t)Pos_KIDIV_LOG,
+  .hDefKdGain           = (int16_t)PID_Pos_KD_DEFAULT,
+  .hKdDivisor           = (uint16_t)Pos_KDDIV,
+  .hKdDivisorPOW2       = (uint16_t)Pos_KDDIV_LOG,
+};
+//速度环PID参数
+PID_Handle_t PIDSpeedHandle_M1 =
+{
+  .hDefKpGain          = (int16_t)PID_SPEED_KP_DEFAULT,
+  .hDefKiGain          = (int16_t)PID_SPEED_KI_DEFAULT, 
   .wUpperIntegralLimit = (int32_t)IQMAX * (int32_t)SP_KIDIV,
   .wLowerIntegralLimit = -(int32_t)IQMAX * (int32_t)SP_KIDIV,
   .hUpperOutputLimit       = (int16_t)IQMAX, 
@@ -44,7 +61,7 @@ PID_Handle_t PIDPosHandle_M1 =
   .hKiDivisor          = (uint16_t)SP_KIDIV,
   .hKpDivisorPOW2      = (uint16_t)SP_KPDIV_LOG,
   .hKiDivisorPOW2      = (uint16_t)SP_KIDIV_LOG,
-  .hDefKdGain           = (int16_t)PID_Pos_KD_DEFAULT,
+  .hDefKdGain           = (int16_t)PID_SPEED_KD_DEFAULT,
   .hKdDivisor           = (uint16_t)SP_KDDIV,
   .hKdDivisorPOW2       = (uint16_t)SP_KDDIV_LOG,
 };
@@ -86,12 +103,32 @@ void SetTorque(int16_t hTorque){
 void SetFlux(int16_t hFlux){
   FOC_Component_M1.Vqd.qV_Component1 = hFlux;
 }
+//PID 设置
+void SetPosPIDKp(int16_t p){
+  PIDPosHandle_M1.hKpGain = p;
+}
+void SetPosPIDKi(int16_t i){
+  PIDPosHandle_M1.hKiGain = i;
+}
+void SetPosPIDKd(int16_t d){
+  PIDPosHandle_M1.hKdGain = d;
+}
+//PID 设置
+void SetSpeedPIDKp(int16_t p){
+  PIDSpeedHandle_M1.hKpGain = p;
+}
+void SetSpeedPIDKi(int16_t i){
+  PIDSpeedHandle_M1.hKiGain = i;
+}
+void SetSpeedPIDKd(int16_t d){
+  PIDSpeedHandle_M1.hKdGain = d;
+}
 /**
  * 
  * 水平垂直转换
 */
 void Hor_Turn_Ver(void){
-  if(FOC_Component_M1.hTargetAngle!=0)
+  if(FOC_Component_M1.hAddTargetAngle!=0)
     SetHorizontal();
   else
     SetVertical();
@@ -101,32 +138,32 @@ void Hor_Turn_Ver(void){
  * 设置到水平
 */
 void SetHorizontal(void){
-    FOC_Component_M1.hTargetAngle = 0;
-    FOC_Component_M1.endAngle = 0;
+    FOC_Component_M1.hAddTargetAngle = 0;
+    //FOC_Component_M1.endAngle = 0;
 }
 /**
  * 
  * 设置到垂直
 */
 void SetVertical(void){
-    FOC_Component_M1.hTargetAngle = 0x4000;
-    FOC_Component_M1.endAngle = 0x4000;
+    FOC_Component_M1.hAddTargetAngle = 0x4000;
+    //FOC_Component_M1.endAngle = 0x4000;
 }
 /***
  * 
  * 左转
 */
 void SetTurnLeft(void){
-    FOC_Component_M1.hTargetAngle += 0x4000;
-    FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
+    FOC_Component_M1.hAddTargetAngle += 0x4000;
+    //FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }
 /***
  * 
  * R转
 */
 void SetTurnRight(void){
-    FOC_Component_M1.hTargetAngle -= 0x4000;
-    FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
+    FOC_Component_M1.hAddTargetAngle -= 0x4000;
+    //FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }
 //获取学习的Z轴中点
 int16_t GetLearnGyroZBais(void){
@@ -146,6 +183,13 @@ void SetLearnGyroZBais(int16_t vZ){
 //重新开始学习参数
 void MC_initLearn(void){
     MC_learnHall(&FOC_Component_M1);
+}
+//获取电角度
+int16_t GetMecA(void){
+    return FOC_Component_M1.hMecAngle;
+}
+int16_t GetElA(void){
+    return FOC_Component_M1.hElAngle;
 }
 
 //uint16_t GetHallX_offset(void){

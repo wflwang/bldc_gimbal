@@ -20,12 +20,12 @@ int16_t firstOrderFilter(filter_t *ft,int16_t raw){
     if(((diff>0)&&(ft->lastDiff<0))||((diff<0)&&(ft->lastDiff>0))){
         //误差方向不一致 滤波系数降到最小
         ft->alpha_raw = ft->alpha_min;
-        ft->lastDiff = diff;    //只需要误差的方向不关心误差值
+        //ft->lastDiff = diff;    //只需要误差的方向不关心误差值
     }else{
         //不同误差对应到不同的滤波系数增量
         uint8_t index=0;
         for(;index<ft->alpha_diff_len;index++){
-            if((int)ft->alpha_diff[index]<abs(diff)){
+            if((int)ft->alpha_diff[index]>abs(diff)){
                 break;
             }
         }
@@ -33,6 +33,7 @@ int16_t firstOrderFilter(filter_t *ft,int16_t raw){
         if(ft->alpha_raw>ft->alpha_max)
             ft->alpha_raw = ft->alpha_max;
     }
+		ft->lastDiff = diff;    //只需要误差的方向不关心误差值 
     ft->filter = (int16_t)((ft->alpha_raw*diff)>>16)+ft->filter;
     return ft->filter;
 }

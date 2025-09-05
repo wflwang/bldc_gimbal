@@ -13,7 +13,10 @@
 //#include "main.h"
 //#include "parameters_conversion.h"
 //缓冲区大小
-#define RX_BUFFER_SIZE           64
+#define RX_BUFFER_SIZE           32 //必须是2的倍数
+#if ((RX_BUFFER_SIZE&0x1)!=0)
+#error RX_BUFFER_SIZE must be an even number (multiple of 2)
+#endif
 typedef struct 
 {
 	uint8_t Data[RX_BUFFER_SIZE];
@@ -39,6 +42,10 @@ void MX_Uart_Init(void);
 void UartSendDatas(uint8_t *p, uint8_t len);
 void delay_us(uint16_t us_x10);
 void MX_Hall_init(int16_t xRaw,int16_t yRaw);
+void GetUartDebug(void);
+void UartSendDatas(uint8_t *p, uint8_t len);
+void sendstart(void);
+uint32_t Get1msTick(void);
 
 
 #endif

@@ -528,20 +528,20 @@ Trig_Components MCM_Trig_Functions( int16_t hAngle )
 /****
  * @brief 从0-45 度表中 搜索arctan 值
  * @param pr = y/x*65536
- * 
+ * @return 0-128
 */
 int16_t arctanSearch(uint16_t pr){
   int16_t max = 128;  //实在表格中不存在
   int16_t min = 0;
   int16_t index = 0x40;
-  while(max>(min+1)){
+  while(max>min){
     index = (max+min)>>1;
     if(pr<hTan_Table[index]){
       max = index;
     }else{
       min = index;
-      if(min==127)
-        return 128;
+      if(min==(max-1))
+        return max;
     }
   }
   return index;
@@ -568,7 +568,7 @@ int16_t arctan(int16_t x, int16_t y){
         else return (y > 0) ? 0x6000 : 0xA000;         // 135°/225°
     }
 
-    if (abs_x > abs_y) { 
+    if (abs_x > abs_y) { //1<45 2>135 3<225 4<315
         // 第一象限 <45° 的情况：直接查表
         ratio = ((int32_t)abs_y << 16) / abs_x; // Q16: y/x
         base_angle = arctanSearch((int16_t)ratio) << 6;    // 0-45° → 0x0000-0x2000
@@ -599,7 +599,7 @@ int16_t arctan(int16_t x, int16_t y){
             if(y>0){
             return 0x4000+base_angle; //2
           }else{
-            return 0xc000+base_angle; //3
+            return 0xc000-base_angle; //3
           }
         }
     }

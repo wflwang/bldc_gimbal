@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hk32g003.h"
+//#include "drive_parameters.h"
 //#include "main.h"
 #ifdef __cplusplus
 extern "C" {
@@ -173,8 +174,11 @@ typedef struct
     volatile uint32_t hElAngle;   //电角度
     //uint32_t hLastElAngle;   //上次完整电角度
     volatile int16_t hMecAngle;  //物理角度
+    volatile int16_t hLastMecAngle;
     int16_t hTargetAngle; //目标物理角度
+    int16_t hAddTargetAngle;  //增加的角度
     int16_t endAngle; //结束角度
+    volatile int16_t hSpeed;   //当前速度
     //uint8_t x_step; //hallx 动作步骤
     uint16_t x_now;
     //uint16_t x_Start;
@@ -189,6 +193,8 @@ typedef struct
     uint16_t hStepTime;  //增加时间
     int16_t hFinalTorque;  //最后扭力
     uint16_t hDurationms; //持续时间
+    //int16_t hx[filterAVDeep];
+    //int16_t hy[filterAVDeep];
 }FOC_Component;
 
 

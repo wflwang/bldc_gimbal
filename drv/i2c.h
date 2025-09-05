@@ -13,7 +13,7 @@
 
 typedef struct 
 {
-    uint8_t iic_adr;    //IIC 地址
+    uint8_t iic_adr;    //IIC Write 地址
     uint8_t data_adr;   //数据地址
     uint8_t len;        //数据长度
     uint8_t *data;      //数据指针

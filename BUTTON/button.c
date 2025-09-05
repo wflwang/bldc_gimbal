@@ -24,7 +24,7 @@ void fScanButton(void){
 void ScanButton(button_t *bt){
     //有按键按下 长按开关机 短按水平/垂直 双击旋转模式
     uint8_t tmp;
-    tmp = (!GetButonPWR())|((!GetButonLR())<<1)|((!GetButonLR())<<2);
+    tmp = (!GetButonPWR())|((!GetButonLR())<<1)|((!GetButonRR())<<2);
     if(tmp!=bt->nowbt){
         bt->deboune = 0;
         bt->nowbt = tmp;
@@ -36,7 +36,7 @@ void ScanButton(button_t *bt){
         bt->deboune = 0;
         tmp = ((bt->nowbt!=0)<<1)|(bt->lastbt!=0);
         switch(tmp){
-            case 0:
+            case 0: //都没按下
                 if(bt->BtTime<60000)
                 bt->BtTime++;   //长按计时
                 if((bt->BtTime==shortHTime)&&((bt->BtCount&0xf0))){

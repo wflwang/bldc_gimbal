@@ -11,22 +11,41 @@
 #include "mc_math.h"
 #include "mc_config.h"
 #include	"i2c.h"
+
+#if AccXY_dir == 0
+#define ACCXY	ACC_vX,ACC_vY
+#elif AccXY_dir == 1
+#define ACCXY	ACC_vX,-ACC_vY
+#elif AccXY_dir == 2
+#define ACCXY	-ACC_vX,ACC_vY
+#elif AccXY_dir == 3
+#define ACCXY	-ACC_vX,-ACC_vY
+#elif AccXY_dir == 4
+#define ACCXY	ACC_vY,ACC_vX
+#elif AccXY_dir == 5
+#define ACCXY	ACC_vY,-ACC_vX
+#elif AccXY_dir == 6
+#define ACCXY	-ACC_vY,ACC_vX
+#else 
+#define ACCXY	-ACC_vY,-ACC_vX
+#endif
+
 //陀螺仪参数滤波主要滤掉低频 低误差时候滤波系数小 高误差时候滤波系数大
 //陀螺仪滤波系数表格 只需要过滤掉 变化大的  ?/65536(滤波系数)=>每次增加的滤波系数
 const int16_t gyroFilter[] = {
-    80,220,820,1500,5000,10000
+    60,180,670,1800,6000,10000
 };
 //对应不同误差的滤波系数增量
 const int16_t gyroFilterV[]={
-    312,622,900,1500,3000,6000,9000
+    42,102,250,1000,3700,6000,9000
 };
 //加速度滤波 滤波系数要大,不能增长过快
 //加速率滤波表格
 const int16_t accFilter[] = {
-    80,160,820,2640,8500
+    80,560,1820,4640,10500,20000
 };
 const int16_t accFilterV[] = {
-    360,500,700,1500,3500,8000
+    60,150,300,650,1000,2300,4000
 };
 //互补滤波 误差越大滤波系数快速增大
 //互补滤波表格 误差越大 陀螺仪占比越多 误差越小 加速度占比越多
@@ -63,8 +82,15 @@ const int16_t accFilterV[] = {
 
 #define QMI8658B_WHOAMI             0x00
 #define QMI8658B_WHOAMI_V           0x05
+#define QMI8658B_REVID             	0x01
+#define QMI8658B_REVID_V           	0x7c
 #define QMI8658B_RESET				0x60
-#define QMI8658B_RESET_V			0x4b	//reset
+#define QMI8658B_RESET_V			0xb0	//0x4b reset
+
+#define QMI8658B_ConfReg			0x02
+#define QMI8658B_ConfReg_ADR_AI		0x40	//1 addr auto add
+#define QMI8658B_ConfReg_ADR_BE		0x20	//read Big-endian
+#define QMI8658B_Dis_HiOSC			0x01
 
 #define QMI8658B_ACC_Set			0x03
 #define QMI8658B_ACC_FS_selftest	0x80
@@ -86,7 +112,7 @@ const int16_t accFilterV[] = {
 #define QMI8658B_ACC_LP_ODR_11HZ		0x0e
 #define QMI8658B_ACC_LP_ODR_3HZ			0x0f
 
-#define QMI8658B_GYRO_Set			0x03
+#define QMI8658B_GYRO_Set			0x04
 #define QMI8658B_GYRO_FS_selftest	0x80
 #define QMI8658B_GYRO_FS_16DPS		0x00
 #define QMI8658B_GYRO_FS_32DPS		0x10
@@ -113,10 +139,10 @@ const int16_t accFilterV[] = {
 
 
 //*****************************************
-float accelOneG = 9.8065;           // 
-int16_t accelData500Hz[3];
+//float accelOneG = 9.8065;           // 
+//int16_t accelData500Hz[3];
 
-float accelTCBias[3] = { 0.0f, 0.0f, 0.0f };
+//float accelTCBias[3] = { 0.0f, 0.0f, 0.0f };
 static i2c_t it;
 static int16_t GYRO_vZ = 0;
 static int16_t ACC_vX = 0;
@@ -125,6 +151,8 @@ static int16_t ACC_vZ = 0;
 //static int16_t TEMP = 0;
 static int16_t lastOriA=0;	//上次计算出的角度
 static uint8_t gyroInitFin=0;	//陀螺仪初始化完成标志
+static int accA = 0;	//本次加速度算出的脚位
+static int gyroA = 0;	//本次陀螺仪算出的脚位
 filter_t accXft;
 filter_t accYft;
 filter_t gyroZft;
@@ -141,6 +169,7 @@ filter_t gyroZft;
 */
 uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_gpio,uint32_t scl_pin){
     GPIO_InitTypeDef GPIO_InitStructure;
+		uint8_t ret = 0;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -155,18 +184,23 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	it.scl_pin = scl_pin;
 	it.sda_gpio = sda_gpio;
 	it.sda_pin = sda_pin;
+	it.delay = 0;
 	//it.iic_adr = QMI8658B_ADDRESS;
 	//it.len =1;
 	//it.data_adr = QMI8658B_RESET;
 	//it.data = &dat;
 	//i2cWrite(&it);		//reset
 	writeQMIregInit(&it);
+	//it.data_adr = QMI8658B_WHOAMI;
+	//it.data = &ret;
+	//i2cRead(&it);	
 	writeQMIreg(&it,QMI8658B_RESET,QMI8658B_RESET_V);
-	Delay_ms(150);
+	Delay_ms(250);
 	//it.data_adr = QMI8658B_ACC_Set;
 	//dat = (QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_896HZ);
 	//it.data = &dat;
 	//i2cWrite(&it);		//reset
+	writeQMIreg(&it,QMI8658B_ConfReg,QMI8658B_ConfReg_ADR_AI);
 	writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_896HZ));
 	//it.data_adr = QMI8658B_GYRO_Set;
 	//it.data = (QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ);
@@ -176,8 +210,17 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	//it.data = (QMI8658B_GYRO_EN|QMI8658B_ACC_EN);
 	//i2cWrite(&it);		//reset
 	writeQMIreg(&it,QMI8658B_EN_Sensors,(QMI8658B_GYRO_EN|QMI8658B_ACC_EN));
+	
+	//it.data_adr = QMI8658B_ACC_Set;
+	//it.data = &ret;
+	//i2cRead(&it);
+	//it.data_adr = QMI8658B_GYRO_Set;
+	//it.data = &ret;
+	//i2cRead(&it);
+	//it.data_adr = QMI8658B_REVID;
+	//it.data = &ret;
+	//i2cRead(&it);
 	it.data_adr = QMI8658B_WHOAMI;
-	uint8_t ret = 0;
 	it.data = &ret;
 	i2cRead(&it);
 	if(it.data[0] != QMI8658B_WHOAMI_V){
@@ -198,7 +241,7 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 
 	///////////////////////////////////
 
-	Delay_ms(100);
+	Delay_ms(200);
 	readQmi8658b();	//读出参数
 	//初始化所有滤波参数
 	accXft.alpha_diff = accFilter;
@@ -262,7 +305,7 @@ void calibrationGyro(void){
 		int gyroSum = 0;
 		int gyroMin =INT32_MAX;
 		int gyroMax =INT32_MIN;
-		for(int i=0;i<258;i++){
+		for(int i=0;i<514;i++){
 			Delay_ms(1);		//1ms读一次陀螺仪 最快0.5s校准
 			readQmi8658b();	
 			ACC_vX = firstOrderFilter(&accXft,ACC_vX);
@@ -277,7 +320,7 @@ void calibrationGyro(void){
 		LEDG_Xor();		//学习完一次绿灯切换一次
 		gyroSum -=gyroMin; 
 		gyroSum -=gyroMax;
-		gyroSum >>=8; 
+		gyroSum >>=9; 
 		if((gyroMax-gyroMin)<gyroCaliErr){
 			//陀螺仪误差在一个很小范围内
 			SetLearnGyroZBais((int16_t)gyroSum);
@@ -289,27 +332,27 @@ void calibrationGyro(void){
 				gyroInitFin = 1;
 			}
 		}
-		LEDG_Set();	//结束时候绿灯亮
+	}
+	LEDG_Set();	//结束时候绿灯亮
 		//校准完了算出当前初始角度 直接角速度角度为初始角度
 		//重新算出初始角度
-		lastOriA = (int)arctan(ACC_vX,ACC_vY);	//算出加速度角度
-	}
+	lastOriA = (int)arctan(ACCXY);	//算出加速度角度
 }
 /**
  * @brief 从qmi8658b 读出陀螺仪 和 加速度数据 和后面函数配合使用读出对应数据
  * 
 */
 void readQmi8658b(void){
-	uint8_t data[14];
-	it.len =14;
-	it.data_adr = QMI8658B_TEMP_OUT_L;
+	uint8_t data[12];
+	it.len =12;
+	it.data_adr = QMI8658B_ACCEL_XOUT_L;	//QMI8658B_TEMP_OUT_L;
 	it.data = data;
 	i2cRead(&it);
 	//TEMP	= (int16_t)(it.data[0]|((uint16_t)it.data[1]<<8));
-	ACC_vX	= (int16_t)(it.data[2]|((uint16_t)it.data[3]<<8));
-	ACC_vY	= (int16_t)(it.data[4]|((uint16_t)it.data[5]<<8));
-	ACC_vZ	= (int16_t)(it.data[6]|((uint16_t)it.data[7]<<8));
-	GYRO_vZ	= (int16_t)(it.data[12]|((uint16_t)it.data[13]<<8));
+	ACC_vX	= (int16_t)(it.data[0]|((uint16_t)it.data[1]<<8));
+	ACC_vY	= (int16_t)(it.data[2]|((uint16_t)it.data[3]<<8));
+	ACC_vZ	= (int16_t)(it.data[4]|((uint16_t)it.data[5]<<8));
+	GYRO_vZ	= (int16_t)(it.data[10]|((uint16_t)it.data[11]<<8));
 	//中值滤波加一阶滤波 滤波 ACC&GYRO
 	//accXft.alpha_diff = accFilter;
 	//accYft.alpha_diff = accFilter;
@@ -339,18 +382,41 @@ int16_t GetGYRO_Z(void){
  * 
 */
 int16_t getOrientation_1ms(void){
+	//uint8_t data[2];
 	if(gyroInitFin==1){
+		//LEDR_Set();
 		readQmi8658b();	//读出参数	
+		//LEDR_Reset();
 		//Acc X&Y 算出加速度轴的角度
-		int accA = (int)arctan(ACC_vX,ACC_vY)*5625;	//算出加速度角
+		accA = (int)arctan(ACCXY)*5625;	//算出加速度角
 		//DPS = 512  DPS/32768 * vZ * time(1000us)*351.5625*16*65536/360 = 增加的角度*6525
  		//gyro = lastgyro*5625 + addgyro*16
-		int gyroA = (int)(GYRO_vZ-GetLearnGyroZBais())<<4 + (int)lastOriA*5625;		//本次Z轴加速度
-		gyroA = complementFilter(gyroA,accA);
-		lastOriA = (int16_t)(gyroA/5625);	//算出当前实际角度
+		gyroA = ((int)(GYRO_vZ-GetLearnGyroZBais())<<5) + (int)lastOriA*5625;		//本次Z轴加速度
+		int gyroA1 = complementFilter(gyroA,accA);
+		lastOriA = (int16_t)(gyroA1/5625);	//算出当前实际角度
+		//data[0] = 0xaa;
+		//data[1] = (uint8_t)(lastOriA>>8);
+		//data[2] = (uint8_t)(lastOriA&0xff);
+      	//UartSendDatas(data,3);
 		return lastOriA;
 	}
 	return 0;
+}
+/***
+ * @brief 获取陀螺仪算出的角度
+ * 
+ * 
+*/
+int16_t GetOriGyroA(void){
+	return lastOriA;
+}
+//加速度算出的角度
+int16_t GetGyroA(void){
+	return (int16_t)(gyroA/5625);
+}
+//陀螺仪积分算出的角度
+int16_t GetAccA(void){
+	return (int16_t)(accA/5625);
 }
 
 

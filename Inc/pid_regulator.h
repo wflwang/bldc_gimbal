@@ -84,6 +84,7 @@ typedef struct PID_Handle
                                        must be 9 as 2^9 = 512 */
   int32_t   wPrevProcessVarError; /*!< previous process variable used by the
                                        derivative part of the PID component */
+  int32_t   wPreDeltaErr;  //上次误差
 } PID_Handle_t;
 
 /*

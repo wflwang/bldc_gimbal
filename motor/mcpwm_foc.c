@@ -13,6 +13,7 @@
 #include    "EEPROM.h"
 #include "peripherals.h"
 #include    "parameters_conversion.h"
+#include "qmi8658b.h"
 
 #define cTurnLCycle  0
 #define cTurnLCycleLen  2
@@ -25,6 +26,9 @@
 //static uint8_t Aligned_hall = 0;
 static uint8_t IsMCCompleted = 0;
 static uint8_t RunModeEn = 0;
+
+static uint8_t vPIDInt = cPIDDiff;  //PID间隔时间 
+static uint16_t vDeadErr = deadErr; //死区时间
 //static mc_cmd mc_cmd_t = lock;
 const RunModeParam RunModeParam_t[]={ \
    // {.Add=8,.EndAngle = 0x4000},{.Add=-8,.EndAngle=-0x4000} 
@@ -66,14 +70,9 @@ int16_t Get_HallAngle(FOC_Component *fc){
     uint32_t hElAngle;
     uint16_t maxtemp = fc->x_Max;
     uint16_t mintemp = fc->x_Min;    
-    #ifdef filterFirstOrder
     HallXYs hxy = MX_Hall_Sample((GetHallxAD()&0xFFF)<<4,(GetHallyAD()&0xFFF)<<4);
     fc->x_now = hxy.Hallx;
     fc->y_now = hxy.Hally;
-    #else
-    fc->x_now = (GetHallxAD()&0xFFF)<<4;
-    fc->y_now = (GetHallyAD()&0xFFF)<<4;
-    #endif
     if(fc->lc.LearnFinish==0){
         if(fc->learnXYFin==0){
             //fc->x_now = ((GetHallxAD()&0xFFF)<<4);  //获取X轴的最大值,最小值
@@ -107,11 +106,12 @@ int16_t Get_HallAngle(FOC_Component *fc){
  * 
 */
 uint32_t GetRealElAngle(FOC_Component *fc){
-    static int32_t hX=0,hY=0,hcount=0;
+    //static int32_t hX=0,hY=0,hcount=0;
     int16_t hx1,hy1;
     uint32_t hElAngle;
 
     #ifdef filterAV
+	static int32_t hX=0,hY=0,hcount=0;
     //MX_Hall_init(int16_t xRaw,int16_t yRaw);
     hX += (int32_t)(fc->x_now-fc->lc.x_offset);
 	hY += (int32_t)(fc->y_now-fc->lc.y_offset);
@@ -123,14 +123,49 @@ uint32_t GetRealElAngle(FOC_Component *fc){
         hX = 0;
         hY = 0;
         GetHallXYScale(&fc->lc,&hx1,&hy1);
-        //物理角度 * 磁对数 = 电角度
+        #if HallXY_dir==0
         fc->hMecAngle = arctan(hx1,hy1);
+        #elif HallXY_dir==1    
+	    fc->hMecAngle = arctan(hx1,-hy1);
+        #elif HallXY_dir==2
+        fc->hMecAngle = arctan(-hx1,hy1);
+        #elif HallXY_dir==3
+        fc->hMecAngle = arctan(-hx1,-hy1);
+        #elif HallXY_dir==4
+	    //LEDR_Set();
+        fc->hMecAngle = arctan(hy1,hx1);
+	    //LEDR_Reset();
+        #elif HallXY_dir==5
+        fc->hMecAngle = arctan(hy1,-hx1);
+        #elif HallXY_dir==6
+        fc->hMecAngle = arctan(-hy1,hx1);
+        #else
+        fc->hMecAngle = arctan(-hy1,-hx1);
+        #endif
     }
     #else
     hx1 = (int16_t)(fc->x_now-fc->lc.x_offset);
 	hy1 = (int16_t)(fc->y_now-fc->lc.y_offset);
     GetHallXYScale(&fc->lc,&hx1,&hy1);
+    #if HallXY_dir==0
     fc->hMecAngle = arctan(hx1,hy1);
+    #elif HallXY_dir==1    
+	fc->hMecAngle = arctan(hx1,-hy1);
+    #elif HallXY_dir==2
+    fc->hMecAngle = arctan(-hx1,hy1);
+    #elif HallXY_dir==3
+    fc->hMecAngle = arctan(-hx1,-hy1);
+    #elif HallXY_dir==4
+	//LEDR_Set();
+    fc->hMecAngle = arctan(hy1,hx1);
+	//LEDR_Reset();
+    #elif HallXY_dir==5
+    fc->hMecAngle = arctan(hy1,-hx1);
+    #elif HallXY_dir==6
+    fc->hMecAngle = arctan(-hy1,hx1);
+    #else
+    fc->hMecAngle = arctan(-hy1,-hx1);
+    #endif
     #endif
     hElAngle = (uint32_t)fc->hMecAngle*(uint32_t)fc->PolePariNum;    //当前物理角度算出的电角度
     return hElAngle;
@@ -151,13 +186,46 @@ void GetHallXYScale(Learn_Componets *lc,int16_t *x,int16_t *y){
 //PID 控制
 int16_t PosPISControl(FOC_Component *fc){
     static int hErrCount=0;
+    static uint8_t errTime=0;
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
+    int16_t hSpeed; //误差对应的速度
     if(fc->lc.M_dir)
     //电角度和物理角度同相变化
     hError = fc->hTargetAngle - fc->hMecAngle;
     else
     hError = fc->hMecAngle - fc->hTargetAngle;
+    //为Error增加一个死区
+    if((hError>-vDeadErr)&&(hError<vDeadErr)){
+        if(errTime<80)
+        errTime++;
+        else{
+            hError = 0;
+        }
+    }else{
+        //超出误差
+        errTime = 0;    //超出了误差
+    }
+    #ifdef posLoop  //位置环
+    hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
+    #else
+    //不同的角度误差 => 对应不同速度 位置环 
+    //速度环 转速熊超过1min 1转 1s->1/6转
+    hSpeed = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
+    //限制一下最大速度 
+    //if(hSpeed>250)
+    //    hSpeed = 250;
+    //if(hSpeed<-250)
+    //    hSpeed = -250;
+    //不同速度对应不同扭矩 速度环 速度恒定
+    //目标速度 - 实际速度  = 当前误差速度
+    //本次 
+    //fc->hSpeed = fc->hMecAngle - fc->hLastMecAngle;
+    fc->hSpeed += fc->hMecAngle - fc->hLastMecAngle;
+    fc->hSpeed >>= 1;
+    fc->hLastMecAngle = fc->hMecAngle;
+    hTorqueReference = PID_Controller(&PIDSpeedHandle_M1, ( int32_t )(hSpeed-fc->hSpeed));
+    #endif
     //if((hError<0x200)&&(hError>-0x200)){
     //    if(hErrCount<200)
     //    hErrCount++;
@@ -168,8 +236,19 @@ int16_t PosPISControl(FOC_Component *fc){
     //}else{
     //    hErrCount=0;
     //}
-    hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
+    //hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
     return hTorqueReference;
+}
+//设置PID调节间隔
+void SetSPIDInterval(int16_t in){
+  vPIDInt = in;
+}
+//获取运行速度
+int16_t GetSpeedRun(void){
+  return FOC_Component_M1.hSpeed;
+}
+void SetDeadErr(uint16_t in){
+  vDeadErr = in;
 }
 /***
  * 
@@ -272,8 +351,8 @@ Err_FOC MotorRunControl(FOC_Component *fc){
             }
         }
     }else{
-				fc->hStepTime++;
-        if(fc->hStepTime>cPIDDiff){
+		fc->hStepTime++;
+        if(fc->hStepTime>(uint16_t)vPIDInt){
             fc->hStepTime = 0;
             //位置PID 当前角度和 目标角度之间的误差
             fc->Vqd.qV_Component1 = PosPISControl(fc);
@@ -307,8 +386,16 @@ void MC_RunMotorControlTasks(void){
             RunModeEn = UpNextRunModeAngle(&urm);
         }
         #ifndef testQMI
-        //当前陀螺仪多少度 目标角度要马达移到它镜像的角度 1 -> 65536-1  2 ->65536-2
-        FOC_Component_M1.hTargetAngle -= getOrientation_1ms();    //当前陀螺仪的角度
+        //int16_t oriA = getOrientation_1ms();
+        //当前陀螺仪多少度 目标值是当前角度-陀螺仪的角度 = 目标角度 误差就是陀螺仪角度的反向
+        //FOC_Component_M1.hTargetAngle = -GetOriGyroA();   //getOrientation_1ms();    //当前陀螺仪的角度
+        //FOC_Component_M1.hTargetAngle += FOC_Component_M1.hAddTargetAngle;
+        else{
+            #ifdef GyroEn
+            FOC_Component_M1.hTargetAngle = FOC_Component_M1.hMecAngle - GetOriGyroA();
+            #endif
+            FOC_Component_M1.hTargetAngle += FOC_Component_M1.hAddTargetAngle;
+        }
         #endif
     #if 0
         switch(mc_cmd_t){
@@ -417,6 +504,7 @@ void mcpwm_foc_init(void) {
 /******************************************************/
     //位置PID
     PID_HandleInit(&PIDPosHandle_M1);
+    PID_HandleInit(&PIDSpeedHandle_M1);
     /* disable IT and flags  */
     //ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
     /* Enables the ADC peripheral */

@@ -11,6 +11,8 @@
 #include "filter.h"
 #include "mc_config.h"
 #include    "EEPROM.h"
+#include "debugTab.h"
+#include "qmi8658b.h"
 
 
 static __IO uint32_t msTick=0;
@@ -18,6 +20,9 @@ static uint8_t filterInit=0;   //一阶滤波是否初始化完成
 UartRxBufDef Uart_t;
 filter_t hallXft;
 filter_t hallYft;
+//static uint8_t instNum = 0;
+//static uint8_t debugOutCount=0; //输出调试计次
+//static uint8_t debugOutInterval=0;  //调试输出间隔时间   
 //霍尔滤波主要是过滤掉低频杂波和瞬间脉冲
 //hall 滤波表格
 const int16_t hallFilter[] = {
@@ -28,6 +33,7 @@ const int16_t hallFilterV[] = {
 };
 //extern FOC_Component FOC_Component_M1;
 //#include "targets.h"
+//extern void UART1_IRQHandler(void);
 /**
  * system init
 */
@@ -44,7 +50,10 @@ void initCorePeripherals(void){
     }
 		//EE_WriteFOC(&FOC_Component_M1.lc);
 		EE_ReadFOC(&FOC_Component_M1.lc);   //读取存储的FOC 参数
+    #ifdef cUartDebugEn
+    SWD_Pin_To_PB5_PD5_Configuration();
     MX_Uart_Init();
+    #endif
     MX_ADC_Init();
     MX_TIM_Init();
     MX_NVIC_init();
@@ -350,6 +359,7 @@ void MX_Hall_init(int16_t xRaw,int16_t yRaw){
 */
 HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw){
     HallXYs hxy_t;
+    #ifdef filterFirstOrder
     if(filterInit==0){
         MX_Hall_init(xRaw,yRaw);
         hxy_t.Hallx = hallXft.filter;
@@ -358,7 +368,11 @@ HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw){
         hxy_t.Hallx = firstOrderFilter(&hallXft,xRaw);
         hxy_t.Hally = firstOrderFilter(&hallYft,yRaw);
     }
-		return hxy_t;
+    #else
+    hxy_t.Hallx = (GetHallxAD()&0xFFF)<<4;
+    hxy_t.Hally = (GetHallyAD()&0xFFF)<<4;
+    #endif
+	return hxy_t;
 }
 /**
  * @brief uart initial
@@ -368,10 +382,21 @@ HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw){
 */
 void MX_Uart_Init(void){
     UART_InitTypeDef UART_InitStructure;
+    GPIO_InitTypeDef GPIO_InitStructure;
     /* Enable UART1 clock */
     RCC_AHBPeriphClockCmd(UartTX_CLK | UartRX_CLK, ENABLE);
     GPIO_PinAFConfig(UartTX_PORT, UartTX_SOURCE, UartTX_GPIO_AF);
     GPIO_PinAFConfig(UartRX_PORT, UartRX_SOURCE, UartRX_GPIO_AF);
+    GPIO_InitStructure.GPIO_Pin = UartTX_PIN;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+    GPIO_Init(UartTX_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin = UartRX_PIN;
+    GPIO_Init(UartRX_PORT, &GPIO_InitStructure);
+
     RCC_APBPeriph2ClockCmd(RCC_APBPeriph2_UART1, ENABLE);
     UART_InitStructure.UART_BaudRate = bps_rate;
     UART_InitStructure.UART_WordLength = UART_WordLength_8b;
@@ -400,14 +425,17 @@ void UART1_IRQHandler(void)
 	if( UART_GetITStatus(UART1, UART_IT_RXNE) != RESET )
 	{
 		UART_ClearITPendingBit(UART1, UART_IT_RXNE);
-        /* receive data */
-        Uart_t.Index = (Uart_t.Index+1)%RX_BUFFER_SIZE;
-        Uart_t.Data[Uart_t.Index] = UART_ReceiveData(UART1);
-		
-		if(Uart_t.Index == 1)
-		{
-			UART_ITConfig(UART1, UART_IT_IDLE, ENABLE);
-		}
+        //if(Uart_t.FinishedFlag != SET){
+            /* receive data */
+            Uart_t.Data[Uart_t.Index] = UART_ReceiveData(UART1);
+            Uart_t.Index = (Uart_t.Index+1)&(RX_BUFFER_SIZE-1);
+            //LEDG_Xor();
+    
+		    if(Uart_t.Index == 1)
+		    {
+		    	UART_ITConfig(UART1, UART_IT_IDLE, ENABLE);
+		    }
+        //}
 	}
 	
 	if(UART_GetITStatus(UART1, UART_IT_IDLE) != RESET)
@@ -436,13 +464,132 @@ void UartSendDatas(uint8_t *p, uint8_t len)
     }
   }
 }
+/**
+ * @brief debug output uartdata
+ * 
+ * 
+*/
+//void SendUartDebug(void){
+    //static uint8_t sendCountTime=0;
+    //uint8_t data[32];
+    //sendCountTime++;
+    //if(debugOutCount!=0){
+    //     if(debugOutCount<sendCountTime){
+    //        sendCountTime = 0;
+            //间隔时间到了可以正常发码
+    //UartSendDatas(data,instNum);    //发送数据
+
+    //    }
+    //    if(debugOutCount!=0xff)
+    //    debugOutCount--;
+    //}
+//}
 /***
  * @brief 获取串口调试信息 P/I/D
  * 
  * 
 */
 void GetUartDebug(void){
-
+    uint8_t len = 0;
+    uint8_t data[32];
+    //if(Uart_t.FinishedFlag == SET){
+    //    Uart_t.FinishedFlag = RESET;
+    //    UartSendDatas(Uart_t.Data, Uart_t.Len);
+    //}
+    if((Uart_t.FinishedFlag == SET)&&(Uart_t.Data[0]==0xaa)){
+        //表示收到一帧完整信号解码调试内容
+            //
+            len = Uart_t.Data[1];   //指令数量  获取/设置 获取可以多个一次输出 设置设置一个?
+            //data[0] = 0xbb;
+            //data[1] = len;
+            uint8_t index = 0;
+            int16_t param = 0;
+            for(uint8_t i=0;i<len;i++){
+                switch(Uart_t.Data[i+2]){
+                    case GetGyroAngle:  //获取陀螺仪物理角度
+                        data[index++] = 0xbb;
+                        param = GetOriGyroA();
+                    break;
+                    case GetMecAngle:
+                        data[index++] = 0xaa;
+                        param = GetMecA();
+                    break;
+                    case GetElAngle:
+                        data[index++] = 0xcc;
+                        param = GetElA();
+                    break;
+                    case GetMecAngleAcc:
+                        data[index++] = 0xa1;
+                        param = GetAccA();
+                    break;
+                    case GetMecAngleGyro:
+                        data[index++] = 0xa2;
+                        param = GetGyroA();
+                    break;
+                    case GetMotorSpeed:
+                        data[index++] = 0xa0;
+                        param = GetSpeedRun();
+                    break;
+                    case SetPosPID_P:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetPosPIDKp(param);
+                        i += 2;
+                    break;
+                    case SetPosPID_I:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetPosPIDKi(param);
+                        i += 2;
+                    break;
+                    case SetPosPID_D:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetPosPIDKd(param);
+                        i += 2;
+                    break;
+                    case SetSpeedPID_P:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetSpeedPIDKp(param);
+                        i += 2;
+                    break;
+                    case SetSpeedPID_I:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetSpeedPIDKi(param);
+                        i += 2;
+                    break;
+                    case SetSpeedPID_D:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetSpeedPIDKd(param);
+                        i += 2;
+                    break;
+                    case SetPIDInt: //设置PID调整间隔
+                        param = (int8_t)Uart_t.Data[i+3];
+                        SetSPIDInterval(param);
+                        i += 1;
+                    break;
+                    case SetDead_Err:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetDeadErr(param);
+                        i += 2;
+                    break;
+                }
+                data[index++] = (uint8_t)((param>>8)&0xff);
+                data[index++] = (uint8_t)((param)&0xff);
+            }
+            //data[index++] = 0x44;
+            UartSendDatas(data,index);
+        Uart_t.FinishedFlag = RESET;
+    }
+}
+/**
+ * 发送串口启动
+ * 
+*/
+void sendstart(void){
+    uint8_t data[3];
+    uint8_t index = 3;
+    data[0] = 0xaa;
+    data[1] = 0x0;
+    data[2] = 0x55;
+    UartSendDatas(data,index);
 }
 /**
   * @brief  Configure SWDIO pin to GPIO function
@@ -482,17 +629,19 @@ void SWD_Pin_To_PB5_PD5_Configuration(void)
   GPIO_IOMUX_ChangePin(IOMUX_PIN8, IOMUX_PB5_SEL_PB5);
 #endif
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_SetBits(UartTX_PORT,UartTX_PIN);
+  GPIO_InitStructure.GPIO_Pin = UartTX_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
+  GPIO_Init(UartTX_PORT, &GPIO_InitStructure);
+  GPIO_SetBits(UartTX_PORT,UartTX_PIN);
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Pin = UartRX_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(UartRX_PORT, &GPIO_InitStructure);
 }
 /**
  * 
@@ -507,6 +656,9 @@ void Delay_ms(__IO uint32_t Delay)
   {
   }
 }
+uint32_t Get1msTick(void){
+    return msTick;
+}
 /***
  * @brief 
  * @param us_x10 微秒*10 提高描述精度
@@ -519,10 +671,10 @@ void delay_us(uint16_t us_x10)
     // 假如你希望每个 count 对应 1us，那么 count ≈ 48
     // 但为了更安全，我们使用一个经验公式，并通过调试校准
 
-    volatile uint32_t i;  // 关键：使用 volatile 防止优化
-    uint32_t count = (uint32_t)us_x10 * (SystemCoreClock / 300000);  // 调整此系数以接近真实 us
+    //volatile uint32_t i;  // 关键：使用 volatile 防止优化
+    //uint32_t count = (uint32_t)us_x10 * (SystemCoreClock / 300000);  // 调整此系数以接近真实 us
 
-    for (i = 0; i < count; i++) {
+    for (uint16_t i = 0; i < us_x10; i++) {
         __NOP();  // 确保插入一条空指令
     }
 }
@@ -549,10 +701,12 @@ void MX_NVIC_init(void)
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;		
     NVIC_Init(&NVIC_InitStruct);
     /* UART1 IRQ Channel configuration */
+    #ifdef cUartDebugEn
     NVIC_InitStruct.NVIC_IRQChannel = UART1_IRQn;
     NVIC_InitStruct.NVIC_IRQChannelPriority = 0x01;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;		
     NVIC_Init(&NVIC_InitStruct);
+    #endif
 
     /* UART1_IRQn interrupt configuration */
     //NVIC_InitStruct.NVIC_IRQChannel=UART1_IRQn;

@@ -315,11 +315,18 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
   }
   else
   {
-    wIntegral_Term = pHandle->hKiGain * wProcessVarError;
+    //wIntegral_Term = pHandle->hKiGain * wProcessVarError;
     //if(((pHandle->wIntegralTerm^wProcessVarError)&0x80000000)&&((pHandle->wIntegralTerm>500)||(pHandle->wIntegralTerm<-500))){
       //正负方向不一致 积分迅速减小
       //pHandle->wIntegralTerm = pHandle->wIntegralTerm>>1; // /4倍
     //}
+    if(((wProcessVarError<520)||(wProcessVarError>-520))){
+      wIntegral_Term = pHandle->hKiGain * wProcessVarError;
+      //wIntegral_Term  = 0;
+    }else{
+      wIntegral_Term  = 0;
+      //pHandle->wIntegralTerm = 0;
+    }
     wIntegral_sum_temp = pHandle->wIntegralTerm + wIntegral_Term;
 
     if ( wIntegral_sum_temp < 0 )
@@ -509,8 +516,11 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
 
   if ( pHandle->hKdGain != 0 ) /* derivative terms not used */
   {
+    //本次误差
     wDeltaError = wProcessVarError - pHandle->wPrevProcessVarError;
-    wDifferential_Term = pHandle->hKdGain * wDeltaError;
+    pHandle->wPreDeltaErr += wDeltaError;
+    pHandle->wPreDeltaErr >>= 1;
+    wDifferential_Term = pHandle->hKdGain * pHandle->wPreDeltaErr;
 
 #ifdef FULL_MISRA_C_COMPLIANCY
     wDifferential_Term /= ( int32_t )pHandle->hKdDivisor;
@@ -526,24 +536,41 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //}
 
     pHandle->wPrevProcessVarError = wProcessVarError;
-    if(((wProcessVarError^wDifferential_Term)&0x80000000)&&((wDifferential_Term>0x60)||(wDifferential_Term<-0x60))){
+    //if(((wProcessVarError^wDifferential_Term)&0x80000000)&&((wDifferential_Term>0x60)||(wDifferential_Term<-0x60))){
+    if(((wProcessVarError^wDifferential_Term)&0x80000000)){
       //微分和比例方向不一致时候积分减半
-      pHandle->wIntegralTerm = (pHandle->wIntegralTerm *180)>>8;
-      wTemp_output = PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
+    //  pHandle->wIntegralTerm = (pHandle->wIntegralTerm *180)>>8;
+      wTemp_output = (int32_t)PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
     }else{
-      wTemp_output = PI_Controller( pHandle, wProcessVarError );
+      wTemp_output = (int32_t)PI_Controller( pHandle, wProcessVarError );
     }
     //wTemp_output = PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
     if((wProcessVarError^wTemp_output)&0x80000000){
-      //pHandle->wIntegralTerm = 0;
-      wTemp_output = 0;
+      //int32_t tmp = wTemp_output;
+      //if(tmp<0)
+      //  tmp = - tmp;
+      //if(tmp>0x800){
+      //  pHandle->wIntegralTerm = 0;
+      //}else if(tmp>0x500){
+      //  pHandle->wIntegralTerm = (pHandle->wIntegralTerm)>>3;
+      //}else if(tmp>0x350){
+      //  pHandle->wIntegralTerm = (pHandle->wIntegralTerm)>>2;
+      //}else if(tmp>0x250){
+      //  pHandle->wIntegralTerm = (pHandle->wIntegralTerm )>>1;
+      //}else if(tmp>0x100){
+        pHandle->wIntegralTerm = (pHandle->wIntegralTerm *3)>>2;
+      //}else{
+      //  wTemp_output = 0;
+      //}
+      //pHandle->wIntegralTerm >>= 1;
+      //wTemp_output = 0;
     }
 
-    if ( wTemp_output > pHandle->hUpperOutputLimit )
+    if ( (int16_t)wTemp_output > pHandle->hUpperOutputLimit )
     {
       wTemp_output = pHandle->hUpperOutputLimit;
     }
-    else if ( wTemp_output < pHandle->hLowerOutputLimit )
+    else if ( (int16_t)wTemp_output < pHandle->hLowerOutputLimit )
     {
       wTemp_output = pHandle->hLowerOutputLimit;
     }

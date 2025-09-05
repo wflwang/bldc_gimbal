@@ -58,7 +58,7 @@ int EE_ReadFOC(Learn_Componets *lc){
   lc->y_offset = (int16_t)(data>>16);
   lc->xy_scale = (int16_t)(data&0xffff);
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+16);
-  lc->y_offset = (int16_t)(data>>16);
+  lc->gyroVz_Bais = (int16_t)(data>>16);
   if(lc->LearnFinish!=1){
     lc->LearnFinish = 0;
     return -1;
@@ -88,7 +88,7 @@ void EE_WriteFOC(Learn_Componets *lc){
   uint32_t primask = __get_PRIMASK();  // 读取PRIMASK寄存器[1](@ref)
   __disable_irq();                     // 强制关闭中断
   erase_page(EEPROM_BASE,1);
-  write_data(ADDR_FLASH_EEPROM_PAGE, data, 3);
+  write_data(ADDR_FLASH_EEPROM_PAGE, data, 4);
   // 智能恢复中断状态
   if ((primask & 0x1) == 0) {          // 判断原状态是否为开启
     __enable_irq();                   // 原开启则恢复开启[4](@ref)

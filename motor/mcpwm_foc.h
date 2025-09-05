@@ -61,6 +61,9 @@ void SetTurnRightCycle(void);
 void SetTurnHorRoll(void);
 void SetTurnVerRoll(void);
 void HorOrVerRoll(void);
+void SetSPIDInterval(int16_t in);
+int16_t GetSpeedRun(void);
+void SetDeadErr(uint16_t in);
 
 
 #endif

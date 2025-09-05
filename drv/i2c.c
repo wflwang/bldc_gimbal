@@ -18,7 +18,7 @@ void i2cRead(i2c_t* it){
     i2cBitWrite(it,(it->iic_adr<<1)|0x01);
     for(uint8_t i=0;i<it->len;i++){
         i2cSDA_IN(it);
-        *(it->data+i) = i2cBitRead(it);
+        it->data[i] = i2cBitRead(it);
         i2cSDA_OUT(it);
         if(i==(it->len-1))
         i2cNoAck(it);
@@ -36,7 +36,7 @@ void i2cWrite(i2c_t* it){
     i2cBitWrite(it,(it->iic_adr<<1));
     i2cBitWrite(it,it->data_adr);
     for(int i=0;i<it->len;i++){
-        i2cBitWrite(it,*(it->data+i));
+        i2cBitWrite(it,it->data[i]);
     }
     i2cStop(it);
 }
@@ -116,7 +116,7 @@ void i2cBitWrite(i2c_t *it,uint8_t data){
 */
 uint8_t i2cBitRead(i2c_t *it){
     uint8_t data=0;
-    for(uint8_t i=0;i<9;i++){
+    for(uint8_t i=0;i<8;i++){
         data <<= 1;
         GPIO_SetBits(it->scl_gpio,it->scl_pin);
         IIC_delay(it->delay);

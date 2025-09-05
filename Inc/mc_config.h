@@ -36,6 +36,7 @@
 //#include "usart_frame_communication_protocol.h"
 
 extern PID_Handle_t PIDPosHandle_M1;
+extern PID_Handle_t PIDSpeedHandle_M1;
 extern PWMC_Handle PWMC_Handle_M1;
 extern FOC_Component FOC_Component_M1;
 Volt_Components GetVqd(void);
@@ -50,6 +51,14 @@ void SetVertical(void);
 uint8_t GetLearnState(void);
 int16_t GetLearnGyroZBais(void);
 void SetLearnGyroZBais(int16_t vZ);
+int16_t GetMecA(void);  //获取物理角度
+int16_t GetElA(void); //获取电角度
+void SetPosPIDKp(int16_t p);  //设置位置环比例
+void SetPosPIDKi(int16_t i);  //设置位置环比例
+void SetPosPIDKd(int16_t d);  //设置位置环比例
+void SetSpeedPIDKp(int16_t p);  //速度环参数
+void SetSpeedPIDKi(int16_t i);
+void SetSpeedPIDKd(int16_t d);
 //extern PID_Handle_t PIDSpeedHandle_M1;
 //extern PID_Handle_t PIDIqHandle_M1;
 //extern PID_Handle_t PIDIdHandle_M1;

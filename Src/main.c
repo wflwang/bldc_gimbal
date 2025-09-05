@@ -14,11 +14,11 @@
 //#include    "IO.h"
 //#include    "common.h"
 //#include    "sensor.h"
-
+static uint32_t timetemp=0;
 mainState mainState_t={0};
 
 int main(void){
-      initCorePeripherals();
+    initCorePeripherals();
     //初始化IO
     //MX_GPIO_init();
     //初始化AD
@@ -30,9 +30,16 @@ int main(void){
     //初始化陀螺仪
     qmi8658x_init(GYPO_SDA_GPIO_PORT,GYPO_SDA_GPIO_PIN,GYPO_SCL_GPIO_PORT,GYPO_SCL_GPIO_PIN);
     #ifdef testQMI
+    #ifdef cUartDebugEn
+    sendstart();
+    #endif
     while(1){
       Delay_ms(1);
       getOrientation_1ms(); //获取当前角度值
+      LEDControl();   //LED控制
+      #ifdef cUartDebugEn
+      GetUartDebug(); //获取串口调试数据
+      #endif
     }
     #endif
     //初始化hall 
@@ -44,15 +51,24 @@ int main(void){
     //MX_Uart_init();
     //初始化EEPROM
     //EEPROM_init();  
-    Delay_ms(200);  //增加延迟方便SWD debug
+    Delay_ms(100);  //增加延迟方便SWD debug
     //初始化中断
     //MX_NVIC_init();
     while(1){
         //Scan_GYPO();    //扫描陀螺仪控制
-        Delay_ms(1);  //增加延迟方便SWD debug
-        fScanButton();   //扫描按键功能
-        LEDControl();   //LED控制
-        //GetUartDebug(); //获取串口调试数据
+        uint32_t time1ms = Get1msTick();
+        if((time1ms-timetemp)>1){
+          timetemp = time1ms;
+          //LEDR_Set();
+          //Delay_ms(1);  //增加延迟方便SWD debug
+          fScanButton();   //扫描按键功能
+          LEDControl();   //LED控制
+          #ifdef cUartDebugEn
+          getOrientation_1ms();
+          GetUartDebug(); //获取串口调试数据
+          #endif
+          //LEDR_Xor();
+        }
     }
 }
 /**
