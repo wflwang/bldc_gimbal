@@ -220,11 +220,11 @@
 #define SPEED_LOOP_FREQUENCY_HZ       1000   //300 
 /*!<Execution rate of speed regulation loop (Hz) */
 //#define posLoop      //位置环 /  位置环+速度环
-#define deadErr   10 //329   //死区范围
+#define deadErr   70 //329   //死区范围
 //速度环
-#define PID_SPEED_KP_DEFAULT                 3520  //570 //175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_SPEED_KI_DEFAULT                 400  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_SPEED_KD_DEFAULT                 256  //#1500
+#define PID_SPEED_KP_DEFAULT                 150   //1520  //570 //175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_SPEED_KI_DEFAULT                 828   //400  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_SPEED_KD_DEFAULT                 200   //256  //#1500
 
 /* Speed PID parameter dividers */
 #define SP_KPDIV                       256   //64
@@ -239,9 +239,9 @@
 #define Pos_KIDIV                       8192  //16384
 #define Pos_KDDIV                       512   //512  //8192
 //PID 间隔时间
-#define cPIDDiff        1 
+#define cPIDDiff        9  //1 
 //#define filterFirstOrder      //一阶滤波
-//#define filterAV 
+#define filterAV 
 #define filterAVDeep    32
 
 /* USER CODE BEGIN PID_SPEED_INTEGRAL_INIT_DIV */

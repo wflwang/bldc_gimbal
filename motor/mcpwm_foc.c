@@ -195,24 +195,26 @@ int16_t PosPISControl(FOC_Component *fc){
     hError = fc->hTargetAngle - fc->hMecAngle;
     else
     hError = fc->hMecAngle - fc->hTargetAngle;
-    //为Error增加一个死区
-    if((hError>-vDeadErr)&&(hError<vDeadErr)){
-        if(errTime<80)
-        errTime++;
-        else{
-            hError = 0;
-        }
-    }else{
-        //超出误差
-        errTime = 0;    //超出了误差
-    }
+
     #ifdef posLoop  //位置环
     hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
     #else
     //不同的角度误差 => 对应不同速度 位置环 
-    //速度环 转速熊超过1min 1转 1s->1/6转
-    hSpeed = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
+    //速度环 转速熊超过1min 1转 1s->1/6转 err 对应角度的反数 角度期望总是要无限接近0
+    //hSpeed = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
     //限制一下最大速度 
+    if(hError>vDeadErr)
+    hSpeed = 64;    //匀速 不管在哪里都是匀速处理
+    else if(hError<vDeadErr)
+    hSpeed = -64;
+    else{   //速度逐渐变到目标速度
+        if(hSpeed>0){
+            hSpeed -= 5;
+            if(hSpeed<0)
+                hSpeed = 0;
+        }
+        hSpeed = 0;     //只设置三种速度
+    }
     //if(hSpeed>250)
     //    hSpeed = 250;
     //if(hSpeed<-250)
@@ -224,7 +226,22 @@ int16_t PosPISControl(FOC_Component *fc){
     fc->hSpeed += fc->hMecAngle - fc->hLastMecAngle;
     fc->hSpeed >>= 1;
     fc->hLastMecAngle = fc->hMecAngle;
-    hTorqueReference = PID_Controller(&PIDSpeedHandle_M1, ( int32_t )(hSpeed-fc->hSpeed));
+    int16_t errspeed = (hSpeed-fc->hSpeed);
+    //检测速度 如果速度也接近0 就认为已经到一个平衡点了 用上次的扭力就可以了
+    //为Error增加一个死区
+    //if(((hError>-vDeadErr)&&(hError<vDeadErr))&&((fc->hSpeed>-64)&&(fc->hSpeed<64))){
+    //    if(errTime<100)
+    //    errTime++;
+    //    else{
+    //        //认为打到目标 不再积分(PWM 不用再变化?)
+    //        //hError = 0; //扭矩不变化 用上次的扭矩
+    //        return GetTorque();    //获取上次的扭矩
+    //    }
+    //}else{
+    //    //超出误差
+    //    errTime = 0;    //超出了误差
+    //}
+    hTorqueReference = PID_Controller(&PIDSpeedHandle_M1, ( int32_t )errspeed);
     #endif
     //if((hError<0x200)&&(hError>-0x200)){
     //    if(hErrCount<200)
@@ -249,6 +266,10 @@ int16_t GetSpeedRun(void){
 }
 void SetDeadErr(uint16_t in){
   vDeadErr = in;
+}
+//获取扭矩
+int16_t GetTorque(void){
+    return FOC_Component_M1.Vqd.qV_Component1;
 }
 /***
  * 
@@ -393,8 +414,10 @@ void MC_RunMotorControlTasks(void){
         else{
             #ifdef GyroEn
             FOC_Component_M1.hTargetAngle = FOC_Component_M1.hMecAngle - GetOriGyroA();
-            #endif
             FOC_Component_M1.hTargetAngle += FOC_Component_M1.hAddTargetAngle;
+            #else
+            FOC_Component_M1.hTargetAngle = FOC_Component_M1.hAddTargetAngle;
+            #endif
         }
         #endif
     #if 0
