@@ -196,7 +196,7 @@
 
 /**************************    DRIVE SETTINGS SECTION   **********************/
 /* PWM generation and current reading */
-#define PWM_FREQUENCY                        10000 //25000 //10000 //10000 //8000  //10000
+#define PWM_FREQUENCY                        11000 //25000 //10000 //10000 //8000  //10000
 #define LOW_SIDE_SIGNALS_ENABLING            LS_PWM_TIMER
 #define SW_DEADTIME_NS                       200  //800   //1400   /*!< Dead-time to be inserted by FW, only if low side signals are enabled */
 
@@ -216,33 +216,44 @@
 //#define TF_KPDIV                             8192
 //#define TF_KIDIV                             8192
 
+//#define testQMI //仅仅测试陀螺仪
+#define GyroEn  //陀螺仪功能使能
+#define cUartDebugEn    //开启串口调试功能
+//#define debug_int
 /* Speed control loop */ 
 #define SPEED_LOOP_FREQUENCY_HZ       1000   //300 
 /*!<Execution rate of speed regulation loop (Hz) */
 //#define posLoop      //位置环 /  位置环+速度环
-#define deadErr   70 //329   //死区范围
+#define deadErr   100 //329   //死区范围
 //速度环
-#define PID_SPEED_KP_DEFAULT                 150   //1520  //570 //175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_SPEED_KI_DEFAULT                 828   //400  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_SPEED_KD_DEFAULT                 200   //256  //#1500
+#define PID_SPEED_KP_DEFAULT                 80 //70   //1520  //570 //175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_SPEED_KI_DEFAULT                 90 //80   //400  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_SPEED_KD_DEFAULT                 380   //256  //#1500
 
 /* Speed PID parameter dividers */
 #define SP_KPDIV                       256   //64
 #define SP_KIDIV                       8192  //16384
 #define SP_KDDIV                       512   //512  //8192
 //位置环
-#define PID_Pos_KP_DEFAULT                 55 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KP_DEFAULT                 4560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
 #define PID_Pos_KI_DEFAULT                 0 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 3456 //31200  //#1500
+#define PID_Pos_KD_DEFAULT                 1000 //31200  //#1500
 /* Speed PID parameter dividers */
 #define Pos_KPDIV                       256   //64
 #define Pos_KIDIV                       8192  //16384
 #define Pos_KDDIV                       512   //512  //8192
+
+#define MaxPosSpeed     15000
 //PID 间隔时间
-#define cPIDDiff        9  //1 
+#define cPIDDiff        2  //2ms once 500Hz
 //#define filterFirstOrder      //一阶滤波
-#define filterAV 
-#define filterAVDeep    32
+//#define filterAV 
+//#define filterAVDeep    32
+
+//输入数据去高去低滑动平均滤波 合成的角度做一阶滤波 让角度输出很稳定
+//滑动平均滤波的滤波深度 2的倍数  4/8/16/32/64/128 
+#define avFilterDeep    8
+//#define HallfilterFirstEn     //使能霍尔一阶滤波
 
 /* USER CODE BEGIN PID_SPEED_INTEGRAL_INIT_DIV */
 #define PID_SPEED_INTEGRAL_INIT_DIV 1 /*  */

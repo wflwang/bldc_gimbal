@@ -31,4 +31,4 @@ flash 32个word 256byte 一个 page 共 64 个page 第1&2个page 作为bootloade
 
 ## 仓库
 * [Gitee](https://gitee.com/szdctek/bldc_gimbal.git)
-* [Github](https://github.com/wflwang/***)
+* [Github](https://github.com/wflwang/bldc_gimbal.git)

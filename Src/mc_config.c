@@ -81,7 +81,7 @@ FOC_Component FOC_Component_M1 ={
   .lc.y_offset = 0,
   .lc.xy_scale = 1,
   .PolePariNum = POLE_PAIR_NUM,
-  .learnXYFin = 0,
+  .lc.learnXYFin = 0,
   .hElAngle = 0,
   .hStepTime = 0,  //增加时间
   .hFinalTorque    =	FINAL_I_ALIGNMENT,            
@@ -154,7 +154,7 @@ void SetVertical(void){
  * 左转
 */
 void SetTurnLeft(void){
-    FOC_Component_M1.hAddTargetAngle += 0x4000;
+    FOC_Component_M1.hAddTargetAngle -= 0x4000;
     //FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }
 /***
@@ -162,7 +162,7 @@ void SetTurnLeft(void){
  * R转
 */
 void SetTurnRight(void){
-    FOC_Component_M1.hAddTargetAngle -= 0x4000;
+    FOC_Component_M1.hAddTargetAngle += 0x4000;
     //FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }
 //获取学习的Z轴中点

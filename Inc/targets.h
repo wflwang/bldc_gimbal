@@ -11,9 +11,6 @@
 #define FIRMWARE_NAME   "gimbal"
 #define FILE_NAME   "bldc_gimbal_singal"
 #define DEAD_TIME   10
-//#define testQMI //仅仅测试陀螺仪
-//#define GyroEn  //陀螺仪功能使能
-#define cUartDebugEn    //开启串口调试功能
 #define HallXY_dir     4  //霍尔XY方向 000(x,y不变) 001(x,-y) 010(-x,y) 011(-x,-y) 100(y,x) 101(y,-x) 110(-y,x) 111(-y,-x)
 #define AccXY_dir   2
 //#define Current_ADC_PIN 
@@ -99,16 +96,16 @@
 #define Button_PWR_SOURCE       GPIO_PinSource5
 #define GetButonPWR()   GPIO_ReadInputDataBit(Button_PWR_GPIO_PORT,Button_PWR_GPIO_PIN)   
 //左旋
-#define Button_LR_GPIO_PIN     GPIO_Pin_3
-#define Button_LR_GPIO_PORT    GPIOA
-#define Button_LR_GPIO_CLK     RCC_AHBPeriph_GPIOA
-#define Button_LR_SOURCE       GPIO_PinSource3
+#define Button_LR_GPIO_PIN     GPIO_Pin_4
+#define Button_LR_GPIO_PORT    GPIOD
+#define Button_LR_GPIO_CLK     RCC_AHBPeriph_GPIOD
+#define Button_LR_SOURCE       GPIO_PinSource4
 #define GetButonLR()   GPIO_ReadInputDataBit(Button_LR_GPIO_PORT,Button_LR_GPIO_PIN)   
 //右旋
-#define Button_RR_GPIO_PIN     GPIO_Pin_4
-#define Button_RR_GPIO_PORT    GPIOD
-#define Button_RR_GPIO_CLK     RCC_AHBPeriph_GPIOD
-#define Button_RR_SOURCE       GPIO_PinSource4
+#define Button_RR_GPIO_PIN     GPIO_Pin_3
+#define Button_RR_GPIO_PORT    GPIOA
+#define Button_RR_GPIO_CLK     RCC_AHBPeriph_GPIOA
+#define Button_RR_SOURCE       GPIO_PinSource3
 #define GetButonRR()   GPIO_ReadInputDataBit(Button_RR_GPIO_PORT,Button_RR_GPIO_PIN)   
 
 //灯和控制脚定义

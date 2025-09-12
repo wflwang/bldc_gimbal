@@ -61,7 +61,10 @@ int EE_ReadFOC(Learn_Componets *lc){
   lc->gyroVz_Bais = (int16_t)(data>>16);
   if(lc->LearnFinish!=1){
     lc->LearnFinish = 0;
+    lc->learnXYFin = 0;
     return -1;
+  }else{
+    lc->learnXYFin = 1;
   }
   return 0;
 

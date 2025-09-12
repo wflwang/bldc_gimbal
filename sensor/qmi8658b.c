@@ -30,6 +30,23 @@
 #define ACCXY	-ACC_vY,-ACC_vX
 #endif
 
+#define accX_alp_raw    1000    //6000    //当前滤波系数
+#define accX_alp_min    70    //6000    //最小滤波系数
+#define accX_alp_max    65535    //最大滤波系数
+#define accY_alp_raw    1000    //6000    //当前滤波系数
+#define accY_alp_min    70    //6000    //最小滤波系数
+#define accY_alp_max    65535    //最大滤波系数
+#define gyroZ_alp_raw    1000    //当前滤波系数
+#define gyroZ_alp_min    500    //最小滤波系数
+#define gyroZ_alp_max    65535    //最大滤波系数
+
+#define accvq2_Min  0x3f40*0x3f40
+#define accvq2_Max  0x40c0*0x40c0
+#define accvq2_Mid  0x4000*0x4000
+
+#define MinGyroRun	5	//最小陀螺仪动作幅度
+
+#define accMaxPro   16  //32/256 最大可信度
 //陀螺仪参数滤波主要滤掉低频 低误差时候滤波系数小 高误差时候滤波系数大
 //陀螺仪滤波系数表格 只需要过滤掉 变化大的  ?/65536(滤波系数)=>每次增加的滤波系数
 const int16_t gyroFilter[] = {
@@ -42,10 +59,10 @@ const int16_t gyroFilterV[]={
 //加速度滤波 滤波系数要大,不能增长过快
 //加速率滤波表格
 const int16_t accFilter[] = {
-    80,560,1820,4640,10500,20000
+    80,560,1820,4640,8500,12000
 };
 const int16_t accFilterV[] = {
-    60,150,300,650,1000,2300,4000
+    60,120,200,350,600,800,1000
 };
 //互补滤波 误差越大滤波系数快速增大
 //互补滤波表格 误差越大 陀螺仪占比越多 误差越小 加速度占比越多
@@ -132,6 +149,18 @@ const int16_t accFilterV[] = {
 #define QMI8658B_GYRO_ODR_56HZ		0x07
 #define QMI8658B_GYRO_ODR_28HZ		0x08
 
+#define QMI8658B_LPF				0x06
+#define QMI8658B_LPF_AccEn			0x01
+#define QMI8658B_LPF_Acc_ODR_2d66	0x00
+#define QMI8658B_LPF_Acc_ODR_3d63	0x02
+#define QMI8658B_LPF_Acc_ODR_5d39	0x04
+#define QMI8658B_LPF_Acc_ODR_13d37	0x06
+#define QMI8658B_LPF_GYROEn			0x10
+#define QMI8658B_LPF_GYRO_ODR_2d66	0x00
+#define QMI8658B_LPF_GYRO_ODR_3d63	0x20
+#define QMI8658B_LPF_GYRO_ODR_5d39	0x40
+#define QMI8658B_LPF_GYRO_ODR_13d37	0x60
+
 #define QMI8658B_EN_Sensors			0x08
 #define QMI8658B_GYRO_EN			0x02
 #define QMI8658B_ACC_EN				0x01
@@ -201,7 +230,7 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	//it.data = &dat;
 	//i2cWrite(&it);		//reset
 	writeQMIreg(&it,QMI8658B_ConfReg,QMI8658B_ConfReg_ADR_AI);
-	writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_896HZ));
+	writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_2G|QMI8658B_ACC_ODR_896HZ));
 	//it.data_adr = QMI8658B_GYRO_Set;
 	//it.data = (QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ);
 	//i2cWrite(&it);		//reset
@@ -209,6 +238,7 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	//it.data_adr = QMI8658B_EN_Sensors;
 	//it.data = (QMI8658B_GYRO_EN|QMI8658B_ACC_EN);
 	//i2cWrite(&it);		//reset
+	//writeQMIreg(&it,QMI8658B_LPF,(QMI8658B_LPF_AccEn|QMI8658B_LPF_Acc_ODR_2d66|QMI8658B_LPF_GYROEn|QMI8658B_LPF_GYRO_ODR_13d37));
 	writeQMIreg(&it,QMI8658B_EN_Sensors,(QMI8658B_GYRO_EN|QMI8658B_ACC_EN));
 	
 	//it.data_adr = QMI8658B_ACC_Set;
@@ -308,9 +338,9 @@ void calibrationGyro(void){
 		for(int i=0;i<514;i++){
 			Delay_ms(1);		//1ms读一次陀螺仪 最快0.5s校准
 			readQmi8658b();	
-			ACC_vX = firstOrderFilter(&accXft,ACC_vX);
-			ACC_vY = firstOrderFilter(&accYft,ACC_vY);
-			GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
+			//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+			//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+			//GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
 			if(GYRO_vZ>gyroMax)
 				gyroMax = (int)GYRO_vZ;
 			else if(GYRO_vZ<gyroMin)
@@ -357,6 +387,9 @@ void readQmi8658b(void){
 	//accXft.alpha_diff = accFilter;
 	//accYft.alpha_diff = accFilter;
 	//gyroZft.alpha_diff = gyroFilter;
+	//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+	//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+	//GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
 	//firstOrderFilter(&accXft);
 	//firstOrderFilter(&accYft);
 	//firstOrderFilter(&gyroZft);
@@ -374,11 +407,31 @@ int16_t GetGYRO_Z(void){
 	return GYRO_vZ;
 }
 /***
+ * @brief 解码加速度是否处于匀速/稳定范围 稳定时候占5%比例 不稳定不能用
+ * 稳定时候还可以慢慢校准陀螺仪中点
+ * 
+ * 
+*/
+int8_t CheckCorrect(void){
+	int vx = (int16_t)ACC_vX;
+	int vy = (int16_t)ACC_vY;
+	int vz = (int16_t)ACC_vZ;
+	int vq2 = vx*vx + vy*vy + vz*vz;
+	if((vq2>accvq2_Min)&&(vq2<accvq2_Max)&&(abs(GYRO_vZ-GetLearnGyroZBais())<MinGyroRun)){
+		//在可信范围内 越接近1G 越可信 可信度越高 加速度占比越大
+		if(vq2<accvq2_Mid){
+			return (vq2-accvq2_Min)*accMaxPro/(accvq2_Mid-accvq2_Min);
+		}else{
+			return (accvq2_Max-vq2)*accMaxPro/(accvq2_Max-accvq2_Mid);
+		}
+	}else{
+		return 0;	//不可信
+	}
+}
+/***
  * @brief 获取陀螺仪算出的角度
  * 固定采样时间位1000us 固定参数方便整型运算 DPS 512 固定参数的值
  * DPS/32768 * dt * 65536/360 * vz = 积分的角度值
- * 
- * 
  * 
 */
 int16_t getOrientation_1ms(void){
@@ -386,14 +439,30 @@ int16_t getOrientation_1ms(void){
 	if(gyroInitFin==1){
 		//LEDR_Set();
 		readQmi8658b();	//读出参数	
+		//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+		//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
 		//LEDR_Reset();
 		//Acc X&Y 算出加速度轴的角度
 		accA = (int)arctan(ACCXY)*5625;	//算出加速度角
 		//DPS = 512  DPS/32768 * vZ * time(1000us)*351.5625*16*65536/360 = 增加的角度*6525
  		//gyro = lastgyro*5625 + addgyro*16
 		gyroA = ((int)(GYRO_vZ-GetLearnGyroZBais())<<5) + (int)lastOriA*5625;		//本次Z轴加速度
-		int gyroA1 = complementFilter(gyroA,accA);
-		lastOriA = (int16_t)(gyroA1/5625);	//算出当前实际角度
+		//int gyroA1 = complementFilter(gyroA,accA);
+		if(gyroA<-32768*5625){
+			gyroA = 65536*5625 + gyroA;
+		}else if(gyroA>32767*5625){
+			gyroA = -65536*5625 + gyroA;
+		}
+		//int gyroA1 = complementFilter(gyroA,accA);
+
+    	int diff = gyroA - accA;    //本次角度误差 不同误差对应不同滤波系数
+    	int gyroA1 = (diff * (int)(256-CheckCorrect())>>8)+accA;
+		if(gyroA1<-32768*5625){
+			gyroA1 = 65536*5625 + gyroA1;
+		}else if(gyroA1>32767*5625){
+			gyroA1 = -65536*5625 + gyroA1;
+		}
+		lastOriA = (int16_t)(gyroA/5625);	//算出当前实际角度
 		//data[0] = 0xaa;
 		//data[1] = (uint8_t)(lastOriA>>8);
 		//data[2] = (uint8_t)(lastOriA&0xff);
@@ -402,6 +471,28 @@ int16_t getOrientation_1ms(void){
 	}
 	return 0;
 }
+/***
+ * @brief 对加速度角度进行一阶滤波
+ * 
+ * 
+*/
+//int16_t accA_Sample(filter_t *ft,int16_t raw){
+//    static int8_t accAInit=0; //物理角度滤波初始化
+//    if(accAInit==0){
+//        ft->filter = raw;  //初始化上次速度
+//        ft->alpha_diff = accFilter;
+//        ft->alpha_diff_addV = accFilterV;
+//        ft->alpha_diff_len = sizeof(accFilter)/sizeof(int16_t);
+//        ft->alpha_raw = MecA_alp_raw;
+//        ft->alpha_min = MecA_alp_min;
+//        ft->alpha_max = MecA_alp_max
+//        accAInit = 1;
+//    }else{
+//        //求出一阶滤波后速度
+//        firstOrderFilter(ft,raw);
+//    }
+//    return ft->filter;
+//}
 /***
  * @brief 获取陀螺仪算出的角度
  * 

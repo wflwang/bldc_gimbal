@@ -41,7 +41,9 @@ void SWD_Pin_To_PB5_PD5_Configuration(void);
 void MX_Uart_Init(void);
 void UartSendDatas(uint8_t *p, uint8_t len);
 void delay_us(uint16_t us_x10);
+#ifdef HallfilterFirstEn
 void MX_Hall_init(int16_t xRaw,int16_t yRaw);
+#endif
 void GetUartDebug(void);
 void UartSendDatas(uint8_t *p, uint8_t len);
 void sendstart(void);

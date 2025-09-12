@@ -16,21 +16,31 @@
 
 
 static __IO uint32_t msTick=0;
+#ifdef HallfilterFirstEn
 static uint8_t filterInit=0;   //一阶滤波是否初始化完成
+#endif
 UartRxBufDef Uart_t;
 filter_t hallXft;
 filter_t hallYft;
+Avfilter_t avfilterHallX;
+Avfilter_t avfilterHallY;
 //static uint8_t instNum = 0;
 //static uint8_t debugOutCount=0; //输出调试计次
 //static uint8_t debugOutInterval=0;  //调试输出间隔时间   
 //霍尔滤波主要是过滤掉低频杂波和瞬间脉冲
 //hall 滤波表格
 const int16_t hallFilter[] = {
-    80,260,700,1000,1500,2500
+    40,80,120,200,400,900
 };
 const int16_t hallFilterV[] = {
-    400,700,900,1400,3800,8500,12000
+    40,60,90,150,300,500,700
 };
+#define hallX_alp_raw   1000    //当前滤波系数
+#define hallX_alp_min   100    //当前滤波系数
+#define hallX_alp_max   65535    //当前滤波系数
+#define hallY_alp_raw   1000    //当前滤波系数
+#define hallY_alp_min   100    //当前滤波系数
+#define hallY_alp_max   65535    //当前滤波系数
 //extern FOC_Component FOC_Component_M1;
 //#include "targets.h"
 //extern void UART1_IRQHandler(void);
@@ -334,43 +344,51 @@ void MX_ADC_Init(void){
  * @retval  None
  * 初始化霍尔? 初始化hall变量 XY 霍尔一阶值
 */
+#ifdef HallfilterFirstEn
 void MX_Hall_init(int16_t xRaw,int16_t yRaw){
     hallXft.alpha_diff = hallFilter;
     hallXft.alpha_diff_addV = hallFilterV;
     hallXft.alpha_diff_len = sizeof(hallFilter)/sizeof(int16_t);
-    hallXft.alpha_raw = 9000;
-    hallXft.alpha_min = 9000;
-    hallXft.alpha_max = 65535;
+    hallXft.alpha_raw = hallX_alp_raw;
+    hallXft.alpha_min = hallX_alp_min;
+    hallXft.alpha_max = hallX_alp_max;
     hallXft.filter = xRaw;
     hallYft.alpha_diff = hallFilter;
     hallYft.alpha_diff_addV = hallFilterV;
     hallYft.alpha_diff_len = sizeof(hallFilter)/sizeof(int16_t);
-    hallYft.alpha_raw = 9000;
-    hallYft.alpha_min = 9000;
-    hallYft.alpha_max = 65535;
+    hallYft.alpha_raw = hallY_alp_raw;
+    hallYft.alpha_min = hallY_alp_min;
+    hallYft.alpha_max = hallY_alp_max;
     hallYft.filter = yRaw;
     filterInit = 1;
 }
+#endif
 /**
  * @brief hall sample  Out filter value
  * @param xRaw 本次采样的Xhall
  * @param yRaw 本次采样的Yhall
+ * 改为采样时候做滑动平均滤波
  * 
 */
 HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw){
     HallXYs hxy_t;
-    #ifdef filterFirstOrder
-    if(filterInit==0){
-        MX_Hall_init(xRaw,yRaw);
-        hxy_t.Hallx = hallXft.filter;
-        hxy_t.Hally = hallYft.filter;
-    }else{
-        hxy_t.Hallx = firstOrderFilter(&hallXft,xRaw);
-        hxy_t.Hally = firstOrderFilter(&hallYft,yRaw);
-    }
-    #else
-    hxy_t.Hallx = (GetHallxAD()&0xFFF)<<4;
-    hxy_t.Hally = (GetHallyAD()&0xFFF)<<4;
+    #ifdef HallfilterFirstEn
+    //#ifdef filterFirstOrder
+    //if(filterInit==0){
+    //    MX_Hall_init(xRaw,yRaw);
+    //    hxy_t.Hallx = hallXft.filter;
+    //    hxy_t.Hally = hallYft.filter;
+    //}else{
+    //    hxy_t.Hallx = firstOrderFilter(&hallXft,xRaw);
+    //    hxy_t.Hally = firstOrderFilter(&hallYft,yRaw);
+    //}
+    //#else
+    //hxy_t.Hallx = xRaw;
+    //hxy_t.Hally = yRaw;
+    //#endif
+    #else   //滑动平均滤波
+    hxy_t.Hallx = AvFilter(&avfilterHallX,xRaw);
+    hxy_t.Hally = AvFilter(&avfilterHallY,yRaw);
     #endif
 	return hxy_t;
 }
@@ -530,6 +548,10 @@ void GetUartDebug(void){
                         data[index++] = 0xa0;
                         param = GetSpeedRun();
                     break;
+                    case GetTorq:
+                        data[index++] = 0xa3;
+                        param = GetTorque();
+                    break;
                     case SetPosPID_P:
                         param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
                         SetPosPIDKp(param);
@@ -574,7 +596,14 @@ void GetUartDebug(void){
                 data[index++] = (uint8_t)((param>>8)&0xff);
                 data[index++] = (uint8_t)((param)&0xff);
             }
-            //data[index++] = 0x44;
+            //index=0;
+            //data[index++] = 0xaa;
+            //param = GetSpeedRun();
+            //data[index++] = (uint8_t)((param>>8)&0xff);
+            //data[index++] = (uint8_t)((param)&0xff);
+            //param = GetTorque();
+            //data[index++] = (uint8_t)((param>>8)&0xff);
+            //data[index++] = (uint8_t)((param)&0xff);
             UartSendDatas(data,index);
         Uart_t.FinishedFlag = RESET;
     }

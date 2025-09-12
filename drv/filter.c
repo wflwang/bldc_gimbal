@@ -60,6 +60,48 @@ int complementFilter(int gyroA,int accA){
     int out_min = complementFLP_minAlpha;   //最小滤波系数
     int out_max = complementFLP_maxAlpha;   //最大滤波系数
     int pro = dataRangeMov(abs(diff),in_min,in_max,out_min,out_max);
-    int result = (((long long)diff * pro)>>8)+accA;
+    int result = (int)(((long long)diff * 256)>>8)+accA;
+    //int result = ((diff>>8) * 255)+accA;
     return result;
+}
+/***
+ * @brief 滑动平均滤波 去高去低取中间值的平均
+ * @param buff 缓存数组的指针
+ * @param len 数组长度 固定长度10个
+ * @param index 数组指针位置
+ * @param raw 当前输入的数据
+ * @return 当前的滑动平均值
+*/
+int16_t AvFilter(Avfilter_t *aft,int16_t raw){
+    int16_t maxdata = 0;    //最大数
+    int16_t mindata = 0; //最小数
+    int32_t sum = 0; //最小数
+    aft->buff[aft->index++] = raw;    
+    if(aft->index>=(avFilterDeep+2)){
+        aft->index = 0;
+        aft->avFilterInitFin = 1;    //完成初始化
+    }
+    if(aft->avFilterInitFin){
+        //选出最大最小值
+        maxdata = aft->buff[0];
+        if(maxdata>aft->buff[1])
+        mindata = aft->buff[1];
+        else{
+            maxdata = aft->buff[1];
+            mindata = aft->buff[0];
+        }
+        sum = maxdata+mindata;
+        for(uint8_t i=2;i<(avFilterDeep+2);i++){
+            sum += (int32_t)aft->buff[i];
+            if(aft->buff[i]>maxdata)
+                maxdata = aft->buff[i];
+            else if(aft->buff[i]<mindata)
+                mindata = aft->buff[i];
+        }
+        sum -= (int32_t)maxdata;
+        sum -= (int32_t)mindata;
+        sum >>= LOG2(avFilterDeep);
+        return (int16_t)sum;
+    }else
+        return raw;
 }

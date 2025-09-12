@@ -159,6 +159,7 @@ typedef struct
     uint8_t LearnFinish;  //学习完成
     uint8_t M_dir;    //马达旋转的方向
     uint8_t xyScaleDir;  //XY 对应比例关系方向 X>Y 0 / X<Y 1  增益永远小于1
+    uint8_t learnXYFin; //学习XY点是否完成
 		int16_t ElAngele_offset;  //电角度的偏差
     uint16_t x_offset;
     uint16_t y_offset;
@@ -169,7 +170,6 @@ typedef struct
 typedef struct 
 {
     Learn_Componets lc; //学习组件
-    uint8_t learnXYFin; //学习误差
     uint8_t PolePariNum; //极对数
     volatile uint32_t hElAngle;   //电角度
     //uint32_t hLastElAngle;   //上次完整电角度
@@ -180,12 +180,13 @@ typedef struct
     int16_t endAngle; //结束角度
     volatile int16_t hSpeed;   //当前速度
     //uint8_t x_step; //hallx 动作步骤
-    uint16_t x_now;
+    //uint16_t x_now;
+    HallXYs xy_now;
     //uint16_t x_Start;
     volatile uint16_t x_Max;
     volatile uint16_t x_Min;
     //uint8_t y_step; //hallx 动作步骤
-    uint16_t y_now;
+    //uint16_t y_now;
     //uint16_t y_Start;
     volatile uint16_t y_Max;
     volatile uint16_t y_Min;

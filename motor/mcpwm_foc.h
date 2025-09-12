@@ -7,6 +7,7 @@
 #ifndef __MCPWM_FOC_H
 #define __MCPWM_FOC_H
 #include    "main.h"
+#include    "filter.h"
 
 #if 0
 /***
@@ -63,7 +64,11 @@ void SetTurnVerRoll(void);
 void HorOrVerRoll(void);
 void SetSPIDInterval(int16_t in);
 int16_t GetSpeedRun(void);
-void SetDeadErr(uint16_t in);
+void SetDeadErr(int16_t in);
+int16_t Speed_Sample(filter_t *ft,int16_t raw);
+int16_t GetTorque(void);
+int16_t MecA_Sample(filter_t *ft,int16_t raw);  //物理角度采样滤波
+int16_t CalMecAngle(FOC_Component *fc); //获取当前物理角度
 
 
 #endif

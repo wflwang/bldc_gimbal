@@ -15,17 +15,9 @@
 #define QMI8658B_ADDRESS            0x6a
 #endif
 
-#define accX_alp_raw    1000    //6000    //当前滤波系数
-#define accX_alp_min    1000    //6000    //最小滤波系数
-#define accX_alp_max    65535    //最大滤波系数
-#define accY_alp_raw    1000    //6000    //当前滤波系数
-#define accY_alp_min    1000    //6000    //最小滤波系数
-#define accY_alp_max    65535    //最大滤波系数
-#define gyroZ_alp_raw    1000    //当前滤波系数
-#define gyroZ_alp_min    500    //最小滤波系数
-#define gyroZ_alp_max    65535    //最大滤波系数
-
 #define gyroCaliErr     0x40   //陀螺仪最大误差范围
+
+
 
 //#define MPU6050_CONFIG              0x1A
 //#define BITS_DLPF_CFG_256HZ         0x00
@@ -51,6 +43,7 @@ void writeQMIreg(i2c_t *it,uint8_t adr,uint8_t dat);
 int16_t GetOriGyroA(void);
 int16_t GetGyroA(void);
 int16_t GetAccA(void);
+int8_t CheckCorrect(void);
 
 
 #endif

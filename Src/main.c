@@ -61,10 +61,10 @@ int main(void){
           timetemp = time1ms;
           //LEDR_Set();
           //Delay_ms(1);  //增加延迟方便SWD debug
+          getOrientation_1ms();
           fScanButton();   //扫描按键功能
           LEDControl();   //LED控制
-          #ifdef cUartDebugEn
-          getOrientation_1ms();
+		      #ifdef cUartDebugEn
           GetUartDebug(); //获取串口调试数据
           #endif
           //LEDR_Xor();
