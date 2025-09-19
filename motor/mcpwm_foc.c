@@ -91,7 +91,7 @@ void CURRENT_REGULATION_IRQHandler(void){
 
 /****
  * @brief 获取实时霍尔角度 校准时候返回固定角度 正常动作时候返回当前hall采样的角度
- * @return deta
+ * @return deta  真实电角度
  * 采样时候不停的采样平均角度值
 */
 int16_t Get_HallAngle(FOC_Component *fc){
@@ -119,16 +119,18 @@ int16_t Get_HallAngle(FOC_Component *fc){
         //}
     }else{
         //获取当前X Y 霍尔的值 换算出角度
-        //hElAngle = GetRealElAngle(fc); //当前物理角度算出的电角度
-        hElAngle = (uint32_t)fc->hMecAngle*(uint32_t)fc->PolePariNum; 
-
+        hElAngle = GetRealElAngle(fc); //当前物理角度算出的电角度
+        //hElAngle = (uint16_t)fc->hMecAngle*fc->PolePariNum; 
         if(fc->lc.M_dir)   //电角度增加 物理角度是否方向一致 也是增加
-        fc->hElAngle = (int16_t)(hElAngle&0xffff) + fc->lc.ElAngele_offset;
-        else
-        fc->hElAngle = fc->lc.ElAngele_offset - (int16_t)(hElAngle&0xffff);
+        //offset = ela - mecEla
+        fc->hElAngle = (uint32_t)((uint16_t)((int16_t)(hElAngle) + fc->lc.ElAngele_offset));
+        else        //方向不一致
+        //offset = mec + ela
+        fc->hElAngle = (uint32_t)((uint16_t)(fc->lc.ElAngele_offset - (int16_t)(hElAngle)));
+        //fc->hElAngle = CalculateLoopAddSub();
         //换算出实际电角度
     }
-    return (int16_t)(fc->hElAngle&0xffff);
+    return (int16_t)(fc->hElAngle);
 }
 /***
  * @brief 计算当前物理角度
@@ -137,8 +139,8 @@ int16_t Get_HallAngle(FOC_Component *fc){
 */
 int16_t CalMecAngle(FOC_Component *fc){
     int16_t hX,hY,angle;
-    hX = (int32_t)(fc->xy_now.Hallx-fc->lc.x_offset);
-	hY = (int32_t)(fc->xy_now.Hally-fc->lc.y_offset);
+    hX = (int16_t)(fc->xy_now.Hallx-fc->lc.x_offset);
+	hY = (int16_t)(fc->xy_now.Hally-fc->lc.y_offset);
     GetHallXYScale(&fc->lc,&hX,&hY);
     #if HallXY_dir==0
     angle = arctan(hX,hY);
@@ -193,7 +195,6 @@ int16_t MecA_Sample(filter_t *ft,int16_t raw){
 */
 uint32_t GetRealElAngle(FOC_Component *fc){
     //static int32_t hX=0,hY=0,hcount=0;
-    uint32_t hElAngle;
     #if 0
     int16_t hx1,hy1;
     #ifdef filterAV
@@ -213,10 +214,8 @@ uint32_t GetRealElAngle(FOC_Component *fc){
     #else
     GetMecAngle(fc);
     #endif
-
     #endif
-    hElAngle = (uint32_t)fc->hMecAngle*(uint32_t)fc->PolePariNum;    //当前物理角度算出的电角度
-    return hElAngle;
+    return (uint32_t)((uint16_t)fc->hMecAngle*fc->PolePariNum);    //当前物理角度算出的电角度
 }
 /***
  * 
@@ -225,9 +224,9 @@ uint32_t GetRealElAngle(FOC_Component *fc){
 */
 void GetHallXYScale(Learn_Componets *lc,int16_t *x,int16_t *y){
     if(lc->xyScaleDir==0){  //X>Y
-        *x  =   ((lc->xy_scale * (*x)) >>16);
+        *x  =   (int16_t)(((int32_t)lc->xy_scale * (*x)) >>16);
     }else{  // X<Y
-        *y  =   ((lc->xy_scale * (*y)) >>16);
+        *y  =   (int16_t)(((int32_t)lc->xy_scale * (*y)) >>16);
     }
 }
 //**************************************************************
@@ -238,17 +237,40 @@ int16_t PosPISControl(FOC_Component *fc){
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
     int16_t hSpeed; //误差对应的速度
+    if(FOC_Component_M1.hAddTargetAngle!=FOC_Component_M1.hAddActTargetAngle){
+        hError = FOC_Component_M1.hAddTargetAngle-FOC_Component_M1.hAddActTargetAngle;
+        if(hError>0){
+            FOC_Component_M1.hAddActTargetAngle += 16;
+            hError = FOC_Component_M1.hAddTargetAngle-FOC_Component_M1.hAddActTargetAngle;
+            if(hError<0)
+                FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
+        }else{
+            FOC_Component_M1.hAddActTargetAngle -= 16;
+            hError = FOC_Component_M1.hAddTargetAngle-FOC_Component_M1.hAddActTargetAngle;
+            if(hError>0)
+                FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
+        }
+        //if(FOC_Component_M1.hAddTargetAngle>FOC_Component_M1.hAddActTargetAngle){
+        //    FOC_Component_M1.hAddActTargetAngle += 12;
+        //    if(FOC_Component_M1.hAddActTargetAngle>FOC_Component_M1.hAddTargetAngle)
+        //        FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
+        //}else{
+        //    FOC_Component_M1.hAddActTargetAngle -= 12;
+        //    if(FOC_Component_M1.hAddActTargetAngle<FOC_Component_M1.hAddTargetAngle)
+        //        FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
+        //}
+    }
     if(fc->lc.M_dir){
         //电角度和物理角度同相变化
         #ifdef GyroEn
-        hError = -GetOriGyroA() + FOC_Component_M1.hAddTargetAngle;
+        hError = -GetOriGyroA() + FOC_Component_M1.hAddActTargetAngle;
         #else
         hError = fc->hTargetAngle - fc->hMecAngle;
         #endif
     }
     else{
         #ifdef GyroEn
-        hError = GetOriGyroA() - FOC_Component_M1.hAddTargetAngle;
+        hError = GetOriGyroA() - FOC_Component_M1.hAddActTargetAngle;
         #else
         hError = fc->hMecAngle - fc->hTargetAngle;
         #endif
@@ -275,13 +297,14 @@ int16_t PosPISControl(FOC_Component *fc){
     ////    //}
     //    hSpeed = 0;     //只设置三种速度
     //}
+    //hSpeed = -hSpeed;
     if(hSpeed>MaxPosSpeed)
         hSpeed = MaxPosSpeed;
     if(hSpeed<-MaxPosSpeed)
         hSpeed = -MaxPosSpeed;
-    if((hSpeed<vDeadErr)&&(hSpeed>-vDeadErr)){
-        hSpeed = 0;
-    }
+    //if((hSpeed<vDeadErr)&&(hSpeed>-vDeadErr)){
+    //    hSpeed = 0;
+    //}
     //不同速度对应不同扭矩 速度环 速度恒定
     //目标速度 - 实际速度  = 当前误差速度
     //本次 
@@ -290,16 +313,28 @@ int16_t PosPISControl(FOC_Component *fc){
     //fc->hSpeed += fc->hMecAngle - fc->hLastMecAngle;
     //速度一阶滤波
     //fc->hSpeed >>= 1;
-    int32_t tempsp = (int32_t)fc->hMecAngle - (int32_t)fc->hLastMecAngle;
-    if((tempsp>INT16_MAX)||(tempsp<INT16_MIN)){
-        tempsp = -tempsp;
-    }
-    fc->hSpeed = Speed_Sample(&speedft,(int16_t)tempsp);
+    int16_t tempsp = fc->hLastMecAngle - fc->hMecAngle;
     fc->hLastMecAngle = fc->hMecAngle;
+    //if(tempsp>INT16_MAX){
+    //    tempsp = tempsp - 65536; 
+    //}else if(tempsp<INT16_MIN){
+    //    tempsp = 65536 + tempsp; 
+    //}
+    //if((tempsp>INT16_MAX)||(tempsp<INT16_MIN)){
+    //    tempsp = -tempsp;
+    //}
+    //fc->hSpeed = Speed_Sample(&speedft,tempsp);
+    fc->hSpeed = tempsp;
+    //fc->hLastMecAngle = fc->hMecAngle;
     //获取目标速度和本次速度的误差
-    int32_t errspeed = ((int32_t)hSpeed-(int32_t)fc->hSpeed);
-    if((errspeed>INT16_MAX)||(errspeed<INT16_MIN))
-        errspeed = -errspeed;
+    int16_t errspeed = (hSpeed-fc->hSpeed);
+    //if(errspeed>INT16_MAX){
+    //    errspeed = errspeed - 65536; 
+    //}else if(errspeed<INT16_MIN){
+    //    errspeed = 65536 + errspeed; 
+    //}
+    //if((errspeed>INT16_MAX)||(errspeed<INT16_MIN))
+    //    errspeed = -errspeed;
     //检测速度 如果速度也接近0 就认为已经到一个平衡点了 用上次的扭力就可以了
     //为Error增加一个死区
     //if(((hError>-vDeadErr)&&(hError<vDeadErr))&&((fc->hSpeed>-64)&&(fc->hSpeed<64))){
@@ -315,7 +350,7 @@ int16_t PosPISControl(FOC_Component *fc){
     //    errTime = 0;    //超出了误差
     //}
     //速度环算出当前扭矩的增量
-    hTorqueReference = PID_Controller(&PIDSpeedHandle_M1, errspeed);
+    hTorqueReference = PID_Controller(&PIDSpeedHandle_M1, ( int32_t )errspeed);
     #endif
     //if((hError<0x200)&&(hError>-0x200)){
     //    if(hErrCount<200)
@@ -374,10 +409,10 @@ int16_t Speed_Sample(filter_t *ft,int16_t raw){
 */
 Err_FOC MotorRunControl(FOC_Component *fc){
     static uint8_t CountTime=0;
-    static uint32_t  offsetErr1;
-    static uint32_t  offsetErr2;
-    uint32_t  offsetErrTmp1=0; 
-    uint32_t  offsetErrTmp2=0; 
+    static int16_t  offsetErr1;
+    static int16_t  offsetErr2;
+    static int32_t  offsetErrTmp1=0; 
+    static int32_t  offsetErrTmp2=0; 
     uint32_t hElAngle=0;
 
     if(fc->lc.learnXYFin){
@@ -417,11 +452,11 @@ Err_FOC MotorRunControl(FOC_Component *fc){
                     fc->hElAngle += 0x80;   //0x40; //每次0.35度 开环转起来
                     if(((fc->hElAngle>>16)&0xffff)==(fc->PolePariNum+1)){
                         //极对数一对上 得出hall xy 的中点
-                        fc->lc.x_offset = (fc->x_Max+fc->x_Min)>>1;
-                        fc->lc.y_offset = (fc->y_Max+fc->y_Min)>>1;
+                        fc->lc.x_offset = (((uint32_t)fc->x_Max+fc->x_Min)>>1);
+                        fc->lc.y_offset = (((uint32_t)fc->y_Max+fc->y_Min)>>1);
                         uint16_t tempx = (fc->x_Max-fc->x_Min); //x max range
                         uint16_t tempy = (fc->y_Max-fc->y_Min); //y max range
-                        if((tempx<0x4bff)||(tempy<0x4bff)){
+                        if((tempx<0x4000)||(tempy<0x4000)){
                             //范围过小 学习不正常 重新学习
                             fc->hStepTime = 0;
                             return err_learn;
@@ -442,29 +477,46 @@ Err_FOC MotorRunControl(FOC_Component *fc){
                 }else{
 										//fc->hElAngle += 0x100; //每次1.4度 开环转起来
                     if(fc->hElAngle==0){
-                        hElAngle = (uint32_t)fc->hMecAngle*(uint32_t)fc->PolePariNum;
+                        //获取当前物理角度算出的电角度
+                        hElAngle = GetRealElAngle(fc);
+                        offsetErr1 = fc->hMecAngle;     //获取本次物理角度
+                        offsetErr2 = 0;
                         //当前物理角度换算出的电角度和实际电角度偏差
-                        offsetErr1 = (fc->hElAngle&0xffff) - (hElAngle&0xffff); //不知道是正还是反
-                        offsetErr2 = (fc->hElAngle&0xffff) + (hElAngle&0xffff);
-												fc->hElAngle += 0x80; //每次1.4度 开环转起来
+                        //当前电角度 - 计算出的物理角度
+                        //offsetErr1 = (int32_t)((fc->hElAngle&0xffff) - (hElAngle&0xffff)); //不知道是正还是反
+                        //offsetErr2 = (int32_t)((fc->hElAngle&0xffff) + (hElAngle&0xffff));
+                        offsetErrTmp1 = ((int32_t)(fc->hElAngle&0xffff) - (int32_t)(hElAngle&0xffff));
+                        offsetErrTmp1 = CalculateLoopAddSub(offsetErrTmp1); //算出差值
+                        offsetErrTmp2 = ((int32_t)(fc->hElAngle&0xffff) + (int32_t)(hElAngle&0xffff));
+                        offsetErrTmp2 = CalculateLoopAddSub(offsetErrTmp2); //算出差值
+					    fc->hElAngle += 0x80; //每次1.4度 开环转起来
                     }else{
                         fc->hElAngle += 0x80; //每次1.4度 开环转起来
-                        hElAngle = (uint32_t)fc->hMecAngle*(uint32_t)fc->PolePariNum;
-                        offsetErrTmp1 = (fc->hElAngle&0xffff) - (hElAngle&0xffff);
-                        offsetErrTmp2 = (fc->hElAngle&0xffff) + (hElAngle&0xffff);
-                        offsetErr1 += offsetErrTmp1;
-                        offsetErr2 += offsetErrTmp2;
+                        hElAngle = GetRealElAngle(fc);
+                        //本次物理角度和上次物理角度差值
+                        offsetErr2 += (fc->hMecAngle - offsetErr1);     //获取本次物理角度
+                        offsetErr1 = fc->hMecAngle;     //获取本次物理角度
+                        //算出电角度的偏差
+                        offsetErrTmp1 += CalculateLoopAddSub(((int32_t)(fc->hElAngle&0xffff) - (int32_t)(hElAngle&0xffff))); //算出差值
+                        offsetErrTmp2 += CalculateLoopAddSub(((int32_t)(fc->hElAngle&0xffff) + (int32_t)(hElAngle&0xffff))); //算出差值
+                        //offsetErrTmp1 += offsetErr2;    //差值的和
+                        //offsetErr2 += offsetErrTmp2;
                         if(fc->hElAngle==0x1000){
-                            //前面加了16次
-                            offsetErr1 = offsetErr1>>5;
-                            offsetErr2 = offsetErr2>>5;
-                            if((offsetErr1-offsetErrTmp1)<(offsetErr2-offsetErrTmp2)){
+                            //前面加了32次
+                            offsetErrTmp1 = offsetErrTmp1>>5; 
+                            offsetErrTmp2 = offsetErrTmp2>>5; 
+                            //offsetErr1 = offsetErr1>>5;
+                            //offsetErr2 = offsetErr2>>5;
+                            //谁的平均误差小 说明
+                            if(offsetErr2>0){
+                                //电角度增大 物理角度也是增加
                                 //正向误差小
                                 fc->lc.M_dir = 1;   //马达方向正    实际电角度-换算电角度
-                                fc->lc.ElAngele_offset = (int16_t)offsetErr1;
+                                fc->lc.ElAngele_offset = (int16_t)offsetErrTmp1;
                             }else{
+                                //电角度增加 物理角度减小
                                 fc->lc.M_dir = 0;
-                                fc->lc.ElAngele_offset = (int16_t)offsetErr2;
+                                fc->lc.ElAngele_offset = (int16_t)offsetErrTmp2;
                             }
                             fc->lc.LearnFinish  =   1;  //学习完成
                             EE_WriteFOC(&fc->lc); //把学习的参数写入EEPROM

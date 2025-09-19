@@ -124,7 +124,7 @@ int32_t MCM_Sqrt( int32_t wInput );
 uint32_t MCM_floatToIntBit( float x );
 
 //search tan
-int16_t arctanSearch(uint16_t pr);
+uint16_t arctanSearch(uint16_t pr);
 //arctan
 int16_t arctan(int16_t x, int16_t y);
 //最大最小赋值
@@ -132,6 +132,8 @@ void MaxMinUpDate(uint16_t *now,uint16_t *max,uint16_t *min);
 int dataRangeMov(int in_raw,int in_min,int in_max,int out_min,int out_max);
 //计算两个int16 相加可能会溢出的情况
 int16_t CalculateAdd16(int16_t A,int16_t B);
+//环形加减法 溢出后回到环形位置
+int32_t CalculateLoopAddSub(int32_t sum);
 
 
 /**

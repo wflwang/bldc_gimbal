@@ -86,6 +86,8 @@ FOC_Component FOC_Component_M1 ={
   .hStepTime = 0,  //增加时间
   .hFinalTorque    =	FINAL_I_ALIGNMENT,            
   .hDurationms     =	ALIGNMENT_DURATION,   
+  .hAddActTargetAngle = 0,
+  .hAddTargetAngle = 0,
 };
 
 Volt_Components GetVqd(void){

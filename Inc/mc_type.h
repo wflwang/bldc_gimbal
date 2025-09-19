@@ -99,8 +99,8 @@ typedef struct
 
 typedef struct 
 {
-  int16_t Hallx;
-  int16_t Hally;
+  uint16_t Hallx;
+  uint16_t Hally;
 }HallXYs;
 //单轴ACC XY gyro Z 合集
 typedef struct 
@@ -177,6 +177,7 @@ typedef struct
     volatile int16_t hLastMecAngle;
     int16_t hTargetAngle; //目标物理角度
     int16_t hAddTargetAngle;  //增加的角度
+    int16_t hAddActTargetAngle;  //实际增加的角度
     int16_t endAngle; //结束角度
     volatile int16_t hSpeed;   //当前速度
     //uint8_t x_step; //hallx 动作步骤

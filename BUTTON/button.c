@@ -106,7 +106,7 @@ void ScanButton(button_t *bt){
             case 2:
                 bt->BtTime = 0; //清除计时
             break;
-            case 3:
+            case 3:     //长按
             default:
                 if(bt->BtTime<60000)
                 bt->BtTime++;   //长按计时

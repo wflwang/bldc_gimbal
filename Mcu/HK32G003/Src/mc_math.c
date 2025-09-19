@@ -513,7 +513,8 @@ Trig_Components MCM_Trig_Functions( int16_t hAngle )
   /* 10 bit index computation  */
   shindex = ( ( int32_t )32768 + ( int32_t )hAngle );
   uhindex = ( uint16_t )shindex;
-  uhindex /= ( uint16_t )64;
+  //uhindex /= ( uint16_t )64;
+  uhindex >>= 6;
 
  
   switch ( ( uint16_t )( uhindex ) & SIN_MASK )
@@ -545,12 +546,12 @@ Trig_Components MCM_Trig_Functions( int16_t hAngle )
 /****
  * @brief 从0-45 度表中 搜索arctan 值
  * @param pr = y/x*65536
- * @return 0-128
+ * @return 0-256
 */
-int16_t arctanSearch(uint16_t pr){
-  int16_t max = 256;  //实在表格中不存在
-  int16_t min = 0;
-  int16_t index = 0x80;
+uint16_t arctanSearch(uint16_t pr){
+  uint16_t max = 256;  //实在表格中不存在
+  uint16_t min = 0;
+  uint16_t index = 0x80;
   while(max>min){
     index = (max+min)>>1;
     if(pr<hTan_Table[index]){
@@ -570,13 +571,14 @@ int16_t arctanSearch(uint16_t pr){
 */
 int16_t arctan(int16_t x, int16_t y){
 // 处理零值
+#if 0
     if (x == 0 && y == 0) return 0; // 未定义角度，返回0
     if (x == 0) return (y > 0) ? 0x4000 : 0xC000; // 90°或270°
     if (y == 0) return (x > 0) ? 0x0000 : 0x8000; // 0°或180°
-    int16_t abs_x = abs(x);
-    int16_t abs_y = abs(y);
+    int32_t abs_x = abs((int32_t)x);
+    int32_t abs_y = abs((int32_t)y);
     // 计算斜率（Q16格式）
-    int32_t ratio;
+    uint32_t ratio;
     int16_t base_angle;
 
     // 特殊角度判断（45°倍数）
@@ -587,8 +589,8 @@ int16_t arctan(int16_t x, int16_t y){
 
     if (abs_x > abs_y) { //1<45 2>135 3<225 4<315
         // 第一象限 <45° 的情况：直接查表
-        ratio = ((int32_t)abs_y << 16) / abs_x; // Q16: y/x
-        base_angle = arctanSearch((int16_t)ratio) << 5;    // 0-45° → 0x0000-0x2000
+        ratio = ((uint32_t)abs_y << 16) / (uint32_t)abs_x; // Q16: y/x
+        base_angle = (int16_t)(arctanSearch((uint16_t)ratio) << 5);    // 0-45° → 0x0000-0x2000
         if(x>0){
           if(y>0){
             return base_angle;    //1
@@ -604,8 +606,8 @@ int16_t arctan(int16_t x, int16_t y){
         }
     } else { 
         // 第一象限 >45° 的情况：用 90° - arctan(|x|/|y|)
-        ratio = ((int32_t)abs_x << 16) / abs_y; // Q16: x/y
-        base_angle = (arctanSearch((uint16_t)ratio) << 5); // 90° - 锐角
+        ratio = ((uint32_t)abs_x << 16) / (uint32_t)abs_y; // Q16: x/y
+        base_angle = (int16_t)(arctanSearch((uint16_t)ratio) << 5); // 90° - 锐角
         if(x>0){
           if(y>0){
             return 0x4000-base_angle; //1
@@ -620,66 +622,49 @@ int16_t arctan(int16_t x, int16_t y){
           }
         }
     }
-  /*
-  if(y>=0){
-    //1,2 象限
-    if(x>0){
-      //1象限
-      if(x==y){
-        //45度 - 1
-        return 0x2000;
-      }else if(x>y){
-        //<45
-        return (arctanSearch((y<<16)/x)<<6);  //0-0x2000
-      }else{
-        //45<?<90
-        return 0x4000-(arctanSearch((x<<16)/y)<<6); //0x4000 - 0x2000
-      }
-    }else{
-      //2象限
-      x = -x; //方向调整
-      if(x==y){
-        //135度 - 1
-        return 0x6000;
-      }else if(x>y){
-        //135 - 180
-        return 0x8000-(arctanSearch((y<<16)/x)<<6); //0x6000 - 0x8000
-      }else{
-        //90<?<135
-        return 0x4000+(arctanSearch((x<<16)/y)<<6);  //0x4000 - 0x6000
-      }
+#endif
+#if 1
+    if (x == 0 && y == 0) return 0;
+    //if (x == 0) return (y > 0) ? 0x4000 : 0xC000; // 90°或270°
+    //if (y == 0) return (x > 0) ? 0x0000 : 0x8000; // 0°或180°
+    
+    // 计算绝对值比
+    int32_t abs_x = abs((int32_t)x);  //(0-32768)
+    int32_t abs_y = abs((int32_t)y);  //(0-32768)
+    uint32_t ratio;
+    
+    if (abs_x > abs_y) {
+        ratio = ((uint32_t)abs_y << 16) / (uint32_t)abs_x;
+    } else {
+        if(abs_x == abs_y)
+        ratio = 0xffff;
+        else
+        ratio = ((uint32_t)abs_x << 16) / (uint32_t)abs_y;
     }
-  }else{
-    //3.4 象限
-    y = -y; //方向调整
-    if(x>0){
-      //4象限
-      if(x==y){
-        //315度 - 1
-        return 0xe000;
-      }else if(x>y){
-        //315 - 360
-        return 0x0-(arctanSearch((y<<16)/x)<<6);   //0x6000 - 0x8000
-      }else{
-        //270<?<315
-        return 0xc000+(arctanSearch((x<<16)/y)<<6);   //0xc000 - 0xe000
-      }
-    }else{
-      //3象限
-      x = -x; //方向调整
-      if(x==y){
-        //225度 - 1
-        return 0xa000;
-      }else if(x>y){
-        //180 - 225
-        return 0x8000+(arctanSearch((y<<16)/x)<<6);   //0x6000 - 0x8000
-      }else{
-        //225<?<270
-        return 0xc000-(arctanSearch((x<<16)/y)<<6);   //0xc000 - 0xe000
-      }
+    
+    // 查表得到锐角 (0-45°)
+    uint16_t acute_angle = arctanSearch((uint16_t)ratio)<<5;  //0-256 <<5 =>0-0x2000
+    
+    // 计算基础角度
+    int32_t angle;
+    if (abs_x > abs_y) {
+        angle = acute_angle; // 0-45° 0-0x2000
+    } else {
+        angle = 0x4000 - acute_angle; // 45-90° 0x4000-0x2000
     }
-  }
-  */
+    
+    // 根据象限调整
+    if (x >= 0) {
+        angle = (y >= 0) ? angle : -angle; // 第一或第四象限  (0-0x2000),(0-0xe000),(0x4000-0x2000),(0xc000,0xe000)
+    } else {
+      //(0x8000,0x6000),(0xc000,0xa000)
+        angle = (y >= 0) ? 0x8000 - angle : 0x8000 + angle; // 第二或第三象限
+    }
+    
+    // 规范化到 [0, 0xFFFF]
+    if (angle < 0) angle += 0x10000;
+    return (int16_t)angle;
+#endif
 }
 /***
  * @brief 范围平移 输入一个范围之间的数比例对应到另一个输入范围之间的数
@@ -722,7 +707,7 @@ void MaxMinUpDate(uint16_t *now,uint16_t *max,uint16_t *min){
   }
 }
 /***
- * @brief 带进位的加法 限制幅度  int16
+ * @brief 带进位的加法 限制幅度  防止溢出的加法
  * 
 */
 int16_t CalculateAdd16(int16_t A,int16_t B){
@@ -733,10 +718,25 @@ int16_t CalculateAdd16(int16_t A,int16_t B){
     }
   }else{
     if((A<0)&&(B<0)){
-      c = -INT16_MAX;
+      c = INT16_MIN;
     }
   }
   return c;
+}
+/***
+ * @brief int16 环形加减
+ * @param sum a+b / a - b
+ * @param b 
+ * a + b / a-b
+ * 
+*/
+int32_t CalculateLoopAddSub(int32_t sum){
+  if(sum>INT16_MAX){
+    sum = sum - 65536;
+  }else if(sum<INT16_MIN){
+    sum = 65536 - sum;
+  }
+  return sum;
 }
 
 #if defined (CCMRAM)

@@ -370,7 +370,7 @@ void MX_Hall_init(int16_t xRaw,int16_t yRaw){
  * 改为采样时候做滑动平均滤波
  * 
 */
-HallXYs MX_Hall_Sample(int16_t xRaw,int16_t yRaw){
+HallXYs MX_Hall_Sample(uint16_t xRaw,uint16_t yRaw){
     HallXYs hxy_t;
     #ifdef HallfilterFirstEn
     //#ifdef filterFirstOrder

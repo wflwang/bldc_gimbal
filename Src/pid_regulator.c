@@ -320,8 +320,8 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //积分方向一定和比例方向一致 不一致积分清0
     if(((pHandle->wIntegralTerm^wProcessVarError)&0x80000000)){
       //正负方向不一致 积分迅速减小
-      pHandle->wIntegralTerm = 0; //积分清0
-      //pHandle->wIntegralTerm = pHandle->wIntegralTerm>>1; // /4倍
+      //pHandle->wIntegralTerm = 0; //积分清0
+      pHandle->wIntegralTerm = pHandle->wIntegralTerm>>1; // /4倍
     }
     //误差够小时候才积分
     //if(((wProcessVarError<920)&&(wProcessVarError>-920))){
@@ -546,6 +546,11 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
       //微分和比例方向不一致时候积分减半
     //  pHandle->wIntegralTerm = (pHandle->wIntegralTerm *180)>>8;
       wTemp_output = (int32_t)PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
+      if(wTemp_output>INT16_MAX){
+          wTemp_output = INT16_MAX;
+      }else if(wTemp_output<INT16_MIN){
+          wTemp_output = INT16_MIN;
+      }
     }else{
       //方向一致
       wTemp_output = (int32_t)PI_Controller( pHandle, wProcessVarError );

@@ -8,10 +8,10 @@
 #define __FILTER_H
     #include    "main.h"
 
-#define complementFLP_minDiff   50*5625        //互补滤波最小的误差 误差是*5625(>>4 = 351.5625)倍后的误差
+#define complementFLP_minDiff   16*5625        //互补滤波最小的误差 误差是*5625(>>4 = 351.5625)倍后的误差
 #define complementFLP_maxDiff   500*5625        //互补滤波最大的误差
-#define complementFLP_minAlpha   228        //互补滤波最小的滤波系数 208/256
-#define complementFLP_maxAlpha   255    //252        //互补滤波最大滤波系数  252/256
+#define complementFLP_minAlpha   9 //64     //228        //互补滤波最小的滤波系数 208/256
+#define complementFLP_maxAlpha   4    //255    //252        //互补滤波最大滤波系数  252/256
 
 /**
  * 滤波参数结构体
@@ -35,7 +35,12 @@ typedef struct
 {
     uint8_t index; //滤波误差表格长度
     uint8_t avFilterInitFin;    //初始化完成标志
-    int16_t buff[avFilterDeep+2]; //滤波后的值
+    #ifdef AvFilterSubMaxMin
+    uint16_t buff[avFilterDeep+2]; //滤波后的值
+    #else
+    uint16_t buff[avFilterDeep]; //滤波后的值
+    #endif
+    uint32_t sum;        //累加和
 }Avfilter_t;
 
 //一阶滤波
@@ -43,7 +48,7 @@ int16_t firstOrderFilter(filter_t *ft,int16_t raw);
 //一阶互补滤波
 int complementFilter(int gyroA,int accA);
 //平均滤波
-int16_t AvFilter(Avfilter_t *aft,int16_t raw);
+uint16_t AvFilter(Avfilter_t *aft,uint16_t raw);
 
 
 

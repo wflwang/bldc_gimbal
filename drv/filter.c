@@ -52,7 +52,12 @@ int16_t firstOrderFilter(filter_t *ft,int16_t raw){
  * @return 
 */
 int complementFilter(int gyroA,int accA){
-    int diff = gyroA - accA;    //本次角度误差 不同误差对应不同滤波系数
+    int diff = accA - gyroA;    //本次角度误差 不同误差对应不同滤波系数
+    if(diff<-32768*5625){   //误差 超出最大负数 认为是正向误差
+    	diff = 65536*5625 + diff;
+    }else if(diff>32767*5625){
+    	diff = diff-65536*5625;
+    }
     //误差对应范围内的位置 对应到滤波系数对应到的位置
     //误差越大 alpha 值越大 越信任陀螺仪 反之信任加速度
     int in_min = complementFLP_minDiff;  //最小误差范围
@@ -60,8 +65,14 @@ int complementFilter(int gyroA,int accA){
     int out_min = complementFLP_minAlpha;   //最小滤波系数
     int out_max = complementFLP_maxAlpha;   //最大滤波系数
     int pro = dataRangeMov(abs(diff),in_min,in_max,out_min,out_max);
-    int result = (int)(((long long)diff * 256)>>8)+accA;
+    int result = (int)(((int64_t)diff * (int64_t)pro)>>8)+gyroA;
     //int result = ((diff>>8) * 255)+accA;
+    //保证结果一定是在一个正确的范围内 环形加法 不溢出
+    if(result<-32768*5625){   //误差 超出最大负数 认为是正向误差
+    	result = 65536*5625 + result;
+    }else if(result>32767*5625){
+    	result = result-65536*5625; 
+    }
     return result;
 }
 /***
@@ -72,7 +83,8 @@ int complementFilter(int gyroA,int accA){
  * @param raw 当前输入的数据
  * @return 当前的滑动平均值
 */
-int16_t AvFilter(Avfilter_t *aft,int16_t raw){
+uint16_t AvFilter(Avfilter_t *aft,uint16_t raw){
+    #ifdef AvFilterSubMaxMin        //平均滤波有减最大最小值操作
     int16_t maxdata = 0;    //最大数
     int16_t mindata = 0; //最小数
     int32_t sum = 0; //最小数
@@ -104,4 +116,28 @@ int16_t AvFilter(Avfilter_t *aft,int16_t raw){
         return (int16_t)sum;
     }else
         return raw;
+    #else
+    if(aft->avFilterInitFin){
+        //选出最大最小值
+        aft->sum += (uint32_t)raw;
+        aft->sum -= (uint32_t)aft->buff[aft->index];
+        aft->buff[aft->index++] = raw;    
+        if(aft->index>=avFilterDeep)
+            aft->index = 0;
+        uint32_t sum = aft->sum;
+        sum >>= LOG2(avFilterDeep);
+        return (uint16_t)sum;
+    }else{
+        aft->buff[aft->index++] = raw;    
+        if(aft->index>=avFilterDeep){
+            aft->index = 0;
+            aft->avFilterInitFin = 1;    //完成初始化
+            aft->sum = 0;
+            for(uint8_t i=0;i<avFilterDeep;i++){
+                aft->sum += (uint32_t)aft->buff[i];
+            }
+        }
+        return raw;
+    }
+    #endif
 }

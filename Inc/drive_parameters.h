@@ -196,7 +196,7 @@
 
 /**************************    DRIVE SETTINGS SECTION   **********************/
 /* PWM generation and current reading */
-#define PWM_FREQUENCY                        11000 //25000 //10000 //10000 //8000  //10000
+#define PWM_FREQUENCY                        13000 //25000 //10000 //10000 //8000  //10000
 #define LOW_SIDE_SIGNALS_ENABLING            LS_PWM_TIMER
 #define SW_DEADTIME_NS                       200  //800   //1400   /*!< Dead-time to be inserted by FW, only if low side signals are enabled */
 
@@ -226,18 +226,18 @@
 //#define posLoop      //位置环 /  位置环+速度环
 #define deadErr   100 //329   //死区范围
 //速度环
-#define PID_SPEED_KP_DEFAULT                 80 //70   //1520  //570 //175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_SPEED_KI_DEFAULT                 90 //80   //400  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_SPEED_KD_DEFAULT                 380   //256  //#1500
+#define PID_SPEED_KP_DEFAULT                 430 //70   //1520  //570 //175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_SPEED_KI_DEFAULT                 120 //80   //400  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_SPEED_KD_DEFAULT                 2880   //256  //#1500
 
 /* Speed PID parameter dividers */
 #define SP_KPDIV                       256   //64
 #define SP_KIDIV                       8192  //16384
 #define SP_KDDIV                       512   //512  //8192
 //位置环
-#define PID_Pos_KP_DEFAULT                 4560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 0 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 1000 //31200  //#1500
+#define PID_Pos_KP_DEFAULT                 3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 00 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 10000  //10200 //31200  //#1500
 /* Speed PID parameter dividers */
 #define Pos_KPDIV                       256   //64
 #define Pos_KIDIV                       8192  //16384
@@ -252,6 +252,7 @@
 
 //输入数据去高去低滑动平均滤波 合成的角度做一阶滤波 让角度输出很稳定
 //滑动平均滤波的滤波深度 2的倍数  4/8/16/32/64/128 
+//#define AvFilterSubMaxMin     //开启后平均值多2个 有减最大最小值操作 单CPU消耗增多
 #define avFilterDeep    8
 //#define HallfilterFirstEn     //使能霍尔一阶滤波
 
@@ -291,9 +292,9 @@
 /******************************   START-UP PARAMETERS   **********************/
 /* Encoder alignment */
 //-> 这里电流的配置全部直接转换位电压输出控制  大约70%的力 动到0度位置
-#define ALIGN_TimeOnce        10    //每次对齐变化时间
+#define ALIGN_TimeOnce        20    //每次对齐变化时间
 #define ALIGNMENT_DURATION              800  //500 //700 /*!< milliseconds */
-#define ALIGNMENT_ANGLE_DEG             270  //90 /*!< degrees [0...359] */
+#define ALIGNMENT_ANGLE_DEG             0  //90 /*!< degrees [0...359] */
 #define FINAL_I_ALIGNMENT               15000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I3_ALIGNMENT               5600 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I4_ALIGNMENT               4700 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
