@@ -16,7 +16,8 @@
 */
 int16_t firstOrderFilter(filter_t *ft,int16_t raw){
     //如果本次误差方向和上次方向不一致 滤波系数降到最小
-    int diff = (int)raw - (int)ft->filter;
+    int16_t temp = raw - ft->filter;
+    int diff = (int)temp;
     if(((diff>0)&&(ft->lastDiff<0))||((diff<0)&&(ft->lastDiff>0))){
         //误差方向不一致 滤波系数降到最小
         ft->alpha_raw = ft->alpha_min;

@@ -496,7 +496,7 @@ int16_t getOrientation_1ms(void){
     		}else if(diff>32767*5625){
     			diff = diff-65536*5625;
     		}
-			gyroA1 = (int)((diff)>>10)+gyroA;
+			gyroA1 = (int)((diff)>>8)+gyroA;
     		//int result = ((diff>>8) * 255)+accA;
     		//保证结果一定是在一个正确的范围内 环形加法 不溢出
     		if(gyroA1<-32768*5625){   //误差 超出最大负数 认为是正向误差

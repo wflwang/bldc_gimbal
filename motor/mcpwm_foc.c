@@ -53,11 +53,11 @@ const int16_t speedFilterV[] = {
 #define speed_alp_max   65535    //当前滤波系数
 //物理角度滤波
 const int16_t MecAFilter[] = {
-    128,550,912,1524,2748,5096
+    128,550,912,1524,3248,6096
 };
 //speed 速率滤波表格
 const int16_t MecAFilterV[] = {
-    75,120,170,450,1200,3500,7000
+    75,120,170,450,900,2000,4000
 };
 #define MecA_alp_raw   1000    //当前滤波系数
 #define MecA_alp_min   75    //当前滤波系数
@@ -237,18 +237,18 @@ int16_t PosPISControl(FOC_Component *fc){
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
     int16_t hSpeed; //误差对应的速度
-    if(FOC_Component_M1.hAddTargetAngle!=FOC_Component_M1.hAddActTargetAngle){
-        hError = FOC_Component_M1.hAddTargetAngle-FOC_Component_M1.hAddActTargetAngle;
+    if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
+        hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
         if(hError>0){
-            FOC_Component_M1.hAddActTargetAngle += 16;
-            hError = FOC_Component_M1.hAddTargetAngle-FOC_Component_M1.hAddActTargetAngle;
+            fc->hAddActTargetAngle += 16;
+            hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
             if(hError<0)
-                FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
+                fc->hAddActTargetAngle = fc->hAddTargetAngle;
         }else{
-            FOC_Component_M1.hAddActTargetAngle -= 16;
-            hError = FOC_Component_M1.hAddTargetAngle-FOC_Component_M1.hAddActTargetAngle;
+            fc->hAddActTargetAngle -= 16;
+            hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
             if(hError>0)
-                FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
+                fc->hAddActTargetAngle = fc->hAddTargetAngle;
         }
         //if(FOC_Component_M1.hAddTargetAngle>FOC_Component_M1.hAddActTargetAngle){
         //    FOC_Component_M1.hAddActTargetAngle += 12;
@@ -263,16 +263,16 @@ int16_t PosPISControl(FOC_Component *fc){
     if(fc->lc.M_dir){
         //电角度和物理角度同相变化
         #ifdef GyroEn
-        hError = -GetOriGyroA() + FOC_Component_M1.hAddActTargetAngle;
+        hError = -GetOriGyroA() + fc->hAddActTargetAngle;
         #else
-        hError = fc->hTargetAngle - fc->hMecAngle;
+        hError = fc->hTargetAngle - fc->hAddActTargetAngle;
         #endif
     }
     else{
         #ifdef GyroEn
-        hError = GetOriGyroA() - FOC_Component_M1.hAddActTargetAngle;
+        hError = GetOriGyroA() - fc->hAddActTargetAngle;
         #else
-        hError = fc->hMecAngle - fc->hTargetAngle;
+        hError = fc->hMecAngle - fc->hAddActTargetAngle;
         #endif
     }
 
@@ -302,9 +302,9 @@ int16_t PosPISControl(FOC_Component *fc){
         hSpeed = MaxPosSpeed;
     if(hSpeed<-MaxPosSpeed)
         hSpeed = -MaxPosSpeed;
-    //if((hSpeed<vDeadErr)&&(hSpeed>-vDeadErr)){
-    //    hSpeed = 0;
-    //}
+    if((hSpeed<vDeadErr)&&(hSpeed>-vDeadErr)){
+        hSpeed = 0;
+    }
     //不同速度对应不同扭矩 速度环 速度恒定
     //目标速度 - 实际速度  = 当前误差速度
     //本次 
@@ -323,8 +323,8 @@ int16_t PosPISControl(FOC_Component *fc){
     //if((tempsp>INT16_MAX)||(tempsp<INT16_MIN)){
     //    tempsp = -tempsp;
     //}
-    //fc->hSpeed = Speed_Sample(&speedft,tempsp);
-    fc->hSpeed = tempsp;
+    fc->hSpeed = Speed_Sample(&speedft,tempsp);
+    //fc->hSpeed = tempsp;
     //fc->hLastMecAngle = fc->hMecAngle;
     //获取目标速度和本次速度的误差
     int16_t errspeed = (hSpeed-fc->hSpeed);

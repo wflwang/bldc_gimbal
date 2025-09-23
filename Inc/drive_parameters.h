@@ -217,7 +217,7 @@
 //#define TF_KIDIV                             8192
 
 //#define testQMI //仅仅测试陀螺仪
-#define GyroEn  //陀螺仪功能使能
+//#define GyroEn  //陀螺仪功能使能
 #define cUartDebugEn    //开启串口调试功能
 //#define debug_int
 /* Speed control loop */ 
@@ -228,7 +228,7 @@
 //速度环
 #define PID_SPEED_KP_DEFAULT                 430 //70   //1520  //570 //175   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
 #define PID_SPEED_KI_DEFAULT                 120 //80   //400  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_SPEED_KD_DEFAULT                 2880   //256  //#1500
+#define PID_SPEED_KD_DEFAULT                 3880   //256  //#1500
 
 /* Speed PID parameter dividers */
 #define SP_KPDIV                       256   //64
