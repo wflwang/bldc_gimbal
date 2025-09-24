@@ -34,5 +34,6 @@
 #define SetPosPID_D     0x8e    //设置位置环PID P
 #define SetPIDInt       0x8f    //PID调整间隔
 #define SetDead_Err     0x90    //设置死区角度
+#define SetPosLoopCount 0x91    //设置位置环间隔
 //end 0x55
 

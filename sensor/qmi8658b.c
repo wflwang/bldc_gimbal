@@ -11,6 +11,7 @@
 #include "mc_math.h"
 #include "mc_config.h"
 #include	"i2c.h"
+#include 	"button.h"
 
 #if AccXY_dir == 0
 #define ACCXY	ACC_vX,ACC_vY

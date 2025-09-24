@@ -88,6 +88,7 @@ FOC_Component FOC_Component_M1 ={
   .hDurationms     =	ALIGNMENT_DURATION,   
   .hAddActTargetAngle = 0,
   .hAddTargetAngle = 0,
+  .posCount = defposcount,
 };
 
 Volt_Components GetVqd(void){

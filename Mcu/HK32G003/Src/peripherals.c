@@ -592,6 +592,11 @@ void GetUartDebug(void){
                         SetDeadErr(param);
                         i += 2;
                     break;
+                    case SetPosLoopCount:
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        SetPosLoopInv(param);
+                        i += 2;
+                    break;
                 }
                 data[index++] = (uint8_t)((param>>8)&0xff);
                 data[index++] = (uint8_t)((param)&0xff);

@@ -69,6 +69,7 @@ int16_t Speed_Sample(filter_t *ft,int16_t raw);
 int16_t GetTorque(void);
 int16_t MecA_Sample(filter_t *ft,int16_t raw);  //物理角度采样滤波
 int16_t CalMecAngle(FOC_Component *fc); //获取当前物理角度
+void SetPosLoopInv(int16_t in);
 
 
 #endif

@@ -195,6 +195,9 @@ typedef struct
     uint16_t hStepTime;  //增加时间
     int16_t hFinalTorque;  //最后扭力
     uint16_t hDurationms; //持续时间
+    //#ifndef posLoop //有速度环时候有效
+    int16_t posCount; //速度换计次
+    //#endif
     //int16_t hx[filterAVDeep];
     //int16_t hy[filterAVDeep];
 }FOC_Component;

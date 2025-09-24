@@ -46,18 +46,18 @@ const int16_t speedFilter[] = {
 };
 //speed 速率滤波表格
 const int16_t speedFilterV[] = {
-    75,130,260,600,2200,3000,12000
+    75,130,260,600,2200,3000,7000
 };
 #define speed_alp_raw   1000    //当前滤波系数
 #define speed_alp_min   75    //当前滤波系数
 #define speed_alp_max   65535    //当前滤波系数
 //物理角度滤波
 const int16_t MecAFilter[] = {
-    128,550,912,1524,3248,6096
+    128,550,912,1524,2248,4096
 };
 //speed 速率滤波表格
 const int16_t MecAFilterV[] = {
-    75,120,170,450,900,2000,4000
+    55,85,150,450,900,2000,4500
 };
 #define MecA_alp_raw   1000    //当前滤波系数
 #define MecA_alp_min   75    //当前滤波系数
@@ -232,11 +232,12 @@ void GetHallXYScale(Learn_Componets *lc,int16_t *x,int16_t *y){
 //**************************************************************
 //PID 控制
 int16_t PosPISControl(FOC_Component *fc){
-    static int hErrCount=0;
-    static uint8_t errTime=0;
+    //static int hErrCount=0;
+    //static uint8_t errTime=0;
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
-    int16_t hSpeed; //误差对应的速度
+    static int16_t hSpeed; //误差对应的速度
+    static int16_t posCount=0;  //位置环计次 3次位置环调整一次 速度换每次都调整
     if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
         hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
         if(hError>0){
@@ -283,7 +284,11 @@ int16_t PosPISControl(FOC_Component *fc){
     #else
     //不同的角度误差 => 对应不同速度 位置环 
     //速度环 转速熊超过1min 1转 1s->1/6转 err 对应角度的反数 角度期望总是要无限接近0
-    hSpeed = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
+    if(++posCount>fc->posCount){
+        posCount = 0;
+        hSpeed = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
+    }
+    
     //限制一下最大速度 
     //if(hError>vDeadErr)
     //hSpeed = 2000;    //匀速 不管在哪里都是匀速处理
@@ -313,7 +318,13 @@ int16_t PosPISControl(FOC_Component *fc){
     //fc->hSpeed += fc->hMecAngle - fc->hLastMecAngle;
     //速度一阶滤波
     //fc->hSpeed >>= 1;
-    int16_t tempsp = fc->hLastMecAngle - fc->hMecAngle;
+    int16_t tempsp;
+    if(fc->lc.M_dir){
+        tempsp = fc->hMecAngle - fc->hLastMecAngle;
+    }
+    else{
+        tempsp = fc->hLastMecAngle - fc->hMecAngle;
+    }
     fc->hLastMecAngle = fc->hMecAngle;
     //if(tempsp>INT16_MAX){
     //    tempsp = tempsp - 65536; 
@@ -375,6 +386,9 @@ int16_t GetSpeedRun(void){
 }
 void SetDeadErr(int16_t in){
     vDeadErr = in;
+}
+void SetPosLoopInv(int16_t in){
+    FOC_Component_M1.posCount = in;
 }
 //获取扭矩
 int16_t GetTorque(void){
