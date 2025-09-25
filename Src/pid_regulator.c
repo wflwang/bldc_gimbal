@@ -318,11 +318,11 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //比例和积分方向不一致时候 积分清0
     //wIntegral_Term = pHandle->hKiGain * wProcessVarError;
     //积分方向一定和比例方向一致 不一致积分清0
-    if(((pHandle->wIntegralTerm^wProcessVarError)&0x80000000)&&(wProcessVarError!=0)){
+    //if(((pHandle->wIntegralTerm^wProcessVarError)&0x80000000)&&(wProcessVarError!=0)){
     //  //正负方向不一致 积分迅速减小
     //  //pHandle->wIntegralTerm = 0; //积分清0
-      pHandle->wIntegralTerm = pHandle->wIntegralTerm - pHandle->wIntegralTerm>>10; // /4倍
-    }
+    //  pHandle->wIntegralTerm = pHandle->wIntegralTerm - pHandle->wIntegralTerm>>12; // /4倍
+    //}
     //误差够小时候才积分
     if(((wProcessVarError<920)&&(wProcessVarError>-920))){
       wIntegral_Term = pHandle->hKiGain * wProcessVarError;

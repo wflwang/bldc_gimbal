@@ -261,19 +261,25 @@ int16_t PosPISControl(FOC_Component *fc){
         //        FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
         //}
     }
+    int16_t realyAngle = fc->hAddActTargetAngle;
+    if(fc->hAddActTargetAngle>0){
+        realyAngle = (realyAngle * 64200) >>16;
+    }else{
+        realyAngle = (realyAngle * 63536) >>16;
+    }
     if(fc->lc.M_dir){
         //电角度和物理角度同相变化
         #ifdef GyroEn
-        hError = -GetOriGyroA() + fc->hAddActTargetAngle;
+        hError = -GetOriGyroA() + realyAngle;
         #else
-        hError = fc->hTargetAngle - fc->hAddActTargetAngle;
+        hError = -fc->hMecAngle + realyAngle;
         #endif
     }
     else{
         #ifdef GyroEn
-        hError = GetOriGyroA() - fc->hAddActTargetAngle;
+        hError = GetOriGyroA() - realyAngle;
         #else
-        hError = fc->hMecAngle - fc->hAddActTargetAngle;
+        hError = fc->hMecAngle - realyAngle;
         #endif
     }
 
@@ -335,7 +341,7 @@ int16_t PosPISControl(FOC_Component *fc){
     //    tempsp = -tempsp;
     //}
     fc->hSpeed = Speed_Sample(&speedft,tempsp);
-    //fc->hSpeed = tempsp;
+    fc->hSpeed = tempsp;
     //fc->hLastMecAngle = fc->hMecAngle;
     //获取目标速度和本次速度的误差
     int16_t errspeed = (hSpeed-fc->hSpeed);

@@ -240,7 +240,7 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	//it.data = (QMI8658B_GYRO_EN|QMI8658B_ACC_EN);
 	//i2cWrite(&it);		//reset
 	//writeQMIreg(&it,QMI8658B_LPF,(QMI8658B_LPF_AccEn|QMI8658B_LPF_Acc_ODR_2d66|QMI8658B_LPF_GYROEn|QMI8658B_LPF_GYRO_ODR_13d37));
-	//writeQMIreg(&it,QMI8658B_LPF,(QMI8658B_LPF_AccEn|QMI8658B_LPF_Acc_ODR_2d66));
+	writeQMIreg(&it,QMI8658B_LPF,(QMI8658B_LPF_AccEn|QMI8658B_LPF_Acc_ODR_2d66));
 	writeQMIreg(&it,QMI8658B_EN_Sensors,(QMI8658B_GYRO_EN|QMI8658B_ACC_EN));
 	
 	//it.data_adr = QMI8658B_ACC_Set;
@@ -460,8 +460,8 @@ int16_t getOrientation_1ms(void){
 	if(gyroInitFin==1){
 		//LEDR_Set();
 		readQmi8658b();	//读出参数	
-		//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
-		//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+		ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+		ACC_vY = firstOrderFilter(&accYft,ACC_vY);
 		//LEDR_Reset();
 		//Acc X&Y 算出加速度轴的角度
 		accA = ((int)arctan(ACCXY))*5625;	//算出加速度角
@@ -497,7 +497,7 @@ int16_t getOrientation_1ms(void){
     		}else if(diff>32767*5625){
     			diff = diff-65536*5625;
     		}
-			gyroA1 = (int)((diff)>>8)+gyroA;
+			gyroA1 = (int)((diff)>>7)+gyroA;
     		//int result = ((diff>>8) * 255)+accA;
     		//保证结果一定是在一个正确的范围内 环形加法 不溢出
     		if(gyroA1<-32768*5625){   //误差 超出最大负数 认为是正向误差

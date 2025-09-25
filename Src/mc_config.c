@@ -87,7 +87,7 @@ FOC_Component FOC_Component_M1 ={
   .hFinalTorque    =	FINAL_I_ALIGNMENT,            
   .hDurationms     =	ALIGNMENT_DURATION,   
   .hAddActTargetAngle = 0,
-  .hAddTargetAngle = 0,
+  .hAddTargetAngle = gyroMidDiff,
   .posCount = defposcount,
 };
 
@@ -141,7 +141,7 @@ void Hor_Turn_Ver(void){
  * 设置到水平
 */
 void SetHorizontal(void){
-    FOC_Component_M1.hAddTargetAngle = 0;
+    FOC_Component_M1.hAddTargetAngle = gyroMidDiff;
     //FOC_Component_M1.endAngle = 0;
 }
 /**
@@ -149,7 +149,8 @@ void SetHorizontal(void){
  * 设置到垂直
 */
 void SetVertical(void){
-    FOC_Component_M1.hAddTargetAngle = 0x4000;
+    FOC_Component_M1.hAddTargetAngle = 0x4000+gyroMidDiff;
+
     //FOC_Component_M1.endAngle = 0x4000;
 }
 /***
