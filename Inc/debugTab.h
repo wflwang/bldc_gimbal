@@ -24,6 +24,8 @@
 #define GetMecAngleGyro 0x23    //陀螺仪角度
 #define GetMotorSpeed   0x33    //获取运行的速度
 #define GetTorq         0x34    //获取当前输出扭矩
+#define GetMHdir      0x35    //获取马达运动和霍尔变化方向关系=1 同向 =0反向
+#define GetGyroMid    0x36  //获取陀螺仪学习的中点
 
 #define SetMCElSpeed    0x84    //设置电机电转速
 #define SetSpeedPID_P   0x89    //速度环PID P

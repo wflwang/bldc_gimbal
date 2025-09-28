@@ -324,7 +324,7 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //  pHandle->wIntegralTerm = pHandle->wIntegralTerm - pHandle->wIntegralTerm>>12; // /4倍
     //}
     //误差够小时候才积分
-    if(((wProcessVarError<920)&&(wProcessVarError>-920))){
+    if(((wProcessVarError<1020)&&(wProcessVarError>-1020))){
       wIntegral_Term = pHandle->hKiGain * wProcessVarError;
       //wIntegral_Term  = 0;
     }else{
@@ -563,9 +563,14 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //wTemp_output = PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
     //比例误差和输出扭力控制方向不一致 说明超调了
     //if((wProcessVarError^wTemp_output)&0x80000000){
-      //int32_t tmp = wTemp_output;
-      //if(tmp<0)
-      //  tmp = - tmp;
+    //  int32_t tmp = wTemp_output;
+    //  if(tmp<0)
+    //    tmp = - tmp;
+    //  if(tmp>0x2000){
+    //      pHandle->wIntegralTerm = 0;
+    //  }else if(tmp>0x1000){
+    //      pHandle->wIntegralTerm = (pHandle->wIntegralTerm)>>1;
+    //  }
       //if(tmp>0x4800){
       //  pHandle->wIntegralTerm = 0;
       //}else if(tmp>0x3050){
@@ -577,7 +582,7 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
       //}else if(tmp>0x650){
       //  pHandle->wIntegralTerm = (pHandle->wIntegralTerm*3)>>2;
       ////}else{
-      ////  wTemp_output = 0;
+    //    wTemp_output = 0;
       //}
       //pHandle->wIntegralTerm =0;
       //wTemp_output = 0;

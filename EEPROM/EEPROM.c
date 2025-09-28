@@ -57,8 +57,9 @@ int EE_ReadFOC(Learn_Componets *lc){
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+8);
   lc->y_offset = (int16_t)(data>>16);
   lc->xy_scale = (int16_t)(data&0xffff);
-  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+16);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+12);
   lc->gyroVz_Bais = (int16_t)(data>>16);
+  lc->GyroInitAngle = (int16_t)(data&0xffff);
   if(lc->LearnFinish!=1){
     lc->LearnFinish = 0;
     lc->learnXYFin = 0;
@@ -86,7 +87,11 @@ void EE_WriteFOC(Learn_Componets *lc){
   data[0] = (((uint32_t)lc->LearnFinish<<24)|((uint32_t)lc->M_dir<<16)|((uint32_t)lc->xyScaleDir<<8));
   data[1] = (((uint32_t)lc->ElAngele_offset<<16)|((uint32_t)lc->x_offset));
   data[2] = (((uint32_t)lc->y_offset<<16)|((uint32_t)lc->xy_scale));
-  data[3] = ((uint32_t)lc->gyroVz_Bais<<16);
+  uint32_t tmp = (uint32_t)lc->gyroVz_Bais<<16;
+  tmp &= 0xffff0000;
+  uint32_t tmp1 = (uint32_t)lc->GyroInitAngle;
+  tmp1 &= 0x0000ffff;
+  data[3] = (tmp|tmp1);
   //memcpy(data, (uint8_t *)lc, sizeof(Learn_Componets));
   uint32_t primask = __get_PRIMASK();  // 读取PRIMASK寄存器[1](@ref)
   __disable_irq();                     // 强制关闭中断

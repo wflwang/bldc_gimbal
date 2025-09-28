@@ -418,7 +418,8 @@ void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
   //PWMC_SetSampPointSectX_Cb_t pSetADCSamplingPoint;
 
   wUAlpha = Valfa_beta.qV_Component1 * ( int32_t )(pHandle->hT_Sqrt3);
-  wUBeta = -( Valfa_beta.qV_Component2 * ( int32_t )( pHandle->hPWMperiod ) ) * 2;
+  //wUBeta = -( Valfa_beta.qV_Component2 * ( int32_t )( pHandle->hPWMperiod ) ) * 2;
+  wUBeta = -( Valfa_beta.qV_Component2 * ( int32_t )( pHandle->hPWMperiod ) ) << 1;
 
   wX = wUBeta;
   wY = ( wUBeta + wUAlpha ) / 2;
@@ -430,7 +431,8 @@ void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
     if ( wZ < 0 )
     {
       //pHandle->hSector = SECTOR_5;
-      wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wZ ) / ( int32_t )262144 );
+      //wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wZ ) / ( int32_t )262144 );
+      wTimePhA = (( int32_t )( pHandle->hPWMperiod ) >>2) + ( ( wY - wZ ) / ( int32_t )262144 );
       wTimePhB = wTimePhA + wZ / 131072;
       wTimePhC = wTimePhA - wY / 131072;
       //pSetADCSamplingPoint = pHandle->pFctSetADCSampPointSect5;
@@ -439,7 +441,8 @@ void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
       if ( wX <= 0 )
       {
         //pHandle->hSector = SECTOR_4;
-        wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wX - wZ ) / ( int32_t )262144 );
+        //wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wX - wZ ) / ( int32_t )262144 );
+        wTimePhA = (( int32_t )( pHandle->hPWMperiod ) >>2) + ( ( wX - wZ ) / ( int32_t )262144 );
         wTimePhB = wTimePhA + wZ / 131072;
         wTimePhC = wTimePhB - wX / 131072;
         //pSetADCSamplingPoint = pHandle->pFctSetADCSampPointSect4;
@@ -447,7 +450,8 @@ void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
       else /* wX > 0 */
       {
         //pHandle->hSector = SECTOR_3;
-        wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wX ) / ( int32_t )262144 );
+        //wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wX ) / ( int32_t )262144 );
+        wTimePhA = (( int32_t )( pHandle->hPWMperiod ) >>2) + ( ( wY - wX ) / ( int32_t )262144 );
         wTimePhC = wTimePhA - wY / 131072;
         wTimePhB = wTimePhC + wX / 131072;
         //pSetADCSamplingPoint = pHandle->pFctSetADCSampPointSect3;
@@ -458,7 +462,8 @@ void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
     if ( wZ >= 0 )
     {
       //pHandle->hSector = SECTOR_2;
-      wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wZ ) / ( int32_t )262144 );
+      //wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wZ ) / ( int32_t )262144 );
+      wTimePhA = (( int32_t )( pHandle->hPWMperiod ) >>2) + ( ( wY - wZ ) / ( int32_t )262144 );
       wTimePhB = wTimePhA + wZ / 131072;
       wTimePhC = wTimePhA - wY / 131072;
       //pSetADCSamplingPoint = pHandle->pFctSetADCSampPointSect2;
@@ -467,7 +472,8 @@ void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
       if ( wX <= 0 )
       {
         //pHandle->hSector = SECTOR_6;
-        wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wX ) / ( int32_t )262144 );
+        //wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wY - wX ) / ( int32_t )262144 );
+        wTimePhA = (( int32_t )( pHandle->hPWMperiod ) >>2) + ( ( wY - wX ) / ( int32_t )262144 );
         wTimePhC = wTimePhA - wY / 131072;
         wTimePhB = wTimePhC + wX / 131072;
         //pSetADCSamplingPoint = pHandle->pFctSetADCSampPointSect6;
@@ -475,7 +481,8 @@ void PWMC_SetPhaseVoltage( PWMC_Handle *pHandle, Volt_Components Valfa_beta )
       else /* wX > 0 */
       {
         //pHandle->hSector = SECTOR_1;
-        wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wX - wZ ) / ( int32_t )262144 );
+        //wTimePhA = ( int32_t )( pHandle->hPWMperiod ) / 4 + ( ( wX - wZ ) / ( int32_t )262144 );
+        wTimePhA = (( int32_t )( pHandle->hPWMperiod ) >>2) + ( ( wX - wZ ) / ( int32_t )262144 );
         wTimePhB = wTimePhA + wZ / 131072;
         wTimePhC = wTimePhB - wX / 131072;
         //pSetADCSamplingPoint = pHandle->pFctSetADCSampPointSect1;
@@ -717,7 +724,7 @@ int dataRangeMov(int in_raw,int in_min,int in_max,int out_min,int out_max){
   if(in_raw>=in_max)
     return out_max;
   if(in_min>in_max)
-    return dataRangeMov(in_raw,in_min,in_max,out_min,out_max);
+    return dataRangeMov(in_raw,in_max,in_min,out_min,out_max);
   if(in_min==in_max)
     return out_min;
   const int in_mid = (in_max+in_min)>>1;
@@ -807,7 +814,8 @@ int32_t MCM_Sqrt( int32_t wInput )
 
     do
     {
-      wtemprootnew = ( wtemproot + wInput / wtemproot ) / ( int32_t )2;
+      //wtemprootnew = ( wtemproot + wInput / wtemproot ) / ( int32_t )2;
+      wtemprootnew = ( wtemproot + wInput / wtemproot )>>1;
       if ( wtemprootnew == wtemproot )
       {
         biter = 6u;

@@ -45,7 +45,11 @@ void ScanButton(button_t *bt){
                     {
                         case 0x10:
                             //水平和垂直切换
-                            Hor_Turn_Ver();
+                            if(GetLearnAtt()){
+                                SetLearnAttStart();
+                            }else{
+                                Hor_Turn_Ver();
+                            }
                         break;
                         case 0x20:
                             //左转90度
@@ -124,6 +128,12 @@ void ScanButton(button_t *bt){
                     case (bt_LREn|bt_RREn):
                         if(bt->BtTime==longReLearn){
                             MC_initLearn();
+                        }
+                    break;
+                    case (bt_LREn|bt_RREn|bt_pwrEn):
+                        if((GetONOFF()==0)&&(bt->BtTime==longONOFF)){
+                            poweron(); //开机
+                            MC_initLearn(); //开始自动学习
                         }
                     break;
                     default:

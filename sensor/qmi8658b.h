@@ -44,6 +44,8 @@ int16_t GetOriGyroA(void);
 int16_t GetGyroA(void);
 int16_t GetAccA(void);
 int8_t CheckCorrect(void);
+void ResetGyroInit(void);
+uint8_t GetGyroFin(void);   //获取陀螺仪完成标志
 
 
 #endif

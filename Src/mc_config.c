@@ -80,6 +80,7 @@ FOC_Component FOC_Component_M1 ={
   .lc.x_offset = 0,
   .lc.y_offset = 0,
   .lc.xy_scale = 1,
+  .lc.GyroInitAngle = 0,
   .PolePariNum = POLE_PAIR_NUM,
   .lc.learnXYFin = 0,
   .hElAngle = 0,
@@ -89,6 +90,7 @@ FOC_Component FOC_Component_M1 ={
   .hAddActTargetAngle = 0,
   .hAddTargetAngle = gyroMidDiff,
   .posCount = defposcount,
+  .LearnAttitude = 0,
 };
 
 Volt_Components GetVqd(void){
@@ -131,7 +133,8 @@ void SetSpeedPIDKd(int16_t d){
  * 水平垂直转换
 */
 void Hor_Turn_Ver(void){
-  if(FOC_Component_M1.hAddTargetAngle!=0)
+  ClearRunMode();
+  if(FOC_Component_M1.hAddTargetAngle!=FOC_Component_M1.lc.GyroInitAngle)
     SetHorizontal();
   else
     SetVertical();
@@ -141,7 +144,7 @@ void Hor_Turn_Ver(void){
  * 设置到水平
 */
 void SetHorizontal(void){
-    FOC_Component_M1.hAddTargetAngle = gyroMidDiff;
+    FOC_Component_M1.hAddTargetAngle = FOC_Component_M1.lc.GyroInitAngle;
     //FOC_Component_M1.endAngle = 0;
 }
 /**
@@ -149,7 +152,8 @@ void SetHorizontal(void){
  * 设置到垂直
 */
 void SetVertical(void){
-    FOC_Component_M1.hAddTargetAngle = 0x4000+gyroMidDiff;
+    ClearRunMode();
+    FOC_Component_M1.hAddTargetAngle = 0x4000+FOC_Component_M1.lc.GyroInitAngle;
 
     //FOC_Component_M1.endAngle = 0x4000;
 }
@@ -158,6 +162,7 @@ void SetVertical(void){
  * 左转
 */
 void SetTurnLeft(void){
+    ClearRunMode();
     FOC_Component_M1.hAddTargetAngle -= 0x4000;
     //FOC_Component_M1.endAngle = FOC_Component_M1.hTargetAngle;
 }

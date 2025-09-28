@@ -64,10 +64,14 @@ int main(void){
           getOrientation_1ms();
           fScanButton();   //扫描按键功能
           LEDControl();   //LED控制
+          fScanVdd(); //扫描VDD电压
 		      #ifdef cUartDebugEn
           GetUartDebug(); //获取串口调试数据
           #endif
           //LEDR_Xor();
+        }
+        if(GetGyroFin()==0){
+          calibrationGyro();  //先校准陀螺仪中点值
         }
     }
 }

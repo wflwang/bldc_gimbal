@@ -16,28 +16,31 @@
 #include "qmi8658b.h"
 
 #define cTurnLCycle  0
-#define cTurnLCycleLen  2
-#define cTurnRCycle  2
-#define cTurnRCycleLen  2
-#define cTurnHorRoll  4
-#define cTurnHorRollLen 3
-#define cTurnVerRoll  7
-#define cTurnVerRollLen  4
+#define cTurnLCycleLen  4
+#define cTurnRCycle  4
+#define cTurnRCycleLen  4
+#define cTurnHorRoll  8
+#define cTurnHorRollLen 6
+#define cTurnVerRoll  14
+#define cTurnVerRollLen  7
 //static uint8_t Aligned_hall = 0;
 static uint8_t IsMCCompleted = 0;
 static uint8_t RunModeEn = 0;
 
 static uint8_t vPIDInt = cPIDDiff;  //PID间隔时间 
 static int16_t vDeadErr = deadErr; //死区时间
+//static uint16_t vddAD;
 filter_t speedft;   //速度滤波 结构体
 filter_t mecAft;   //物理角度滤波 结构体
+filter_t vddft;   //物理角度滤波 结构体
 //static mc_cmd mc_cmd_t = lock;
-const RunModeParam RunModeParam_t[]={ \
+const int16_t RunModeParam_t[]={ \
    // {.Add=8,.EndAngle = 0x4000},{.Add=-8,.EndAngle=-0x4000} 
-{.Add=8,.EndAngle=0x8000},{.Add=8,.EndAngle=0x0},\
-{.Add=-8,.EndAngle=0x8000},{.Add=-8,.EndAngle=0x0},\
-{.Add=-8,.EndAngle=0xa000},{.Add=8,.EndAngle=0x6000},{.Add=-8,.EndAngle=0x0},\
-{.Add=8,.EndAngle=0x6000},{.Add=-8,.EndAngle=0xb000},{.Add=8,.EndAngle=0x6000},{.Add=-8,.EndAngle=0x4000}};
+    0x4000,0x4000,0x4000,0x4000,\
+    -0x4000,-0x4000,-0x4000,-0x4000,\
+    -0x4000,-0x2000,0x4000,0x4000,0x4000,-0x6000,\
+    0x2000,-0x4000,-0x4000,-0x2500,0x4500,0x6000,-0x2000
+};
 UpRunMode urm={0};
 //当前速度
 //speed 滤波表格
@@ -53,15 +56,28 @@ const int16_t speedFilterV[] = {
 #define speed_alp_max   65535    //当前滤波系数
 //物理角度滤波
 const int16_t MecAFilter[] = {
-    128,550,912,1524,2248,4096
+    //128,550,912,1524,2248,4096
+    256,550,1024,2048,4096,8192
 };
 //speed 速率滤波表格
 const int16_t MecAFilterV[] = {
-    55,85,150,450,900,2000,4500
+    //55,85,150,450,900,2000,4500
+    55,85,130,200,300,500,800
 };
 #define MecA_alp_raw   1000    //当前滤波系数
-#define MecA_alp_min   75    //当前滤波系数
+#define MecA_alp_min   60   //75    //当前滤波系数
 #define MecA_alp_max   65535    //当前滤波系数
+//电压滤波
+const int16_t vddFilter[] = {
+    228,550,1312,2524,4248,7096
+};
+//电压滤波参数
+const int16_t vddFilterV[] = {
+    55,85,150,300,500,900,1500
+};
+#define vdd_alp_raw   1000    //当前滤波系数
+#define vdd_alp_min   60   //75    //当前滤波系
+#define vdd_alp_max   65535   //75    //当前滤波系
 //左360度动作
 //const uint16_t leftCycle[10]={};
 void CURRENT_REGULATION_IRQHandler(void){
@@ -74,6 +90,7 @@ void CURRENT_REGULATION_IRQHandler(void){
     //AD 采样出 HallX&Y  VDD
     //根据Hall 值算出当前角度
     //GetVolAD();
+    FOC_Component_M1.vddAD = GetVolAD()&0xfff;
     #ifdef debug_int
     GPIO_Toggle(LEDR_GPIO_PORT,LEDR_GPIO_PIN);
     #endif
@@ -95,7 +112,7 @@ void CURRENT_REGULATION_IRQHandler(void){
  * 采样时候不停的采样平均角度值
 */
 int16_t Get_HallAngle(FOC_Component *fc){
-    uint32_t hElAngle;
+    int32_t hElAngle;
     fc->xy_now = MX_Hall_Sample((GetHallxAD()&0xFFF)<<4,(GetHallyAD()&0xFFF)<<4);
     //fc->x_now = hxy.Hallx;
     //fc->y_now = hxy.Hally;
@@ -119,14 +136,22 @@ int16_t Get_HallAngle(FOC_Component *fc){
         //}
     }else{
         //获取当前X Y 霍尔的值 换算出角度
-        hElAngle = GetRealElAngle(fc); //当前物理角度算出的电角度
+        hElAngle = GetRealElAngle(fc); 
+        //hElAngle = fc->hMecAngle*fc->PolePariNum;
+        int16_t ElA = (int16_t)hElAngle;    //当前物理角度算出的电角度
+        //hElAngle = GetRealElAngle(fc); //当前物理角度算出的电角度
         //hElAngle = (uint16_t)fc->hMecAngle*fc->PolePariNum; 
-        if(fc->lc.M_dir)   //电角度增加 物理角度是否方向一致 也是增加
+        int16_t tmp;
+        if(fc->lc.M_dir){   //电角度增加 物理角度是否方向一致 也是增加
         //offset = ela - mecEla
-        fc->hElAngle = (uint32_t)((uint16_t)((int16_t)(hElAngle) + fc->lc.ElAngele_offset));
-        else        //方向不一致
+            tmp = ElA + fc->lc.ElAngele_offset;
+            fc->hElAngle = (uint32_t)(tmp);
+        }
+        else{        //方向不一致
         //offset = mec + ela
-        fc->hElAngle = (uint32_t)((uint16_t)(fc->lc.ElAngele_offset - (int16_t)(hElAngle)));
+            tmp = fc->lc.ElAngele_offset - ElA;
+            fc->hElAngle = (uint32_t)(tmp);
+        }
         //fc->hElAngle = CalculateLoopAddSub();
         //换算出实际电角度
     }
@@ -139,9 +164,12 @@ int16_t Get_HallAngle(FOC_Component *fc){
 */
 int16_t CalMecAngle(FOC_Component *fc){
     int16_t hX,hY,angle;
+    //GetHallXYScale(&fc->lc,&fc->xy_now.Hallx,&fc->xy_now.Hally);
     hX = (int16_t)(fc->xy_now.Hallx-fc->lc.x_offset);
 	hY = (int16_t)(fc->xy_now.Hally-fc->lc.y_offset);
     GetHallXYScale(&fc->lc,&hX,&hY);
+    //hX = (int16_t)hX1;
+    //hY = (int16_t)hY1;
     #if HallXY_dir==0
     angle = arctan(hX,hY);
     #elif HallXY_dir==1    
@@ -224,9 +252,68 @@ uint32_t GetRealElAngle(FOC_Component *fc){
 */
 void GetHallXYScale(Learn_Componets *lc,int16_t *x,int16_t *y){
     if(lc->xyScaleDir==0){  //X>Y
-        *x  =   (int16_t)(((int32_t)lc->xy_scale * (*x)) >>16);
+        *x  =   (int16_t)((lc->xy_scale * (*x)) >>16);
     }else{  // X<Y
-        *y  =   (int16_t)(((int32_t)lc->xy_scale * (*y)) >>16);
+        *y  =   (int16_t)((lc->xy_scale * (*y)) >>16);
+    }
+}
+/**
+ * @brief 获取VDD值
+ * 
+*/
+int16_t fGetVDDAD(){
+    return FOC_Component_M1.vddAD;
+}
+/***
+ * @brief 获取电压状态
+ * 
+*/
+uint8_t fGetVddState(void){
+    return FOC_Component_M1.vddErr;
+}
+void fSetVddState(uint8_t err){
+    FOC_Component_M1.vddErr = err;
+}
+/**
+ * @brief 扫描VDD
+ * 
+*/
+void fScanVdd(void){
+    static int16_t vddInit=0;
+    static int16_t lvdCount=0;
+    if(vddInit==0){
+	    vddft.alpha_diff = vddFilter;
+	    vddft.alpha_diff_addV = vddFilterV;
+	    vddft.alpha_diff_len = sizeof(vddFilter)/sizeof(int16_t);
+        vddft.alpha_raw = vdd_alp_raw;
+        vddft.alpha_min= vdd_alp_min;
+        vddft.alpha_max= vdd_alp_max;
+	    vddft.filter = fGetVDDAD();
+        vddInit = 1;
+    }else{
+        firstOrderFilter(&vddft,fGetVDDAD());
+        int32_t vdd = (int32_t)GetVol_Value(vddft.filter);
+        int32_t vddtemp;
+        if(fGetVddState()==lvdErr)
+            vddtemp = 301;
+        else
+            vddtemp = 331;
+        if(vdd<vddtemp){
+            //电池持续低于3.3v进入低压
+            if(lvdCount>2000){
+                if(fGetVddState()==lvdErr){
+                    //直接关机
+                    poweroff();
+                }else{
+                    fSetVddState(lvdErr);   //低压
+                    lvdCount = 0; //
+                }
+            }else{
+                lvdCount++;
+            }
+        }else{
+            lvdCount = 0; //
+        }
     }
 }
 //**************************************************************
@@ -260,19 +347,25 @@ int16_t PosPISControl(FOC_Component *fc){
         //    if(FOC_Component_M1.hAddActTargetAngle<FOC_Component_M1.hAddTargetAngle)
         //        FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
         //}
+    }else{
+        if(RunModeEn){
+            //学习时候自动增加角度功能
+            RunModeEn = UpNextRunModeAngle(&urm);
+        }
     }
     int16_t realyAngle = fc->hAddActTargetAngle;
-    if(fc->hAddActTargetAngle>0){
-        realyAngle = (realyAngle * 64200) >>16;
-    }else{
-        realyAngle = (realyAngle * 63536) >>16;
-    }
+    //realyAngle += 32768;
+    //if(fc->hAddActTargetAngle>0){
+    //    realyAngle = (realyAngle * 64200) >>16;
+    //}else{
+    //    realyAngle = (realyAngle * 63536) >>16;
+    //}
     if(fc->lc.M_dir){
         //电角度和物理角度同相变化
         #ifdef GyroEn
-        hError = -GetOriGyroA() + realyAngle;
+        hError = realyAngle-GetOriGyroA();
         #else
-        hError = -fc->hMecAngle + realyAngle;
+        hError = realyAngle-fc->hMecAngle;
         #endif
     }
     else{
@@ -315,6 +408,7 @@ int16_t PosPISControl(FOC_Component *fc){
         hSpeed = -MaxPosSpeed;
     if((hSpeed<vDeadErr)&&(hSpeed>-vDeadErr)){
         hSpeed = 0;
+        PIDPosHandle_M1.wIntegralTerm = 0;
     }
     //不同速度对应不同扭矩 速度环 速度恒定
     //目标速度 - 实际速度  = 当前误差速度
@@ -341,7 +435,7 @@ int16_t PosPISControl(FOC_Component *fc){
     //    tempsp = -tempsp;
     //}
     fc->hSpeed = Speed_Sample(&speedft,tempsp);
-    fc->hSpeed = tempsp;
+    //fc->hSpeed = tempsp;
     //fc->hLastMecAngle = fc->hMecAngle;
     //获取目标速度和本次速度的误差
     int16_t errspeed = (hSpeed-fc->hSpeed);
@@ -400,6 +494,25 @@ void SetPosLoopInv(int16_t in){
 int16_t GetTorque(void){
     return FOC_Component_M1.Vqd.qV_Component1;
 }
+//获取马达和霍尔方向关系
+int16_t fGetMHdir(void){
+    return FOC_Component_M1.lc.M_dir;
+}
+//获取陀螺仪0度位置
+int16_t GetGyroZero(void){
+    return FOC_Component_M1.lc.GyroInitAngle;
+}
+//获取是否处于等待姿态检测状态
+bool GetLearnAtt(void){
+    if((FOC_Component_M1.lc.LearnFinish==0)&&(FOC_Component_M1.LearnAttitude==1))
+        return true;
+    else 
+        return false;
+}
+//进入姿态检测状态
+void SetLearnAttStart(void){
+    FOC_Component_M1.LearnAttitude = 2;
+}
 /***
  * @brief 采样当前速度滤波
  * 
@@ -428,7 +541,7 @@ int16_t Speed_Sample(filter_t *ft,int16_t raw){
  * 
 */
 Err_FOC MotorRunControl(FOC_Component *fc){
-    static uint8_t CountTime=0;
+    static uint16_t CountTime=0;
     static int16_t  offsetErr1;
     static int16_t  offsetErr2;
     static int32_t  offsetErrTmp1=0; 
@@ -463,6 +576,38 @@ Err_FOC MotorRunControl(FOC_Component *fc){
             //    fc->y_Start = (fc->y_now+fc->y_Start)>>1;
             }
         }else{
+            //判断是否可以进入姿态校准
+            if(fc->LearnAttitude==2){   //
+                if(CountTime<(ALIGN_qmiTime/2)){
+                    CountTime++;
+                    return no_err;
+                }
+                //学习姿态时候读取陀螺仪并校准
+                ResetGyroInit();
+                //calibrationGyro();  //先校准陀螺仪中点值
+                //静止时候读取当前真实的角度位置
+                CountTime = 0; 
+                fc->LearnAttitude=3;   //进入下一阶段读取陀螺仪稳定值
+                return no_err;
+            }
+            if(fc->LearnAttitude==3){
+                if(GetGyroFin()==1){
+                    if(CountTime<ALIGN_qmiTime){
+                        CountTime++;
+                        return no_err;
+                    }else{
+                        //获取陀螺仪的静止角度
+                        fc->lc.GyroInitAngle = GetOriGyroA();
+                        fc->lc.LearnFinish  =   1;  //学习完成
+                        fc->LearnAttitude = 0;
+                        EE_WriteFOC(&fc->lc); //把学习的参数写入EEPROM
+                        return no_err;
+                    }
+                }else{
+                    CountTime = 0; 
+                    return no_err;
+                }
+            }
             //达到上升时间缓慢增加角度,扭力不变 Hallxy 不停采样最大最小值 10ms 1/1024度 10s一圈
             if(CountTime<ALIGN_TimeOnce){
                 CountTime++;
@@ -538,8 +683,11 @@ Err_FOC MotorRunControl(FOC_Component *fc){
                                 fc->lc.M_dir = 0;
                                 fc->lc.ElAngele_offset = (int16_t)offsetErrTmp2;
                             }
-                            fc->lc.LearnFinish  =   1;  //学习完成
-                            EE_WriteFOC(&fc->lc); //把学习的参数写入EEPROM
+                            fc->LearnAttitude = 1;      //开始学习姿态 马达停止输出
+                            fc->Vqd.qV_Component2 = 0;
+                            fc->Vqd.qV_Component1 = 0;
+                            //fc->lc.LearnFinish  =   1;  //学习完成
+                            //EE_WriteFOC(&fc->lc); //把学习的参数写入EEPROM
                         }
                     }
                 }
@@ -570,6 +718,7 @@ void MC_learnHall(FOC_Component *fc){
     fc->lc.learnXYFin  = 0;
     fc->hStepTime = 0;
     fc->lc.LearnFinish = 0;
+    fc->LearnAttitude = 0;  //不能学习姿态
 }
 
 
@@ -582,23 +731,23 @@ void MC_RunMotorControlTasks(void){
     //static int16_t endAngle;
     if((IsMCCompleted==1)&&(GetONOFF())){
         //初始化完成
-        if(RunModeEn){
+        //if(RunModeEn){
             //学习时候自动增加角度功能
-            RunModeEn = UpNextRunModeAngle(&urm);
-        }
+        //    RunModeEn = UpNextRunModeAngle(&urm);
+        //}
         #ifndef testQMI
         //int16_t oriA = getOrientation_1ms();
         //当前陀螺仪多少度 目标值是当前角度-陀螺仪的角度 = 目标角度 误差就是陀螺仪角度的反向
         //FOC_Component_M1.hTargetAngle = -GetOriGyroA();   //getOrientation_1ms();    //当前陀螺仪的角度
         //FOC_Component_M1.hTargetAngle += FOC_Component_M1.hAddTargetAngle;
-        else{
-            #ifdef GyroEn
-            FOC_Component_M1.hTargetAngle = FOC_Component_M1.hMecAngle - GetOriGyroA();
-            FOC_Component_M1.hTargetAngle += FOC_Component_M1.hAddTargetAngle;
-            #else
-            FOC_Component_M1.hTargetAngle = FOC_Component_M1.hAddTargetAngle;
-            #endif
-        }
+        //else{
+        //    #ifdef GyroEn
+        //    FOC_Component_M1.hTargetAngle = FOC_Component_M1.hMecAngle - GetOriGyroA();
+        //    FOC_Component_M1.hTargetAngle += FOC_Component_M1.hAddTargetAngle;
+        //    #else
+        //    FOC_Component_M1.hTargetAngle = FOC_Component_M1.hAddTargetAngle;
+        //    #endif
+        //}
         #endif
     #if 0
         switch(mc_cmd_t){
@@ -691,13 +840,10 @@ void MC_RunMotorControlTasks(void){
  * @return 0: fail 1: over
 */
 uint8_t UpNextRunModeAngle(UpRunMode *rm){
-    rm->fc->hTargetAngle = rm->fc->hMecAngle + RunModeParam_t[rm->step].Add; //每次增加1/8192度 一圈时间8s?
-    if(rm->fc->hTargetAngle == RunModeParam_t[rm->step].EndAngle){
-        rm->step++;
-        if(rm->step>rm->OverStep){
-            return 0;   //over
-        }
+    if(rm->step>=rm->OverStep){
+        return 0;   //over
     }
+    FOC_Component_M1.hAddTargetAngle += RunModeParam_t[rm->step++]; //每次增加1/8192度 一圈时间8s?
     return 1;
 }
 
@@ -718,6 +864,7 @@ void mcpwm_foc_init(void) {
     //}
     //PWM 输出刹车
     PWMC_ONPWM();   //开启PWM ADC 采样
+    SetHorizontal();
     //EE_WriteFOC(&FOC_Component_M1.lc);
     //EE_ReadFOC(&FOC_Component_M1.lc);
     IsMCCompleted = 1;
@@ -727,35 +874,19 @@ void mcpwm_foc_init(void) {
     //}
 }
 
+void ClearRunMode(void){
+    RunModeEn = 0;
+}
 /***
  * 
  * 正转360度, 每次比当前增加0x1000度 达到再增加 每=
  * 
 */
 void SetTurnLeftCycle(void){
-    RunModeEn = 1;
-    urm.step= cTurnLCycle;    //开始位置
-    urm.OverStep= cTurnLCycle+cTurnRCycleLen;    
-}
-/***
- * 
- * 正转360度, 每次比当前增加0x1000度 达到再增加 每=
- * 
-*/
-void SetTurnRightCycle(void){
-    RunModeEn = 1;
-    urm.step= cTurnRCycle;    //开始位置
-    urm.OverStep= cTurnRCycle+cTurnLCycleLen;    
-}
-/***
- * @brief 水平还是垂直 摇摆动作
- * 
-*/
-void HorOrVerRoll(void){
-    if(FOC_Component_M1.hTargetAngle==0){
-        SetTurnHorRoll();
-    }else{
-        SetTurnVerRoll();
+    if(RunModeEn==0){
+        RunModeEn = 1;
+        urm.step= cTurnLCycle;    //开始位置
+        urm.OverStep= cTurnLCycle+cTurnRCycleLen;    
     }
 }
 /***
@@ -763,18 +894,45 @@ void HorOrVerRoll(void){
  * 正转360度, 每次比当前增加0x1000度 达到再增加 每=
  * 
 */
-void SetTurnHorRoll(void){
-    RunModeEn = 1;
-    urm.step= cTurnHorRoll;    //开始位置
-    urm.OverStep= cTurnHorRoll+cTurnHorRollLen;    
+void SetTurnRightCycle(void){
+    if(RunModeEn==0){
+        RunModeEn = 1;
+        urm.step= cTurnRCycle;    //开始位置
+        urm.OverStep= cTurnRCycle+cTurnLCycleLen;
+    }    
 }
 /***
+ * @brief 特定旋转动作
  * 
+*/
+void HorOrVerRoll(void){
+    if(FOC_Component_M1.hAddTargetAngle==FOC_Component_M1.lc.GyroInitAngle){
+        SetTurnHorRoll();
+    }else{
+        SetTurnVerRoll();
+    }
+}
+/***
+ * @brief 水平时候自定义动作
+ * 正转360度, 每次比当前增加0x1000度 达到再增加 每=
+ * 
+*/
+void SetTurnHorRoll(void){
+    if(RunModeEn==0){
+        RunModeEn = 1;
+        urm.step= cTurnHorRoll;    //开始位置
+        urm.OverStep= cTurnHorRoll+cTurnHorRollLen;    
+    }
+}
+/***
+ * @brief 垂直时候自定义动作
  * 反转360度, 每次比当前增加0x1000度 达到再增加 每=
  * 
 */
 void SetTurnVerRoll(void){
-    RunModeEn = 1;
-    urm.step= cTurnVerRoll;    //开始位置
-    urm.OverStep= cTurnVerRoll+cTurnVerRollLen;    
+    if(RunModeEn==0){
+        RunModeEn = 1;
+        urm.step= cTurnVerRoll;    //开始位置
+        urm.OverStep= cTurnVerRoll+cTurnVerRollLen;    
+    }
 }

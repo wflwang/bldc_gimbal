@@ -30,18 +30,21 @@ typedef enum{
 }mc_cmd;
 #endif
 
+
+#define lvdErr 2
+
 typedef struct 
 {
-    FOC_Component *fc;
+    //FOC_Component *fc;
     int16_t step;    //变化的步骤
     int16_t OverStep;
 }UpRunMode;
 
-typedef struct 
-{
-    int16_t Add;    //增量
-    int16_t EndAngle;  //本次结束角度
-}RunModeParam;
+//typedef struct 
+//{
+//    int16_t Add;    //增量
+//    int16_t EndAngle;  //本次结束角度
+//}RunModeParam;
 
 
 
@@ -70,6 +73,14 @@ int16_t GetTorque(void);
 int16_t MecA_Sample(filter_t *ft,int16_t raw);  //物理角度采样滤波
 int16_t CalMecAngle(FOC_Component *fc); //获取当前物理角度
 void SetPosLoopInv(int16_t in);
+int16_t fGetMHdir(void);
+bool GetLearnAtt(void);
+void SetLearnAttStart(void);
+int16_t GetGyroZero(void);
+void ClearRunMode(void);    //清除runmode标志
+void fScanVdd(void);
+uint8_t fGetVddState(void);
+void fSetVddState(uint8_t err);
 
 
 #endif

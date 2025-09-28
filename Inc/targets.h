@@ -11,7 +11,7 @@
 #define FIRMWARE_NAME   "gimbal"
 #define FILE_NAME   "bldc_gimbal_singal"
 #define DEAD_TIME   10
-#define HallXY_dir     4  //霍尔XY方向 000(x,y不变) 001(x,-y) 010(-x,y) 011(-x,-y) 100(y,x) 101(y,-x) 110(-y,x) 111(-y,-x)
+#define HallXY_dir       4  //霍尔XY方向 000(x,y不变) 001(x,-y) 010(-x,y) 011(-x,-y) 100(y,x) 101(y,-x) 110(-y,x) 111(-y,-x)
 #define AccXY_dir   2
 //#define Current_ADC_PIN 
 //#define Current_ADC_PORT    GPIOC

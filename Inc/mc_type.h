@@ -165,23 +165,27 @@ typedef struct
     uint16_t y_offset;
     uint16_t xy_scale;  //X对应Y的比例关系  
     int16_t gyroVz_Bais;  //Z轴中点
+    int16_t GyroInitAngle;  //陀螺仪初始角度0度位置 防止陀螺仪偏
 }Learn_Componets; //学习组件
 
 typedef struct 
 {
     Learn_Componets lc; //学习组件
     uint8_t PolePariNum; //极对数
+    uint8_t LearnAttitude;  //是否允许学习姿态
+    uint8_t vddErr;  //error标志
     volatile uint32_t hElAngle;   //电角度
     //uint32_t hLastElAngle;   //上次完整电角度
     volatile int16_t hMecAngle;  //物理角度
     volatile int16_t hLastMecAngle;
-    int16_t hTargetAngle; //目标物理角度
+    //int16_t hTargetAngle; //目标物理角度
     int16_t hAddTargetAngle;  //增加的角度
     int16_t hAddActTargetAngle;  //实际增加的角度
     int16_t endAngle; //结束角度
     volatile int16_t hSpeed;   //当前速度
     //uint8_t x_step; //hallx 动作步骤
     //uint16_t x_now;
+    int16_t vddAD;
     HallXYs xy_now;
     //uint16_t x_Start;
     volatile uint16_t x_Max;

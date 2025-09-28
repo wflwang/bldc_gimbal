@@ -52,6 +52,7 @@ void initCorePeripherals(void){
     SysTick_Config(SystemCoreClock /SYS_TICK_FREQUENCY);
     //EE_Read();
     MX_GPIO_Init();
+	EE_ReadFOC(&FOC_Component_M1.lc);   //读取存储的FOC 参数
 
     while(GetONOFF()==0){
         //LEDG_Xor();
@@ -59,7 +60,6 @@ void initCorePeripherals(void){
         fScanButton();   //扫描按键功能
     }
 		//EE_WriteFOC(&FOC_Component_M1.lc);
-		EE_ReadFOC(&FOC_Component_M1.lc);   //读取存储的FOC 参数
     #ifdef cUartDebugEn
     SWD_Pin_To_PB5_PD5_Configuration();
     MX_Uart_Init();
@@ -514,7 +514,7 @@ void GetUartDebug(void){
     //    Uart_t.FinishedFlag = RESET;
     //    UartSendDatas(Uart_t.Data, Uart_t.Len);
     //}
-    if((Uart_t.FinishedFlag == SET)&&(Uart_t.Data[0]==0xaa)){
+    if((Uart_t.FinishedFlag == SET)&&(Uart_t.Data[0]==0xaa)&&(Uart_t.Data[Uart_t.Len-1]==0x55)){
         //表示收到一帧完整信号解码调试内容
             //
             len = Uart_t.Data[1];   //指令数量  获取/设置 获取可以多个一次输出 设置设置一个?
@@ -551,6 +551,14 @@ void GetUartDebug(void){
                     case GetTorq:
                         data[index++] = 0xa3;
                         param = GetTorque();
+                    break;
+                    case GetMHdir:  //获取马达和霍尔方向关系=1 同向 =0 反向
+                        data[index++] = 0xa4;
+                        param = fGetMHdir();
+                    break;
+                    case GetGyroMid:  //获取陀螺仪中点
+                        data[index++] = 0xa5;
+                        param = GetGyroZero();
                     break;
                     case SetPosPID_P:
                         param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
@@ -599,7 +607,11 @@ void GetUartDebug(void){
                     break;
                 }
                 data[index++] = (uint8_t)((param>>8)&0xff);
+                if(index>31)
+                    break;
                 data[index++] = (uint8_t)((param)&0xff);
+                if(index>31)
+                    break;
             }
             //index=0;
             //data[index++] = 0xaa;
