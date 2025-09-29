@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hk32g003.h"
-//#include "drive_parameters.h"
+#include "drive_parameters.h"
 //#include "main.h"
 #ifdef __cplusplus
 extern "C" {
@@ -146,6 +146,20 @@ typedef struct
   TIM_TypeDef *TIMx;
 }PWMC_Handle;
 
+typedef struct 
+{
+  /* data */
+  HallXYs xyMax[POLE_PAIR_NUM];  //不同极对范围内xy最大值
+  HallXYs xyMin[POLE_PAIR_NUM];  //不同极对范围内xy最小值
+  int16_t ElAngleOffset[POLE_PAIR_NUM]; //不同极对 角度的偏差
+  //offset = (max+min)/2
+  //uint16_t x_offset[POLE_PAIR_NUM];  //不同极对 X的偏差
+  //uint16_t y_offset[POLE_PAIR_NUM];  //不同极对 Y的偏差
+  //scale = x/y * (x|y)
+  //uint16_t xy_scale[POLE_PAIR_NUM]; //不同极对换算圆后XY比例误差
+}xy_Componets;  //XY 坐标组件
+
+
 //陀螺仪校准的参数
 //typedef struct 
 //{
@@ -171,6 +185,7 @@ typedef struct
 typedef struct 
 {
     Learn_Componets lc; //学习组件
+    xy_Componets *xyc; //XY坐标组件
     uint8_t PolePariNum; //极对数
     uint8_t LearnAttitude;  //是否允许学习姿态
     uint8_t vddErr;  //error标志

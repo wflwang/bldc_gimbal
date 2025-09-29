@@ -158,6 +158,25 @@ int16_t Get_HallAngle(FOC_Component *fc){
     return (int16_t)(fc->hElAngle);
 }
 /***
+ * @brief 计算当前 xy 值的电角度
+ * 高16bit is polepair 在第几极对
+ * 新程序中不需要准确知道物理角度 只需要知道xy对应的电角度
+*/
+int32_t CalElAngle(FOC_Component *fc){
+    HallXYs xynow = fc->xy_now; //采样到的XY值
+    //定位采样到的AD值在哪个极对区范围
+    uint16_t x_offset;
+    uint16_t y_offset;
+    for(uint8_t i=0;i<POLE_PAIR_NUM;i++){
+        if((xynow.Hallx<fc->xyc->xyMax[i].Hallx)&&(xynow.Hallx>=fc->xyc->xyMin[i].Hallx)&&(xynow.Hally<fc->xyc->xyMax[i].Hally)&&(xynow.Hally>=fc->xyc->xyMin[i].Hally)){
+            //在范围内
+            x_offset = (fc->xyc->xyMin[i].Hallx + fc->xyc->xyMax[i].Hallx)/2;
+            y_offset = (fc->xyc->xyMin[i].Hally + fc->xyc->xyMax[i].Hally)/2;
+        }
+    }
+
+}
+/***
  * @brief 计算当前物理角度
  * 
  * @param hxy hall xy 的角度
