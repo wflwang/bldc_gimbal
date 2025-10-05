@@ -73,16 +73,23 @@ PWMC_Handle PWMC_Handle_M1 =
   .TIMx = TIM1,
 };
 
+Learn_Componets lcM1 = {
+  .M_dir = 0,
+  .GyroInitAngle = 0,
+  .learnXYFin = 0,
+};
+
 FOC_Component FOC_Component_M1 ={
   .Vqd.qV_Component1 = 0,
   .Vqd.qV_Component2 = 0,
-  .lc.M_dir = 0,
-  .lc.x_offset = 0,
-  .lc.y_offset = 0,
-  .lc.xy_scale = 1,
-  .lc.GyroInitAngle = 0,
-  .PolePariNum = POLE_PAIR_NUM,
-  .lc.learnXYFin = 0,
+  .lc = &lcM1,
+  //.lc.M_dir = 0,
+  //.lc.x_offset = 0,
+  //.lc.y_offset = 0,
+  //.lc.xy_scale = 1,
+  //.lc.GyroInitAngle = 0,
+  .PolePairNum = POLE_PAIR_NUM,
+  //.lc->learnXYFin = 0,
   .hElAngle = 0,
   .hStepTime = 0,  //增加时间
   .hFinalTorque    =	FINAL_I_ALIGNMENT,            
@@ -98,7 +105,7 @@ Volt_Components GetVqd(void){
 }
 //获取学习状态
 uint8_t GetLearnState(void){
-  return FOC_Component_M1.lc.LearnFinish;
+  return FOC_Component_M1.lc->LearnFinish;
 }
 //设置扭矩
 void SetTorque(int16_t hTorque){
@@ -134,7 +141,7 @@ void SetSpeedPIDKd(int16_t d){
 */
 void Hor_Turn_Ver(void){
   ClearRunMode();
-  if(FOC_Component_M1.hAddTargetAngle!=FOC_Component_M1.lc.GyroInitAngle)
+  if(FOC_Component_M1.hAddTargetAngle!=FOC_Component_M1.lc->GyroInitAngle)
     SetHorizontal();
   else
     SetVertical();
@@ -144,7 +151,7 @@ void Hor_Turn_Ver(void){
  * 设置到水平
 */
 void SetHorizontal(void){
-    FOC_Component_M1.hAddTargetAngle = FOC_Component_M1.lc.GyroInitAngle;
+    FOC_Component_M1.hAddTargetAngle = FOC_Component_M1.lc->GyroInitAngle;
     //FOC_Component_M1.endAngle = 0;
 }
 /**
@@ -153,7 +160,7 @@ void SetHorizontal(void){
 */
 void SetVertical(void){
     ClearRunMode();
-    FOC_Component_M1.hAddTargetAngle = 0x4000+FOC_Component_M1.lc.GyroInitAngle;
+    FOC_Component_M1.hAddTargetAngle = 0x4000+FOC_Component_M1.lc->GyroInitAngle;
 
     //FOC_Component_M1.endAngle = 0x4000;
 }
@@ -176,11 +183,11 @@ void SetTurnRight(void){
 }
 //获取学习的Z轴中点
 int16_t GetLearnGyroZBais(void){
-  return FOC_Component_M1.lc.gyroVz_Bais;
+  return FOC_Component_M1.lc->gyroVz_Bais;
 }
 //设置校准的Z轴值
 void SetLearnGyroZBais(int16_t vZ){
-  FOC_Component_M1.lc.gyroVz_Bais = vZ;
+  FOC_Component_M1.lc->gyroVz_Bais = vZ;
 }
 /***
  * 

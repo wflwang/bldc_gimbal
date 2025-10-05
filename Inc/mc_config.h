@@ -39,6 +39,7 @@ extern PID_Handle_t PIDPosHandle_M1;
 extern PID_Handle_t PIDSpeedHandle_M1;
 extern PWMC_Handle PWMC_Handle_M1;
 extern FOC_Component FOC_Component_M1;
+extern Learn_Componets lcM1;
 Volt_Components GetVqd(void);
 void SetTorque(int16_t hTorque);
 void SetFlux(int16_t hFlux);

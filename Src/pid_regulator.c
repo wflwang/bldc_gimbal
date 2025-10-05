@@ -324,7 +324,7 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //  pHandle->wIntegralTerm = pHandle->wIntegralTerm - pHandle->wIntegralTerm>>12; // /4倍
     //}
     //误差够小时候才积分
-    if(((wProcessVarError<1020)&&(wProcessVarError>-1020))){
+    if(((wProcessVarError<2020)&&(wProcessVarError>-2020))){
       wIntegral_Term = pHandle->hKiGain * wProcessVarError;
       //wIntegral_Term  = 0;
     }else{
@@ -529,7 +529,7 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     wDeltaError = wProcessVarError - pHandle->wPrevProcessVarError;
     pHandle->wPreDeltaErr += wDeltaError;
     pHandle->wPreDeltaErr >>= 1;
-    wDifferential_Term = pHandle->hKdGain * wDeltaError;  //wDeltaError;  //pHandle->wPreDeltaErr;  //
+    wDifferential_Term = pHandle->hKdGain * pHandle->wPreDeltaErr;  //wDeltaError;  //pHandle->wPreDeltaErr;  //
 
 #ifdef FULL_MISRA_C_COMPLIANCY
     wDifferential_Term /= ( int32_t )pHandle->hKdDivisor;

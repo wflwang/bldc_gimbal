@@ -37,5 +37,6 @@
 #define SetPIDInt       0x8f    //PID调整间隔
 #define SetDead_Err     0x90    //设置死区角度
 #define SetPosLoopCount 0x91    //设置位置环间隔
+#define SetGyroMid    0xa6    //设置陀螺仪中点
 //end 0x55
 

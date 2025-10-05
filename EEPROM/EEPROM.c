@@ -50,16 +50,32 @@ int EE_ReadFOC(Learn_Componets *lc){
   uint32_t data = *(__IO uint32_t *)ADDR_FLASH_EEPROM_PAGE;
   lc->LearnFinish =  (uint8_t)((data>>24)&0xff);
   lc->M_dir =  (uint8_t)((data>>16)&0xff);
-  lc->xyScaleDir =  (uint8_t)((data>>8)&0xff);
+  //lc->xyScaleDir =  (uint8_t)((data>>8)&0xff);
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+4);
-  lc->ElAngele_offset = (int16_t)(data>>16);
-  lc->x_offset = (int16_t)(data&0xffff);
+  lc->Max.Hallx = (int16_t)(data>>16);
+  lc->Max.Hally = (int16_t)(data&0xffff);
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+8);
-  lc->y_offset = (int16_t)(data>>16);
-  lc->xy_scale = (int16_t)(data&0xffff);
+  lc->Min.Hallx = (int16_t)(data>>16);
+  lc->Min.Hally = (int16_t)(data&0xffff);
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+12);
   lc->gyroVz_Bais = (int16_t)(data>>16);
   lc->GyroInitAngle = (int16_t)(data&0xffff);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+16);
+  lc->ZeroAngle[0] = (int16_t)(data>>16);
+  lc->ZeroAngle[1] = (int16_t)(data&0xffff);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+20);
+  lc->ZeroAngle[2] = (int16_t)(data>>16);
+  lc->ZeroAngle[3] = (int16_t)(data&0xffff);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+24);
+  lc->ZeroAngle[4] = (int16_t)(data>>16);
+  lc->ZeroAngle[5] = (int16_t)(data&0xffff);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+28);
+  lc->ZeroAngle[6] = (int16_t)(data>>16);
+  lc->accVx_offset = (int16_t)(data&0xffff);
+  data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+32);
+  lc->accVy_offset = (int16_t)(data>>16);
+  lc->accVz_offset = (int16_t)(data&0xffff);
+
   if(lc->LearnFinish!=1){
     lc->LearnFinish = 0;
     lc->learnXYFin = 0;
@@ -83,20 +99,35 @@ int EE_ReadFOC(Learn_Componets *lc){
 }
 
 void EE_WriteFOC(Learn_Componets *lc){  
-  uint32_t data[4];
-  data[0] = (((uint32_t)lc->LearnFinish<<24)|((uint32_t)lc->M_dir<<16)|((uint32_t)lc->xyScaleDir<<8));
-  data[1] = (((uint32_t)lc->ElAngele_offset<<16)|((uint32_t)lc->x_offset));
-  data[2] = (((uint32_t)lc->y_offset<<16)|((uint32_t)lc->xy_scale));
+  uint32_t data[9];
+  data[0] = (((uint32_t)lc->LearnFinish<<24)|((uint32_t)lc->M_dir<<16));
+  data[1] = (((uint32_t)lc->Max.Hallx<<16)|((uint32_t)lc->Max.Hally));
+  data[2] = (((uint32_t)lc->Min.Hallx<<16)|((uint32_t)lc->Min.Hally));
   uint32_t tmp = (uint32_t)lc->gyroVz_Bais<<16;
   tmp &= 0xffff0000;
   uint32_t tmp1 = (uint32_t)lc->GyroInitAngle;
   tmp1 &= 0x0000ffff;
   data[3] = (tmp|tmp1);
+  tmp = (uint32_t)lc->ZeroAngle[0]<<16;
+  tmp1 = (uint32_t)lc->ZeroAngle[1];
+  data[4] = ((tmp&0xffff0000)|(tmp1&0x0000ffff));
+  tmp = (uint32_t)lc->ZeroAngle[2]<<16;
+  tmp1 = (uint32_t)lc->ZeroAngle[3];
+  data[5] = ((tmp&0xffff0000)|(tmp1&0x0000ffff));
+  tmp = (uint32_t)lc->ZeroAngle[4]<<16;
+  tmp1 = (uint32_t)lc->ZeroAngle[5];
+  data[6] = ((tmp&0xffff0000)|(tmp1&0x0000ffff));
+  tmp = (uint32_t)lc->ZeroAngle[6]<<16;
+  tmp1 = (uint32_t)lc->accVx_offset;
+  data[7] = (tmp&0xffff0000|(tmp1&0x0000ffff));
+  tmp = (uint32_t)lc->accVy_offset<<16;
+  tmp1 = (uint32_t)lc->accVz_offset;
+  data[8] = (tmp&0xffff0000|(tmp1&0x0000ffff));
   //memcpy(data, (uint8_t *)lc, sizeof(Learn_Componets));
   uint32_t primask = __get_PRIMASK();  // 读取PRIMASK寄存器[1](@ref)
   __disable_irq();                     // 强制关闭中断
   erase_page(EEPROM_BASE,1);
-  write_data(ADDR_FLASH_EEPROM_PAGE, data, 4);
+  write_data(ADDR_FLASH_EEPROM_PAGE, data, 9);
   // 智能恢复中断状态
   if ((primask & 0x1) == 0) {          // 判断原状态是否为开启
     __enable_irq();                   // 原开启则恢复开启[4](@ref)

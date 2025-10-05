@@ -146,18 +146,20 @@ typedef struct
   TIM_TypeDef *TIMx;
 }PWMC_Handle;
 
-typedef struct 
-{
-  /* data */
-  HallXYs xyMax[POLE_PAIR_NUM];  //不同极对范围内xy最大值
-  HallXYs xyMin[POLE_PAIR_NUM];  //不同极对范围内xy最小值
-  int16_t ElAngleOffset[POLE_PAIR_NUM]; //不同极对 角度的偏差
-  //offset = (max+min)/2
-  //uint16_t x_offset[POLE_PAIR_NUM];  //不同极对 X的偏差
-  //uint16_t y_offset[POLE_PAIR_NUM];  //不同极对 Y的偏差
-  //scale = x/y * (x|y)
-  //uint16_t xy_scale[POLE_PAIR_NUM]; //不同极对换算圆后XY比例误差
-}xy_Componets;  //XY 坐标组件
+//typedef struct 
+//{
+//  /* data */
+//  int16_t ElDir; //误差方向 同相相加 异相相减
+//  HallXYs xyMax[POLE_PAIR_NUM];  //整个范围内xy最大值
+//  HallXYs xyMin[POLE_PAIR_NUM];  //整个范围内xy最小值
+//  HallXYs xyZero[POLE_PAIR_NUM];  //0度时候的XY
+//  int16_t ElAngleOffset[POLE_PAIR_NUM]; //不同极对 角度的偏差
+//  //offset = (max+min)/2
+//  //uint16_t x_offset[POLE_PAIR_NUM];  //不同极对 X的偏差
+//  //uint16_t y_offset[POLE_PAIR_NUM];  //不同极对 Y的偏差
+//  //scale = x/y * (x|y)
+//  //uint16_t xy_scale[POLE_PAIR_NUM]; //不同极对换算圆后XY比例误差
+//}xy_Componets;  //XY 坐标组件
 
 
 //陀螺仪校准的参数
@@ -172,21 +174,28 @@ typedef struct
 {
     uint8_t LearnFinish;  //学习完成
     uint8_t M_dir;    //马达旋转的方向
-    uint8_t xyScaleDir;  //XY 对应比例关系方向 X>Y 0 / X<Y 1  增益永远小于1
+    //uint8_t xyScaleDir;  //XY 对应比例关系方向 X>Y 0 / X<Y 1  增益永远小于1
     uint8_t learnXYFin; //学习XY点是否完成
-		int16_t ElAngele_offset;  //电角度的偏差
-    uint16_t x_offset;
-    uint16_t y_offset;
-    uint16_t xy_scale;  //X对应Y的比例关系  
+    volatile HallXYs Max; //要学习的最大最小值
+    volatile HallXYs Min;
+    //HallXYs xyZero[POLE_PAIR_NUM];  //0度时候的XY
+		//int16_t ElAngele_offset;  //电角度的偏差
+    //uint16_t x_offset;
+    //uint16_t y_offset;
+    //uint16_t xy_scale;  //X对应Y的比例关系  
     int16_t gyroVz_Bais;  //Z轴中点
     int16_t GyroInitAngle;  //陀螺仪初始角度0度位置 防止陀螺仪偏
+    int16_t accVx_offset;
+    int16_t accVy_offset; //acc xy 默认的中点位置
+    int16_t accVz_offset;
+    int16_t ZeroAngle[POLE_PAIR_NUM]; //每个极对0度时候初始角度
 }Learn_Componets; //学习组件
 
 typedef struct 
 {
-    Learn_Componets lc; //学习组件
-    xy_Componets *xyc; //XY坐标组件
-    uint8_t PolePariNum; //极对数
+    Learn_Componets *lc; //学习组件
+    //xy_Componets *xyc; //XY坐标组件
+    uint8_t PolePairNum; //极对数
     uint8_t LearnAttitude;  //是否允许学习姿态
     uint8_t vddErr;  //error标志
     volatile uint32_t hElAngle;   //电角度
@@ -197,19 +206,23 @@ typedef struct
     int16_t hAddTargetAngle;  //增加的角度
     int16_t hAddActTargetAngle;  //实际增加的角度
     int16_t endAngle; //结束角度
+    HallXYs xyZero[POLE_PAIR_NUM];  //0度时候的XY
+    int32_t accVxSum; //每个极对停一下累加
+    int32_t accVySum; //Vy 加速度累加
+    int32_t accVzSum; //Vz 加速度累加
     volatile int16_t hSpeed;   //当前速度
     //uint8_t x_step; //hallx 动作步骤
     //uint16_t x_now;
     int16_t vddAD;
     HallXYs xy_now;
     //uint16_t x_Start;
-    volatile uint16_t x_Max;
-    volatile uint16_t x_Min;
+    //volatile uint16_t x_Max;
+    //volatile uint16_t x_Min;
     //uint8_t y_step; //hallx 动作步骤
     //uint16_t y_now;
     //uint16_t y_Start;
-    volatile uint16_t y_Max;
-    volatile uint16_t y_Min;
+    //volatile uint16_t y_Max;
+    //volatile uint16_t y_Min;
     Volt_Components Vqd;     //Q轴电压 Vq & Vd
     uint16_t hStepTime;  //增加时间
     int16_t hFinalTorque;  //最后扭力

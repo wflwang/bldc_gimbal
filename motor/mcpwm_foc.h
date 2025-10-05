@@ -50,7 +50,7 @@ typedef struct
 
 void mcpwm_foc_init(void);
 //霍尔比例增益调整
-void GetHallXYScale(Learn_Componets *lc,int16_t *x,int16_t *y);
+//void GetHallXYScale(Learn_Componets *lc,int16_t *x,int16_t *y);
 int16_t PosPISControl(FOC_Component *fc);
 int16_t Get_HallAngle(FOC_Component *fc);
 Err_FOC MotorRunControl(FOC_Component *fc);
@@ -81,6 +81,11 @@ void ClearRunMode(void);    //清除runmode标志
 void fScanVdd(void);
 uint8_t fGetVddState(void);
 void fSetVddState(uint8_t err);
-
+int16_t CalXYAngle(FOC_Component *fc,HallXYs *xynow);
+void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow);
+int16_t GetAccXoffset(void);
+int16_t GetAccYoffset(void);
+int16_t GetAccZoffset(void);
+void fSetGyroInitMid(int16_t in);
 
 #endif

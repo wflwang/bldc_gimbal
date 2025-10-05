@@ -12,6 +12,7 @@
 #include "mc_config.h"
 #include	"i2c.h"
 #include 	"button.h"
+#include 	"mcpwm_foc.h"
 
 #if AccXY_dir == 0
 #define ACCXY	ACC_vX,ACC_vY
@@ -44,9 +45,9 @@
 #define gyroZ_alp_min    500    //最小滤波系数
 #define gyroZ_alp_max    65535    //最大滤波系数
 
-#define accvq2_Min  0x3ee0*0x3ee0
-#define accvq2_Max  0x4120*0x4120
-#define accvq2_Mid  0x4000*0x4000
+#define accvq2_Min  0x1f00*0x1f00	//0x3ee0*0x3ee0
+#define accvq2_Max  0x2100*0x2100	//0x4120*0x4120
+#define accvq2_Mid  0x2000*0x2000	//0x4000*0x4000
 
 #define MinGyroRun	5	//最小陀螺仪动作幅度
 
@@ -68,7 +69,7 @@ const int16_t accFilter[] = {
 };
 const int16_t accFilterV[] = {
     //60,120,200,350,600,800,1000
-    20,60,100,150,230,400,500
+    20,60,100,150,200,300,450
 };
 //互补滤波 误差越大滤波系数快速增大
 //互补滤波表格 误差越大 陀螺仪占比越多 误差越小 加速度占比越多
@@ -238,7 +239,8 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	//i2cWrite(&it);		//reset
 	writeQMIreg(&it,QMI8658B_ConfReg,QMI8658B_ConfReg_ADR_AI);
 	//writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_2G|QMI8658B_ACC_ODR_896HZ));
-	writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_2G|QMI8658B_ACC_ODR_1793HZ));
+	//writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_2G|QMI8658B_ACC_ODR_1793HZ));
+	writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_1793HZ));
 	//it.data_adr = QMI8658B_GYRO_Set;
 	//it.data = (QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ);
 	//i2cWrite(&it);		//reset
@@ -450,15 +452,16 @@ int16_t GetGYRO_Z(void){
  * 
 */
 int8_t CheckCorrect(void){
-	int vx = (int16_t)ACC_vX;
-	int vy = (int16_t)ACC_vY;
-	int vz = (int16_t)ACC_vZ;
+	int vx = (int)ACC_vX;
+	int vy = (int)ACC_vY;
+	int vz = (int)ACC_vZ;
 	static uint8_t count=0;
 	int vq2 = vx*vx + vy*vy + vz*vz;
 	//模值在有效范围内可信 不在范围内不可信, 只要有一次不可信就不可信
 	//持续可信 就真的可信
+
 	if((vq2>accvq2_Min)&&(vq2<accvq2_Max)){
-		if(count<8){
+		if(count<accBelive){
 			count++;
 			return 0;	//不可信
 		}
@@ -494,24 +497,32 @@ int16_t getOrientation_1ms(void){
 	if(gyroInitFin==1){
 		//LEDR_Set();
 		readQmi8658b();	//读出参数	
-		//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
-		//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
-		//LEDR_Reset();
-		//Acc X&Y 算出加速度轴的角度
-		int accInt;
-		accA = ((int)arctan(ACCXY));	//算出加速度角
-		accA = firstOrderFilter(&accft,accA);
-		accInt = accA*5625;
-		//GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
-		//DPS = 512  DPS/32768 * vZ * time(1000us)*351.5625*16*65536/360 = 增加的角度*6525
- 		//gyro = lastgyro*5625 + addgyro*16
+		if((ACC_vX>0x2150)||(ACC_vY>0x2150))
+		ACC_vX -= GetAccXoffset();
+		ACC_vY -= GetAccYoffset();
+		ACC_vZ += (0x2000 - GetAccZoffset());
 		gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<6) + ((int)lastOriA)*5625;		//本次Z轴加速度
-		//int gyroA1 = complementFilter(gyroA,accA);
 		if(gyroA<-32768*5625){
 			gyroA = 65536*5625 + gyroA;	//环形2进制 越界环形回来
 		}else if(gyroA>32767*5625){
 			gyroA = gyroA-65536*5625;
 		}
+		//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+		//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+		//LEDR_Reset();
+		//Acc X&Y 算出加速度轴的角度
+		int accInt;
+		//ACC_vX += 0x100;
+		//ACC_vY += 0x3a0;
+		//ACC_vZ += 0x38;
+		//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+		//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+		//accA = ((int)arctan(ACCXY));	//算出加速度角
+		//accA = firstOrderFilter(&accft,accA);
+		//accInt = accA*5625;
+		//GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
+		//DPS = 512  DPS/32768 * vZ * time(1000us)*351.5625*16*65536/360 = 增加的角度*6525
+ 		//gyro = lastgyro*5625 + addgyro*16
 		//int gyroA1 = complementFilter(gyroA,accA);
 
     	//int diff = accA-gyroA;    //本次角度误差 不同误差对应不同滤波系数
@@ -526,24 +537,37 @@ int16_t getOrientation_1ms(void){
 		int gyroA1;
 		if(CheckCorrect()){
 			//启动融合算法 误差越大 越信任陀螺仪 误差越小越信任加速度
+			ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+			ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+			accA = ((int)arctan(ACCXY));	//算出加速度角
+			accA = firstOrderFilter(&accft,accA);
+			accInt = accA*5625;
 			gyroA1 = complementFilter(gyroA,accInt);
 		}else{
 			//不可信
-			int diff = accInt - gyroA;    //本次角度误差 不同误差对应不同滤波系数
-   			if(diff<-32768*5625){   //误差 超出最大负数 认为是正向误差
-    			diff = 65536*5625 + diff;
-    		}else if(diff>32767*5625){
-    			diff = diff-65536*5625;
-    		}
-			gyroA1 = (int)((diff)>>8)+gyroA;
-    		//int result = ((diff>>8) * 255)+accA;
-    		//保证结果一定是在一个正确的范围内 环形加法 不溢出
-    		if(gyroA1<-32768*5625){   //误差 超出最大负数 认为是正向误差
-    			gyroA1 = 65536*5625 + gyroA1;
-    		}else if(gyroA1>32767*5625){
-    			gyroA1 = gyroA1-65536*5625; 
-    		}
-			//gyroA1 = gyroA;
+			//if((abs(ACC_vX)>0x2300)||(abs(ACC_vY)>0x2300)){
+			//	gyroA1 = gyroA;
+			//}else{
+				ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+				ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+				accA = ((int)arctan(ACCXY));	//算出加速度角
+				//accA = firstOrderFilter(&accft,accA);
+				accInt = accA*5625;
+				int diff = accInt - gyroA;    //本次角度误差 不同误差对应不同滤波系数
+   				if(diff<-32768*5625){   //误差 超出最大负数 认为是正向误差
+    				diff = 65536*5625 + diff;
+    			}else if(diff>32767*5625){
+    				diff = diff-65536*5625;
+    			}
+				gyroA1 = (int)((diff)>>9)+gyroA;
+    			//int result = ((diff>>8) * 255)+accA;
+    			//保证结果一定是在一个正确的范围内 环形加法 不溢出
+    			if(gyroA1<-32768*5625){   //误差 超出最大负数 认为是正向误差
+    				gyroA1 = 65536*5625 + gyroA1;
+    			}else if(gyroA1>32767*5625){
+    				gyroA1 = gyroA1-65536*5625; 
+    			}
+			//}
 		}
     	//int gyroA1 = ((diff * (int)(256-CheckCorrect()))>>8)+gyroA;	//accA;
 		//if(gyroA1<-32768*5625){

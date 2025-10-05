@@ -52,11 +52,13 @@ void initCorePeripherals(void){
     SysTick_Config(SystemCoreClock /SYS_TICK_FREQUENCY);
     //EE_Read();
     MX_GPIO_Init();
-	EE_ReadFOC(&FOC_Component_M1.lc);   //读取存储的FOC 参数
+	EE_ReadFOC(FOC_Component_M1.lc);   //读取存储的FOC 参数
+    //qmi8658x_init(GYPO_SDA_GPIO_PORT,GYPO_SDA_GPIO_PIN,GYPO_SCL_GPIO_PORT,GYPO_SCL_GPIO_PIN);
 
     while(GetONOFF()==0){
         //LEDG_Xor();
         Delay_ms(1);
+		//readQmi8658b();	//读出参数	
         fScanButton();   //扫描按键功能
     }
 		//EE_WriteFOC(&FOC_Component_M1.lc);
@@ -603,6 +605,11 @@ void GetUartDebug(void){
                     case SetPosLoopCount:
                         param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
                         SetPosLoopInv(param);
+                        i += 2;
+                    break;
+                    case SetGyroMid:    //设置陀螺仪中点
+                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+                        fSetGyroInitMid(param);
                         i += 2;
                     break;
                 }
