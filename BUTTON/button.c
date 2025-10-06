@@ -78,11 +78,11 @@ void ScanButton(button_t *bt){
                         break;
                         case bt_LREn:
                             //左转360度
-                            SetTurnLeftCycle();
+                            SetTurnRightCycle();
                         break;
                         case bt_RREn:
                             //右转360度
-                            SetTurnRightCycle();
+                            SetTurnLeftCycle();
                         break;
                         default:
                         break;

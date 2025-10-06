@@ -16,6 +16,7 @@
 #endif
 
 #define gyroCaliErr     0x40   //陀螺仪最大误差范围
+#define acc1g		0x2000
 
 
 

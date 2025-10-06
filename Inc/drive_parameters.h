@@ -236,19 +236,19 @@
 #define SP_KIDIV                       8192  //16384
 #define SP_KDDIV                       256   //512  //8192
 //位置环
-#define PID_Pos_KP_DEFAULT                 0x3f00  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 0x0f00 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 0x7200 //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
+#define PID_Pos_KP_DEFAULT                 0x5500  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 0x2500 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 0x4700  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
 /* Speed PID parameter dividers */
 #define Pos_KPDIV                       256   //64
 #define Pos_KIDIV                       8192  //16384
-#define Pos_KDDIV                       128  //512   //512  //8192
+#define Pos_KDDIV                       64   //128  //512   //512  //8192
 
 #define MaxPosSpeed     25000
 //PID 间隔时间
 #define cPIDDiff        2  //2ms once 500Hz
 #define defposcount     3
-#define accBelive       5  //信任加速度判断时间
+#define accBelive       6  //信任加速度判断时间
 //#define filterFirstOrder      //一阶滤波
 //#define filterAV 
 //#define filterAVDeep    32
@@ -256,7 +256,7 @@
 //输入数据去高去低滑动平均滤波 合成的角度做一阶滤波 让角度输出很稳定
 //滑动平均滤波的滤波深度 2的倍数  4/8/16/32/64/128 
 //#define AvFilterSubMaxMin     //开启后平均值多2个 有减最大最小值操作 单CPU消耗增多
-#define avFilterDeep    8
+#define avFilterDeep    16 //8
 //#define HallfilterFirstEn     //使能霍尔一阶滤波
 
 /* USER CODE BEGIN PID_SPEED_INTEGRAL_INIT_DIV */

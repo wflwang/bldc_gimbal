@@ -171,7 +171,7 @@ int16_t CalXYAngle(FOC_Component *fc,HallXYs *xynow){
     hY = (int16_t)(xynow->Hally-y_offset);
     if(x_Amp>y_Amp){
         hX = hX * y_Amp / x_Amp;
-    }else{
+    }else if(x_Amp<y_Amp){
         hY = hY * x_Amp / y_Amp;
     }
     return arctan(hY,hX);  //求出当前XY 对应相应极对的电角度   
@@ -185,15 +185,15 @@ int16_t CalXYAngle(FOC_Component *fc,HallXYs *xynow){
 */
 int16_t CalElAngle(FOC_Component *fc){
     HallXYs xynow = fc->xy_now; //采样到的XY值
-    int16_t atmp = CalXYAngle(fc,&xynow);   //当换算出的角度
+    int16_t atmp = CalXYAngle(fc,&xynow);   //当换算出的角度 物理角度
     int16_t elA1,elA2,tmpA,tmpB;
     uint8_t i=0;  //两个角度值
-    int32_t reA;
+    uint32_t reA;
     fc->hMecAngle = MecA_Sample(&mecAft,atmp); //对计算的物理角度一阶滤波
     while(1){
         //不同极对有不同的XY->实际角度
         elA1 = fc->lc->ZeroAngle[i];   //换算出当前极对初始角度
-        tmpA = atmp - elA1; //与本次的差值
+        tmpA = fc->hMecAngle - elA1; //与本次的差值
         if(fc->lc->M_dir){
             //同向
             if(tmpA>=0){
@@ -206,7 +206,7 @@ int16_t CalElAngle(FOC_Component *fc){
                 if(tmpB>tmpA){ //A B 都是正
                     //范围内
                     reA =  ((int32_t)(tmpA)<<16) / (int32_t)tmpB;  //算出当前电角度
-                    fc->hElAngle = (int16_t)reA;
+                    fc->hElAngle = (uint16_t)reA;
                     return fc->hElAngle;
                 }
             }else{
@@ -220,14 +220,15 @@ int16_t CalElAngle(FOC_Component *fc){
                 if(tmpB<tmpA){
                     //在范围内
                     reA =  ((int32_t)(tmpA)<<16) / (int32_t)tmpB;  //算出当前电角度
-                    fc->hElAngle = 0xffff - (int16_t)reA;
+                    uint16_t tp = 0xffff - (uint16_t)reA;
+                    fc->hElAngle = tp;
                     return fc->hElAngle;
                 }
             }
         }else{
             //反向
             //tmpA = atmp - elA1; //与本次的差值
-            if(tmpA>=0){
+            if(tmpA>=0){    //误差为正
                 //往回退
                 if(i==0)
                     i = POLE_PAIR_NUM-1;
@@ -238,12 +239,12 @@ int16_t CalElAngle(FOC_Component *fc){
                 if(tmpB>tmpA){
                     //在范围内
                     reA =  ((int32_t)(tmpA)<<16) / (int32_t)tmpB;  //算出当前电角度
-                    int16_t tp = 0xffff - (int16_t)reA;
+                    uint16_t tp = 0xffff - (uint16_t)reA;
                     fc->hElAngle = tp;
                     return fc->hElAngle;
                 }
                 //不在范围内
-            }else{
+            }else{  //误差为负
                 //往前进
                 if(i==(POLE_PAIR_NUM-1))
                     i = 0;
@@ -254,7 +255,7 @@ int16_t CalElAngle(FOC_Component *fc){
                 if(tmpB<tmpA){ //A B 都是负
                     //范围内
                     reA =  ((int32_t)(tmpA)<<16) / (int32_t)tmpB;  //算出当前电角度
-                    fc->hElAngle = (int16_t)reA;
+                    fc->hElAngle = (uint16_t)reA;
                     return fc->hElAngle;
                 }
             }
@@ -299,9 +300,9 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         fc->lc->ZeroAngle[6] = CalXYAngle(fc,&fc->xyZero[6]);
         fc->lc->learnXYFin = 1;
         fc->hElAngle = 0;
-        fc->lc->accVx_offset = fc->accVxSum/(POLE_PAIR_NUM*10);
-        fc->lc->accVy_offset = fc->accVySum/(POLE_PAIR_NUM*10);
-        fc->lc->accVz_offset = fc->accVzSum/(POLE_PAIR_NUM*10);
+        fc->lc->accVx_offset = fc->accVxSum/(POLE_PAIR_NUM*20);
+        fc->lc->accVy_offset = fc->accVySum/(POLE_PAIR_NUM*20);
+        fc->lc->accVz_offset = fc->accVzSum/(POLE_PAIR_NUM*20);
         return;
     }
     //每次0度时记录下当前的XY
@@ -320,12 +321,12 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         count++;
 		readQmi8658b();	//读出参数	
         if(count>10){
-            //11-21
+            //11-31
             fc->accVxSum += GetACC_X();
             fc->accVySum += GetACC_Y();
             fc->accVzSum += GetACC_Z();
         }
-        if(count>20){   //进来一次1ms*200 = 200ms 矫正加速度值
+        if(count>30){   //进来一次1ms*200 = 200ms 矫正加速度值
             fc->xyZero[num] = xynow;
             fc->hElAngle += 0x80;
         }
@@ -707,7 +708,7 @@ int16_t GetAccZoffset(void){
     if(FOC_Component_M1.lc->learnXYFin==1)
     return FOC_Component_M1.lc->accVz_offset;
     else
-    return 0x4000;
+    return acc1g;
 }
 //获取陀螺仪0度位置
 int16_t GetGyroZero(void){
