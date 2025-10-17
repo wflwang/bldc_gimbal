@@ -66,7 +66,8 @@ int complementFilter(int gyroA,int accA){
     int out_min = complementFLP_minAlpha;   //最小滤波系数
     int out_max = complementFLP_maxAlpha;   //最大滤波系数
     int pro = dataRangeMov(abs(diff),in_min,in_max,out_min,out_max);
-    int result = (int)(((int64_t)diff * (int64_t)pro)>>8)+gyroA;
+    //int result = (int)(((int64_t)diff * (int64_t)pro)>>8)+gyroA;
+    int result = (int)(((int64_t)diff * (int64_t)pro)>>9)+gyroA;
     //int result = ((diff>>8) * 255)+accA;
     //保证结果一定是在一个正确的范围内 环形加法 不溢出
     if(result<-32768*5625){   //误差 超出最大负数 认为是正向误差

@@ -9,9 +9,9 @@
     #include    "main.h"
 
 #define complementFLP_minDiff   5*5625        //互补滤波最小的误差 误差是*5625(>>4 = 351.5625)倍后的误差
-#define complementFLP_maxDiff   100*5625        //互补滤波最大的误差
-#define complementFLP_minAlpha   5  //25     //228        //互补滤波最小的滤波系数 208/256
-#define complementFLP_maxAlpha   1    //255    //252        //互补滤波最大滤波系数  252/256
+#define complementFLP_maxDiff   200*5625    //100*5625        //互补滤波最大的误差
+#define complementFLP_minAlpha   11     //5  //10  //25     //228        //互补滤波最小的滤波系数 208/256
+#define complementFLP_maxAlpha   2      //1    //255    //252        //互补滤波最大滤波系数  252/256
 
 /**
  * 滤波参数结构体

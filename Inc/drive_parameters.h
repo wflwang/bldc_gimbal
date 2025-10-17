@@ -15,7 +15,7 @@
  ************************/
 
 /************************* CPU & ADC PERIPHERAL CLOCK CONFIG ******************/
-#define SYSCLK_FREQ      48000000uL
+#define SYSCLK_FREQ      16000000uL
 #define TIM_CLOCK_DIVIDER  1 
 #define ADV_TIM_CLK_MHz    48
 #define ADC_CLK_MHz    24uL /* Maximum ADC Clock Frequency expressed in MHz */
@@ -218,7 +218,7 @@
 
 //#define testQMI //仅仅测试陀螺仪
 #define GyroEn  //陀螺仪功能使能
-#define cUartDebugEn    //开启串口调试功能
+//#define cUartDebugEn    //开启串口调试功能
 //#define debug_int
 /* Speed control loop */ 
 #define SPEED_LOOP_FREQUENCY_HZ       1000   //300 
@@ -236,19 +236,19 @@
 #define SP_KIDIV                       8192  //16384
 #define SP_KDDIV                       256   //512  //8192
 //位置环
-#define PID_Pos_KP_DEFAULT                 0x5500  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 0x2500 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 0x4700  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
+#define PID_Pos_KP_DEFAULT                 0x2730  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 0x550   //0x150 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 0x6700  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
 /* Speed PID parameter dividers */
 #define Pos_KPDIV                       256   //64
 #define Pos_KIDIV                       8192  //16384
-#define Pos_KDDIV                       64   //128  //512   //512  //8192
+#define Pos_KDDIV                       128  //512   //512  //8192
 
 #define MaxPosSpeed     25000
 //PID 间隔时间
 #define cPIDDiff        2  //2ms once 500Hz
 #define defposcount     3
-#define accBelive       6  //信任加速度判断时间
+#define accBelive       1  //信任加速度判断时间
 //#define filterFirstOrder      //一阶滤波
 //#define filterAV 
 //#define filterAVDeep    32
@@ -299,7 +299,7 @@
 #define ALIGN_qmiTime             2000   //陀螺仪角度校准时间
 #define ALIGNMENT_DURATION              1500 //800 //800  //500 //700 /*!< milliseconds */
 #define ALIGNMENT_ANGLE_DEG             0  //90 /*!< degrees [0...359] */
-#define FINAL_I_ALIGNMENT               17000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
+#define FINAL_I_ALIGNMENT               11000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I3_ALIGNMENT               5600 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I4_ALIGNMENT               4700 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 // With ALIGNMENT_ANGLE_DEG equal to 90 degrees final alignment 

@@ -33,20 +33,23 @@
 #endif
 
 #define accX_alp_raw    1000    //6000    //当前滤波系数
-#define accX_alp_min    70    //6000    //最小滤波系数
+#define accX_alp_min    200	//120    //6000    //最小滤波系数
 #define accX_alp_max    65535    //最大滤波系数
 #define accY_alp_raw    1000    //6000    //当前滤波系数
-#define accY_alp_min    70    //6000    //最小滤波系数
+#define accY_alp_min    200	//120    //6000    //最小滤波系数
 #define accY_alp_max    65535    //最大滤波系数
+#define accZ_alp_raw    1000    //6000    //当前滤波系数
+#define accZ_alp_min    200	//120    //6000    //最小滤波系数
+#define accZ_alp_max    65535    //最大滤波系数
 #define acc_alp_raw    1000    //6000    //当前滤波系数
-#define acc_alp_min    15    //6000    //最小滤波系数
+#define acc_alp_min    70    //6000    //最小滤波系数
 #define acc_alp_max    65535    //最大滤波系数
 #define gyroZ_alp_raw    1000    //当前滤波系数
 #define gyroZ_alp_min    500    //最小滤波系数
 #define gyroZ_alp_max    65535    //最大滤波系数
 
-#define accvq2_Min  (acc1g-0x100)*(acc1g-0x100)	//0x3ee0*0x3ee0
-#define accvq2_Max  (acc1g+0x100)*(acc1g+0x100)	//0x4120*0x4120
+#define accvq2_Min  (acc1g-0xe0)*(acc1g-0xe0)	//0x3ee0*0x3ee0
+#define accvq2_Max  (acc1g+0xe0)*(acc1g+0xe0)	//0x4120*0x4120
 #define accvq2_Mid  acc1g*acc1g	//0x4000*0x4000
 
 #define MinGyroRun	5	//最小陀螺仪动作幅度
@@ -60,17 +63,36 @@ const int16_t gyroFilter[] = {
 //对应不同误差的滤波系数增量
 const int16_t gyroFilterV[]={
     42,102,250,1000,3700,6000,9000
+    //28,82,130,200,350,600,800
 };
 //加速度滤波 滤波系数要大,不能增长过快
 //加速率滤波表格
+const int16_t accXYZFilter[] = {
+    //80,560,1820,4640,8500,12000
+    210,660,2020,4640,8500,15000
+};
+//加速度瞬间波动很大,长期是稳定
+//波动小 和 波动大基本上 系数变化不大 主要还是靠累计误差
+const int16_t accXYZFilterV[] = {
+    //60,120,200,350,600,800,1000
+    //20,60,100,150,200,300,450
+	//10,15,20,25,35,45,55
+	//25,32,41,52,70,90,110
+	//#25,32,50,72,100,130,180
+	//30,37,55,77,102,130,170
+	30,37,44,50,56,61,69
+};
+//加速度换算角度的滤波表格
+//角度滤波主要为了实际输出角度的稳定,反应熊太慢
+//变化小和变化大需要有差别 这样实时性会好
 const int16_t accFilter[] = {
     //80,560,1820,4640,8500,12000
     210,660,2020,4640,8500,15000
 };
 const int16_t accFilterV[] = {
     //60,120,200,350,600,800,1000
-    //20,60,100,150,200,300,450
-	8,15,20,25,35,45,55
+    20,60,100,150,200,300,450
+	//8,15,22,30,40,55,80
 };
 //当加速度不准确的时候加大滤波系数
 const int16_t accLowFilter[] = {
@@ -202,6 +224,7 @@ static int16_t accA = 0;	//本次加速度算出的脚位
 static int gyroA = 0;	//本次陀螺仪算出的脚位
 filter_t accXft;
 filter_t accYft;
+filter_t accZft;
 filter_t gyroZft;
 filter_t accft;
 //filter_t copft;	//互补滤波参数
@@ -256,7 +279,8 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	//it.data = (QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ);
 	//i2cWrite(&it);		//reset
 	//writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ));
-	writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_1024DPS|QMI8658B_GYRO_ODR_3587HZ));
+	writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_3587HZ));
+	//writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_1024DPS|QMI8658B_GYRO_ODR_3587HZ));
 	//it.data_adr = QMI8658B_EN_Sensors;
 	//it.data = (QMI8658B_GYRO_EN|QMI8658B_ACC_EN);
 	//i2cWrite(&it);		//reset
@@ -297,21 +321,29 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	Delay_ms(200);
 	readQmi8658b();	//读出参数
 	//初始化所有滤波参数
-	accXft.alpha_diff = accFilter;
-	accXft.alpha_diff_addV = accFilterV;
-	accXft.alpha_diff_len = sizeof(accFilter)/sizeof(int16_t);
+	accXft.alpha_diff = accXYZFilter;
+	accXft.alpha_diff_addV = accXYZFilterV;
+	accXft.alpha_diff_len = sizeof(accXYZFilter)/sizeof(int16_t);
     accXft.alpha_raw = accX_alp_raw;
     accXft.alpha_min= accX_alp_min;
     accXft.alpha_max= accX_alp_max;
 	accXft.filter = ACC_vX;
 
-	accYft.alpha_diff = accFilter;
-	accYft.alpha_diff_addV = accFilterV;
-	accYft.alpha_diff_len = sizeof(accFilter)/sizeof(int16_t);
+	accYft.alpha_diff = accXYZFilter;
+	accYft.alpha_diff_addV = accXYZFilterV;
+	accYft.alpha_diff_len = sizeof(accXYZFilter)/sizeof(int16_t);
     accYft.alpha_raw = accY_alp_raw;
     accYft.alpha_min= accY_alp_min;
     accYft.alpha_max= accY_alp_max;
 	accYft.filter = ACC_vY;
+
+	accZft.alpha_diff = accXYZFilter;
+	accZft.alpha_diff_addV = accXYZFilterV;
+	accZft.alpha_diff_len = sizeof(accXYZFilter)/sizeof(int16_t);
+    accZft.alpha_raw = accZ_alp_raw;
+    accZft.alpha_min= accZ_alp_min;
+    accZft.alpha_max= accZ_alp_max;
+	accZft.filter = ACC_vZ;
 
 	accA = ((int)arctan(ACCXY));	//算出加速度角
 	accft.alpha_diff = accFilter;
@@ -434,8 +466,8 @@ void readQmi8658b(void){
 	ACC_vZ	= (int16_t)((uint16_t)it.data[4]|((uint16_t)it.data[5]<<8));
 	GYRO_vZ	= (int16_t)((uint16_t)it.data[10]|((uint16_t)it.data[11]<<8));
 	//中值滤波加一阶滤波 滤波 ACC&GYRO
-	//accXft.alpha_diff = accFilter;
 	//accYft.alpha_diff = accFilter;
+	//accXft.alpha_diff = accFilter;
 	//gyroZft.alpha_diff = gyroFilter;
 	//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
 	//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
@@ -505,14 +537,13 @@ int8_t CheckCorrect(void){
 */
 int16_t getOrientation_1ms(void){
 	//uint8_t data[2];
-	if(gyroInitFin==1){
+	if((gyroInitFin==1)&&(fGetLearnXYState())){
 		//LEDR_Set();
+		//LEDR_Xor();
 		readQmi8658b();	//读出参数	
 		//if((ACC_vX>0x2150)||(ACC_vY>0x2150))
-		ACC_vX -= GetAccXoffset();
-		ACC_vY -= GetAccYoffset();
-		ACC_vZ += (acc1g - GetAccZoffset());
-		gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<6) + ((int)lastOriA)*5625;		//本次Z轴加速度
+		//GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
+		gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<5) + ((int)lastOriA)*5625;		//本次Z轴加速度
 		if(gyroA<-32768*5625){
 			gyroA = 65536*5625 + gyroA;	//环形2进制 越界环形回来
 		}else if(gyroA>32767*5625){
@@ -545,36 +576,45 @@ int16_t getOrientation_1ms(void){
 		//前提是加速度的模值在有效范围内 超出范围信任陀螺仪
 		//误差越大 越信任陀螺仪 误差越小 越信任加速度(消除陀螺仪累计误差)
 		//gyrp *(1-a) + acc *a = gyrp + (acc-gyrp)a
+		//3轴输出结果进行低通滤波
+		ACC_vX -= GetAccXoffset();
+		ACC_vY -= GetAccYoffset();
+		ACC_vZ += (acc1g - GetAccZoffset());
+		//采样出来真实值再滤波处理
+		ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+		ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+		ACC_vZ = firstOrderFilter(&accZft,ACC_vZ);
 		int gyroA1;
 		if(CheckCorrect()){
 			//启动融合算法 误差越大 越信任陀螺仪 误差越小越信任加速度
-			accXft.alpha_diff = accFilter;
-			accXft.alpha_diff_addV = accFilterV;
-			accYft.alpha_diff = accFilter;
-			accYft.alpha_diff_addV = accFilterV;
-			accft.alpha_diff = accFilter;
-			accft.alpha_diff_addV = accFilterV;
-			ACC_vX = firstOrderFilter(&accXft,ACC_vX);
-			ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+			//accXft.alpha_diff = accFilter;
+			//accXft.alpha_diff_addV = accFilterV;
+			//accYft.alpha_diff = accFilter;
+			//accYft.alpha_diff_addV = accFilterV;
+			//accft.alpha_diff = accFilter;
+			//accft.alpha_diff_addV = accFilterV;
+			//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+			//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
 			accA = ((int)arctan(ACCXY));	//算出加速度角
-			accA = firstOrderFilter(&accft,accA);
+			//accA = firstOrderFilter(&accft,accA);
 			accInt = accA*5625;
-			gyroA1 = complementFilter(gyroA,accInt);
+			gyroA1 = complementFilter(gyroA,accInt);	//正常范围内 进行融合滤波算法
+			//gyroA1 = gyroA;
 		}else{
-			//不可信
+			//不可信 时候 上次角度不变化？ 只信任陀螺仪
 			//if((abs(ACC_vX)>0x2300)||(abs(ACC_vY)>0x2300)){
 			//	gyroA1 = gyroA;
 			//}else{
-				accXft.alpha_diff = accLowFilter;
-				accXft.alpha_diff_addV = accLowFilterV;
-				accYft.alpha_diff = accLowFilter;
-				accYft.alpha_diff_addV = accLowFilterV;
-				accft.alpha_diff = accLowFilter;
-				accft.alpha_diff_addV = accLowFilterV;
-				ACC_vX = firstOrderFilter(&accXft,ACC_vX);
-				ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+				//accXft.alpha_diff = accLowFilter;
+				//accXft.alpha_diff_addV = accLowFilterV;
+				//accYft.alpha_diff = accLowFilter;
+				//accYft.alpha_diff_addV = accLowFilterV;
+				//accft.alpha_diff = accLowFilter;
+				//accft.alpha_diff_addV = accLowFilterV;
+				//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
+				//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
 				accA = ((int)arctan(ACCXY));	//算出加速度角
-				accA = firstOrderFilter(&accft,accA);
+				//accA = firstOrderFilter(&accft,accA);
 				accInt = accA*5625;
 				int diff = accInt - gyroA;    //本次角度误差 不同误差对应不同滤波系数
    				if(diff<-32768*5625){   //误差 超出最大负数 认为是正向误差
@@ -582,7 +622,7 @@ int16_t getOrientation_1ms(void){
     			}else if(diff>32767*5625){
     				diff = diff-65536*5625;
     			}
-				gyroA1 = (int)((diff)>>10)+gyroA;
+				gyroA1 = (int)((diff)>>9)+gyroA;
     			//int result = ((diff>>8) * 255)+accA;
     			//保证结果一定是在一个正确的范围内 环形加法 不溢出
     			if(gyroA1<-32768*5625){   //误差 超出最大负数 认为是正向误差

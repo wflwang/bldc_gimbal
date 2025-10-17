@@ -266,6 +266,17 @@ void MX_TIM_Init(void)
     //TIM_BrakInputRemap(TIM1, TIM_Break_Remap_COMP1OUT);
     /* TIM1 counter enable */
     TIM_Cmd(TIM1, ENABLE);
+
+    RCC_APBPeriph1ClockCmd(RCC_APBPeriph1_TIM2, ENABLE);
+    TIM_TimeBaseStructure.TIM_Prescaler = 1;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseStructure.TIM_Period = (SystemCoreClock/2/500)-1;   //500Hz freq 2ms once
+    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+    /* TIM Interrupts enable */
+    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+    TIM_Cmd(TIM2, ENABLE);
 }
 //关闭所有PWM
 void PWMC_OFFPWM(void){
@@ -434,6 +445,25 @@ void MX_Uart_Init(void){
     //Uart1Rx.FinishedFlag = RESET;
     /* Enable the UART1 */
     UART_Cmd(UART1, ENABLE);
+}
+/**
+ * @brief tim2 int
+ * 
+ * 
+*/
+void TIM2_IRQHandler(void)
+{
+    //if (TIM_GetITStatus(TIM2, TIM_IT_CC1) != RESET)
+    //{
+    //    // 处理比较中断
+    //    TIM_ClearITPendingBit(TIM2, TIM_IT_CC1);
+    //}  
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
+    {
+        // 处理更新中断
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+        getOrientation_1ms();   //读取一次陀螺仪值
+    }
 }
 /**
   * @brief  This function handles UART1 global interrupt request.
@@ -752,6 +782,10 @@ void MX_NVIC_init(void)
     NVIC_InitStruct.NVIC_IRQChannel=ADC1_IRQn;
     NVIC_InitStruct.NVIC_IRQChannelPriority = 0;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;		
+    NVIC_Init(&NVIC_InitStruct);
+    NVIC_InitStruct.NVIC_IRQChannel=TIM2_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPriority = 1;  //0;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;	
     NVIC_Init(&NVIC_InitStruct);
     /* UART1 IRQ Channel configuration */
     #ifdef cUartDebugEn

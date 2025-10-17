@@ -61,7 +61,7 @@ int main(void){
           timetemp = time1ms;
           //LEDR_Set();
           //Delay_ms(1);  //增加延迟方便SWD debug
-          getOrientation_1ms();
+          //getOrientation_1ms();
           fScanButton();   //扫描按键功能
           LEDControl();   //LED控制
           fScanVdd(); //扫描VDD电压

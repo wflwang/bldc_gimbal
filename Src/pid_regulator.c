@@ -324,13 +324,13 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //  pHandle->wIntegralTerm = pHandle->wIntegralTerm - pHandle->wIntegralTerm>>12; // /4倍
     //}
     //误差够小时候才积分
-    if(((wProcessVarError<3020)&&(wProcessVarError>-3020))){
+    //if(((wProcessVarError<3020)&&(wProcessVarError>-3020))){
       wIntegral_Term = pHandle->hKiGain * wProcessVarError;
       //wIntegral_Term  = 0;
-    }else{
-      wIntegral_Term  = 0;
-      pHandle->wIntegralTerm = 0;
-    }
+    //}else{
+    //  wIntegral_Term  = 0;
+    //  pHandle->wIntegralTerm = 0;
+    //}
     wIntegral_sum_temp = pHandle->wIntegralTerm + wIntegral_Term;
 
     if ( wIntegral_sum_temp < 0 )

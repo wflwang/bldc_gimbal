@@ -274,7 +274,16 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
     uint8_t num = (fc->hElAngle>>16);
     if(num>=fc->PolePairNum){
         num -= fc->PolePairNum;
-        int16_t tmp = El_90d - fc->lc->ZeroAngle[0];
+
+        //这里已经完整的转了一圈了 找出最大最小值算出角度
+        fc->lc->ZeroAngle[0] = CalXYAngle(fc,&fc->xyZero[0]);
+        fc->lc->ZeroAngle[1] = CalXYAngle(fc,&fc->xyZero[1]);
+        fc->lc->ZeroAngle[2] = CalXYAngle(fc,&fc->xyZero[2]);
+        fc->lc->ZeroAngle[3] = CalXYAngle(fc,&fc->xyZero[3]);
+        fc->lc->ZeroAngle[4] = CalXYAngle(fc,&fc->xyZero[4]);
+        fc->lc->ZeroAngle[5] = CalXYAngle(fc,&fc->xyZero[5]);
+        fc->lc->ZeroAngle[6] = CalXYAngle(fc,&fc->xyZero[6]);
+		int16_t tmp = El_90d - fc->lc->ZeroAngle[0];
         if(tmp>0){
             //方向一致
             //Err1 = 0-El_0d;
@@ -290,14 +299,6 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
             fc->lc->M_dir = 0;   //diff
             //xyc->ElAngleOffset[num] = Err1;
         }
-        //这里已经完整的转了一圈了 找出最大最小值算出角度
-        fc->lc->ZeroAngle[0] = CalXYAngle(fc,&fc->xyZero[0]);
-        fc->lc->ZeroAngle[1] = CalXYAngle(fc,&fc->xyZero[1]);
-        fc->lc->ZeroAngle[2] = CalXYAngle(fc,&fc->xyZero[2]);
-        fc->lc->ZeroAngle[3] = CalXYAngle(fc,&fc->xyZero[3]);
-        fc->lc->ZeroAngle[4] = CalXYAngle(fc,&fc->xyZero[4]);
-        fc->lc->ZeroAngle[5] = CalXYAngle(fc,&fc->xyZero[5]);
-        fc->lc->ZeroAngle[6] = CalXYAngle(fc,&fc->xyZero[6]);
         fc->lc->learnXYFin = 1;
         fc->hElAngle = 0;
         fc->lc->accVx_offset = fc->accVxSum/(POLE_PAIR_NUM*20);
@@ -310,7 +311,7 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         //每次电角度0度时候先延迟1s 校准加速度 再存入XY值
         //->只能记住XY 全部结束后才可以记忆角度
         //fc->lc->ZeroAngle[num] = CalXYAngle(fc,&xynow);      //算出0的角度
-        if(fc->hElAngle==0){
+        if((fc->hElAngle==0)&&(count==0)){
             //开始学习赋值最大最小值 更新第一个极对的极值
             fc->lc->Max = xynow;
             fc->lc->Min = xynow;    //第一次直接赋值最大最小值
@@ -320,13 +321,13 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         }
         count++;
 		readQmi8658b();	//读出参数	
-        if(count>10){
+        if(count>70){  //~=1.5s 后校验一次
             //11-31
             fc->accVxSum += GetACC_X();
             fc->accVySum += GetACC_Y();
             fc->accVzSum += GetACC_Z();
         }
-        if(count>30){   //进来一次1ms*200 = 200ms 矫正加速度值
+        if(count>90){   //进来一次1ms*200 = 200ms 矫正加速度值
             fc->xyZero[num] = xynow;
             fc->hElAngle += 0x80;
         }
@@ -688,6 +689,10 @@ int16_t GetTorque(void){
 int16_t fGetMHdir(void){
     return FOC_Component_M1.lc->M_dir;
 }
+//获取马达学习XY状态
+uint8_t fGetLearnXYState(void){
+    return FOC_Component_M1.lc->learnXYFin;
+}
 /**
  * @brief Get the Acc Xoffset object
  * 
@@ -695,20 +700,20 @@ int16_t fGetMHdir(void){
 int16_t GetAccXoffset(void){
     if(FOC_Component_M1.lc->learnXYFin==1)
     return FOC_Component_M1.lc->accVx_offset;
-    else
-    return 0;
+    //else
+    //return 0;
 }
 int16_t GetAccYoffset(void){
     if(FOC_Component_M1.lc->learnXYFin==1)
     return FOC_Component_M1.lc->accVy_offset;
-    else
-    return 0;
+    //else
+    //return 0;
 }
 int16_t GetAccZoffset(void){
     if(FOC_Component_M1.lc->learnXYFin==1)
     return FOC_Component_M1.lc->accVz_offset;
-    else
-    return acc1g;
+    //else
+    //return acc1g;
 }
 //获取陀螺仪0度位置
 int16_t GetGyroZero(void){
