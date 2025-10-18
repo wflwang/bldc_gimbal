@@ -459,6 +459,12 @@ uint8_t fGetVddState(void){
 void fSetVddState(uint8_t err){
     FOC_Component_M1.vddErr = err;
 }
+uint8_t fGetProtectState(void){
+    if(FOC_Component_M1.protectCount>cProtectWarning){
+        return 1;
+    }
+    return 0;
+}
 /**
  * @brief 扫描VDD
  * 
@@ -513,12 +519,12 @@ int16_t PosPISControl(FOC_Component *fc){
     if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
         hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
         if(hError>0){
-            fc->hAddActTargetAngle += 16;
+            fc->hAddActTargetAngle += 32;
             hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
             if(hError<0)
                 fc->hAddActTargetAngle = fc->hAddTargetAngle;
         }else{
-            fc->hAddActTargetAngle -= 16;
+            fc->hAddActTargetAngle -= 32;
             hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
             if(hError>0)
                 fc->hAddActTargetAngle = fc->hAddTargetAngle;
@@ -567,7 +573,19 @@ int16_t PosPISControl(FOC_Component *fc){
     //if((hError>-vDeadErr)&&(hError<vDeadErr)){
     //    hError = 0;
     //}
-    hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError);
+    //static int16_t lastErr=0;
+    //if(hError!=lastErr){
+    //    if(hError>lastErr){
+    //        lastErr += 0x500;
+    //        if(lastErr>hError)
+    //            lastErr = hError;
+    //    }else{
+    //        lastErr -= 0x500;
+    //        if(lastErr<hError)
+    //            lastErr = hError;
+    //    }
+    //}
+    hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError); //hError
     #else
     //不同的角度误差 => 对应不同速度 位置环 
     //速度环 转速熊超过1min 1转 1s->1/6转 err 对应角度的反数 角度期望总是要无限接近0
@@ -698,19 +716,19 @@ uint8_t fGetLearnXYState(void){
  * 
  */
 int16_t GetAccXoffset(void){
-    if(FOC_Component_M1.lc->learnXYFin==1)
+    //if(FOC_Component_M1.lc->learnXYFin==1)
     return FOC_Component_M1.lc->accVx_offset;
     //else
     //return 0;
 }
 int16_t GetAccYoffset(void){
-    if(FOC_Component_M1.lc->learnXYFin==1)
+    //if(FOC_Component_M1.lc->learnXYFin==1)
     return FOC_Component_M1.lc->accVy_offset;
     //else
     //return 0;
 }
 int16_t GetAccZoffset(void){
-    if(FOC_Component_M1.lc->learnXYFin==1)
+    //if(FOC_Component_M1.lc->learnXYFin==1)
     return FOC_Component_M1.lc->accVz_offset;
     //else
     //return acc1g;
@@ -848,6 +866,15 @@ Err_FOC MotorRunControl(FOC_Component *fc){
             //每次更新扭力
             fc->Vqd.qV_Component1 = PosPISControl(fc);   //当前扭力的增量
             fc->Vqd.qV_Component2 = 0;
+            if((fc->Vqd.qV_Component1>31550)||(fc->Vqd.qV_Component1<-31550)){
+                fc->protectCount++; //进来一次1ms
+                if(fc->protectCount>cProtectOFF){
+                    //超过45s保护
+                    poweroff();
+                }
+            }else{
+                fc->protectCount = 0;
+            }
         }
     }
     return no_err;

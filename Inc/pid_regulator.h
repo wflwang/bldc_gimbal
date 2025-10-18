@@ -197,6 +197,7 @@ void PID_SetKDDivisorPOW2( PID_Handle_t * pHandle, uint16_t hKdDivisorPOW2 );
  * proportional and integralterms
  */
 int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError );
+int32_t PI_HController( PID_Handle_t * pHandle, int32_t wProcessVarError );
 int32_t LowSpeedPI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError );
 
 /* This function compute the output of a PID regulator sum of its

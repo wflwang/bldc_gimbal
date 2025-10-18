@@ -298,6 +298,92 @@ __attribute__( ( section ( ".ccmram" ) ) )
  *         value minus the present process variable value
  * @retval computed PI output
  */
+int32_t PI_HController( PID_Handle_t * pHandle, int32_t wProcessVarError ){
+  int32_t wProportional_Term, wIntegral_Term, wOutput_32, wIntegral_sum_temp;
+  //int32_t wDischarge = 0;
+  //int16_t hUpperOutputLimit = pHandle->hUpperOutputLimit;
+  //int16_t hLowerOutputLimit = pHandle->hLowerOutputLimit;
+  wProportional_Term = pHandle->hKpGain * wProcessVarError;
+  if ( pHandle->hKiGain == 0 )
+  {
+    pHandle->wIntegralTerm = 0;
+  }else{
+    wIntegral_Term = pHandle->hKiGain * wProcessVarError;
+    wIntegral_sum_temp = pHandle->wIntegralTerm + wIntegral_Term;
+    if ( wIntegral_sum_temp < 0 )
+    {
+      if ( pHandle->wIntegralTerm > 0 )
+      {
+        if ( wIntegral_Term > 0 )
+        {
+          wIntegral_sum_temp = INT32_MAX;
+        }
+      }
+    }
+    else
+    {
+      if ( pHandle->wIntegralTerm < 0 )
+      {
+        if ( wIntegral_Term < 0 )
+        {
+          wIntegral_sum_temp = -INT32_MAX;
+        }
+      }
+    }
+
+    if ( wIntegral_sum_temp > pHandle->wUpperIntegralLimit )
+    {
+      pHandle->wIntegralTerm = pHandle->wUpperIntegralLimit;
+    }
+    else if ( wIntegral_sum_temp < pHandle->wLowerIntegralLimit )
+    {
+      pHandle->wIntegralTerm = pHandle->wLowerIntegralLimit;
+    }
+    else
+    {
+      pHandle->wIntegralTerm = wIntegral_sum_temp;
+    }
+  }
+  #ifdef FULL_MISRA_C_COMPLIANCY
+    wOutput_32 = ( wProportional_Term / ( int32_t )pHandle->hKpDivisor ) + ( pHandle->wIntegralTerm /
+                 ( int32_t )pHandle->hKiDivisor );
+  #else
+    /* WARNING: the below instruction is not MISRA compliant, user should verify
+               that Cortex-M3 assembly instruction ASR (arithmetic shift right)
+               is used by the compiler to perform the shifts (instead of LSR
+               logical shift right)*/
+    wOutput_32 = ( wProportional_Term >> pHandle->hKpDivisorPOW2 ) + ( pHandle->wIntegralTerm >> pHandle->hKiDivisorPOW2 ); 
+    //if(wOutput_32>INT16_MAX){
+    //    wOutput_32 = INT16_MAX;
+    //}else if(wOutput_32<INT16_MIN){
+    //    wOutput_32 = INT16_MIN;
+    //}
+  #endif
+  //if ( wOutput_32 > hUpperOutputLimit )
+  //{
+  //
+  //  wDischarge = hUpperOutputLimit - wOutput_32;
+  //  wOutput_32 = hUpperOutputLimit;
+  //}
+  //else if ( wOutput_32 < hLowerOutputLimit )
+  //{
+  //
+  //  wDischarge = hLowerOutputLimit - wOutput_32;
+  //  wOutput_32 = hLowerOutputLimit;
+  //}
+  //else { /* Nothing to do here */ }
+  //
+  //pHandle->wIntegralTerm += wDischarge;
+  return wOutput_32;
+}
+/**
+ * @brief  This function compute the output of a PI regulator sum of its
+ *         proportional and integral terms
+ * @param  pHandle: handler of the current instance of the PID component
+ * @param  wProcessVarError: current process variable error, intended as the reference
+ *         value minus the present process variable value
+ * @retval computed PI output
+ */
 int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
 {
   int32_t wProportional_Term, wIntegral_Term, wOutput_32, wIntegral_sum_temp;
@@ -377,11 +463,11 @@ int16_t PI_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
              is used by the compiler to perform the shifts (instead of LSR
              logical shift right)*/
   wOutput_32 = ( wProportional_Term >> pHandle->hKpDivisorPOW2 ) + ( pHandle->wIntegralTerm >> pHandle->hKiDivisorPOW2 ); 
-  if(wOutput_32>INT16_MAX){
-      wOutput_32 = INT16_MAX;
-  }else if(wOutput_32<INT16_MIN){
-      wOutput_32 = INT16_MIN;
-  }
+  //if(wOutput_32>INT16_MAX){
+  //    wOutput_32 = INT16_MAX;
+  //}else if(wOutput_32<INT16_MIN){
+  //    wOutput_32 = INT16_MIN;
+  //}
 #endif
 
   if ( wOutput_32 > hUpperOutputLimit )
@@ -529,7 +615,7 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     wDeltaError = wProcessVarError - pHandle->wPrevProcessVarError;
     pHandle->wPreDeltaErr += wDeltaError;
     pHandle->wPreDeltaErr >>= 1;
-    wDifferential_Term = pHandle->hKdGain * wDeltaError;  //wDeltaError;  //pHandle->wPreDeltaErr;  //
+    wDifferential_Term = pHandle->hKdGain * pHandle->wPreDeltaErr;  //wDeltaError;  //pHandle->wPreDeltaErr;  //
 
 #ifdef FULL_MISRA_C_COMPLIANCY
     wDifferential_Term /= ( int32_t )pHandle->hKdDivisor;
@@ -550,7 +636,8 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     //if(((wProcessVarError^wDifferential_Term)&0x80000000)){
       //微分和比例方向不一致时候积分减半
     //  pHandle->wIntegralTerm = (pHandle->wIntegralTerm *180)>>8;
-      wTemp_output = (int32_t)PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
+    //wTemp_output = PI_HController(pHandle, wProcessVarError) + wDifferential_Term;
+    wTemp_output = (int32_t)PI_Controller( pHandle, wProcessVarError ) + wDifferential_Term;
       if(wTemp_output>INT16_MAX){
           wTemp_output = INT16_MAX;
       }else if(wTemp_output<INT16_MIN){

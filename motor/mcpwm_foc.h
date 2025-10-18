@@ -88,5 +88,6 @@ int16_t GetAccYoffset(void);
 int16_t GetAccZoffset(void);
 void fSetGyroInitMid(int16_t in);
 uint8_t fGetLearnXYState(void);
+uint8_t fGetProtectState(void);
 
 #endif

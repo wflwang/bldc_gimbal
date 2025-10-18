@@ -48,8 +48,8 @@
 #define gyroZ_alp_min    500    //最小滤波系数
 #define gyroZ_alp_max    65535    //最大滤波系数
 
-#define accvq2_Min  (acc1g-0xe0)*(acc1g-0xe0)	//0x3ee0*0x3ee0
-#define accvq2_Max  (acc1g+0xe0)*(acc1g+0xe0)	//0x4120*0x4120
+#define accvq2_Min  (acc1g-0x100)*(acc1g-0x100)	//0x3ee0*0x3ee0
+#define accvq2_Max  (acc1g+0x100)*(acc1g+0x100)	//0x4120*0x4120
 #define accvq2_Mid  acc1g*acc1g	//0x4000*0x4000
 
 #define MinGyroRun	5	//最小陀螺仪动作幅度
@@ -595,6 +595,8 @@ int16_t getOrientation_1ms(void){
 			//accft.alpha_diff_addV = accFilterV;
 			//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
 			//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
+			//再稳定时候自动校准陀螺仪 多次采样滤波得出均值
+			//比较均值数据波动在很小的范围里的话认为基本没动 用均值校准
 			accA = ((int)arctan(ACCXY));	//算出加速度角
 			//accA = firstOrderFilter(&accft,accA);
 			accInt = accA*5625;
@@ -622,7 +624,7 @@ int16_t getOrientation_1ms(void){
     			}else if(diff>32767*5625){
     				diff = diff-65536*5625;
     			}
-				gyroA1 = (int)((diff)>>9)+gyroA;
+				gyroA1 = (int)((diff)>>10)+gyroA;
     			//int result = ((diff>>8) * 255)+accA;
     			//保证结果一定是在一个正确的范围内 环形加法 不溢出
     			if(gyroA1<-32768*5625){   //误差 超出最大负数 认为是正向误差

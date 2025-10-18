@@ -17,4 +17,4 @@ REM 推送到 origithub 远程仓库
 echo 正在推送到 origithub 的 %target_branch% 分支...
 git push -u origithub %target_branch%
 
-pause
+:: pause

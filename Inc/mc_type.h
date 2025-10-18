@@ -229,6 +229,7 @@ typedef struct
     uint16_t hDurationms; //持续时间
     //#ifndef posLoop //有速度环时候有效
     int16_t posCount; //速度换计次
+    int protectCount; //堵转保护时间
     //#endif
     //int16_t hx[filterAVDeep];
     //int16_t hy[filterAVDeep];

@@ -196,7 +196,7 @@
 
 /**************************    DRIVE SETTINGS SECTION   **********************/
 /* PWM generation and current reading */
-#define PWM_FREQUENCY                        15000 //25000 //10000 //10000 //8000  //10000
+#define PWM_FREQUENCY                        20000 //15000 //25000 //10000 //10000 //8000  //10000
 #define LOW_SIDE_SIGNALS_ENABLING            LS_PWM_TIMER
 #define SW_DEADTIME_NS                       10  //800   //1400   /*!< Dead-time to be inserted by FW, only if low side signals are enabled */
 
@@ -236,9 +236,9 @@
 #define SP_KIDIV                       8192  //16384
 #define SP_KDDIV                       256   //512  //8192
 //位置环
-#define PID_Pos_KP_DEFAULT                 0x2730  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 0x550   //0x150 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 0x6700  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
+#define PID_Pos_KP_DEFAULT                 0x3030  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 0x750   //0x150 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 0x4500  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
 /* Speed PID parameter dividers */
 #define Pos_KPDIV                       256   //64
 #define Pos_KIDIV                       8192  //16384
@@ -248,7 +248,9 @@
 //PID 间隔时间
 #define cPIDDiff        2  //2ms once 500Hz
 #define defposcount     3
-#define accBelive       1  //信任加速度判断时间
+#define accBelive       1  //1  //信任加速度判断时间
+#define cProtectWarning   14934        //*3ms ->5s
+#define cProtectOFF     16600       //->45s
 //#define filterFirstOrder      //一阶滤波
 //#define filterAV 
 //#define filterAVDeep    32

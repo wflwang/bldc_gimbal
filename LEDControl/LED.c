@@ -24,20 +24,31 @@ void LEDControl(void){
         if(GetLearnState()){
             //正常模式
             if(fGetVddState()==lvdErr){
+                //低压红灯闪烁
                 LEDG_Reset();
                 if(blinkcount&0x100)
                     LEDR_Reset();
                 else
                     LEDR_Set();
             }else{
-                LEDR_Reset();
-                if(blinkcount&0x100)
+                //正常绿灯闪 如果卡死保护了 红灯闪烁
+                if(fGetProtectState()){
+                    //有卡死保护
                     LEDG_Reset();
-                else
-                    LEDG_Set();
+                    if(blinkcount&0x80) //红灯快闪
+                        LEDR_Reset();
+                    else
+                        LEDR_Set();
+                }else{
+                    LEDR_Reset();
+                    if(blinkcount&0x100)
+                        LEDG_Reset();
+                    else
+                        LEDG_Set();
+                }
             }
             //LEDG_Set();
-        }else{
+        }else{  
             //闪烁提示
             if(GetLearnAtt()){
                 //爆闪
@@ -54,5 +65,6 @@ void LEDControl(void){
     }else{
         //关机时候灯灭掉
         LEDG_Reset();
+		LEDR_Reset();
     }
 }
