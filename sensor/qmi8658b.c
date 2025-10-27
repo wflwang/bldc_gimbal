@@ -47,9 +47,9 @@
 #define gyroZ_alp_raw    1000    //当前滤波系数
 #define gyroZ_alp_min    500    //最小滤波系数
 #define gyroZ_alp_max    65535    //最大滤波系数
-
-#define accvq2_Min  (acc1g-0x100)*(acc1g-0x100)	//0x3ee0*0x3ee0
-#define accvq2_Max  (acc1g+0x100)*(acc1g+0x100)	//0x4120*0x4120
+//0x100
+#define accvq2_Min  (acc1g-0xe0)*(acc1g-0xe0)	//0x3ee0*0x3ee0
+#define accvq2_Max  (acc1g+0xe0)*(acc1g+0xe0)	//0x4120*0x4120
 #define accvq2_Mid  acc1g*acc1g	//0x4000*0x4000
 
 #define MinGyroRun	5	//最小陀螺仪动作幅度
@@ -91,8 +91,8 @@ const int16_t accFilter[] = {
 };
 const int16_t accFilterV[] = {
     //60,120,200,350,600,800,1000
-    20,60,100,150,200,300,450
-	//8,15,22,30,40,55,80
+    //20,60,100,150,200,300,450
+	8,15,22,30,40,55,70
 };
 //当加速度不准确的时候加大滤波系数
 const int16_t accLowFilter[] = {
@@ -275,11 +275,14 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	//writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_2G|QMI8658B_ACC_ODR_896HZ));
 	//writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_2G|QMI8658B_ACC_ODR_1793HZ));
 	writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_1793HZ));
+	//writeQMIreg(&it,QMI8658B_ACC_Set,(QMI8658B_ACC_FS_4G|QMI8658B_ACC_ODR_896HZ));
 	//it.data_adr = QMI8658B_GYRO_Set;
 	//it.data = (QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ);
 	//i2cWrite(&it);		//reset
 	//writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_7174HZ));
-	writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_3587HZ));
+	writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_1024DPS|QMI8658B_GYRO_ODR_896HZ));
+	//writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_512DPS|QMI8658B_GYRO_ODR_3587HZ));
+	//writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_2048DPS|QMI8658B_GYRO_ODR_896HZ));
 	//writeQMIreg(&it,QMI8658B_GYRO_Set,(QMI8658B_GYRO_FS_1024DPS|QMI8658B_GYRO_ODR_3587HZ));
 	//it.data_adr = QMI8658B_EN_Sensors;
 	//it.data = (QMI8658B_GYRO_EN|QMI8658B_ACC_EN);
@@ -543,7 +546,16 @@ int16_t getOrientation_1ms(void){
 		readQmi8658b();	//读出参数	
 		//if((ACC_vX>0x2150)||(ACC_vY>0x2150))
 		//GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
-		gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<5) + ((int)lastOriA)*5625;		//本次Z轴加速度
+		//@->512
+		//gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<5) + ((int)lastOriA)*5625;		//本次Z轴加速度
+		//256
+		//gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<4) + ((int)lastOriA)*5625;		//本次Z轴加速度
+		//128
+		//gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<3) + ((int)lastOriA)*5625;		//本次Z轴加速度
+		//1024
+		gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<6) + ((int)lastOriA)*5625;		//本次Z轴加速度
+		//@->2048
+		//gyroA = (((int)(GYRO_vZ-GetLearnGyroZBais()))<<7) + ((int)lastOriA)*5625;		//本次Z轴加速度
 		if(gyroA<-32768*5625){
 			gyroA = 65536*5625 + gyroA;	//环形2进制 越界环形回来
 		}else if(gyroA>32767*5625){

@@ -63,10 +63,12 @@ const int16_t MecAFilter[] = {
 //speed 速率滤波表格
 const int16_t MecAFilterV[] = {
     //55,85,150,450,900,2000,4500
-    55,85,130,200,300,550,4500
+    //#55,85,130,200,300,550,4500
+    //35,65,105,155,205,275,405
+    35,45,55,65,75,85,95
 };
 #define MecA_alp_raw   1000    //当前滤波系数
-#define MecA_alp_min   60   //75    //当前滤波系数
+#define MecA_alp_min   20   //60   //75    //当前滤波系数
 #define MecA_alp_max   65535    //当前滤波系数
 //电压滤波
 const int16_t vddFilter[] = {
@@ -519,12 +521,12 @@ int16_t PosPISControl(FOC_Component *fc){
     if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
         hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
         if(hError>0){
-            fc->hAddActTargetAngle += 32;
+            fc->hAddActTargetAngle += 10;
             hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
             if(hError<0)
                 fc->hAddActTargetAngle = fc->hAddTargetAngle;
         }else{
-            fc->hAddActTargetAngle -= 32;
+            fc->hAddActTargetAngle -= 10;
             hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
             if(hError>0)
                 fc->hAddActTargetAngle = fc->hAddTargetAngle;
