@@ -267,7 +267,7 @@ int16_t CalElAngle(FOC_Component *fc){
 }
 /**
  * @brief 极对中角度信息学习
- * 
+ * 30ms once
 */
 void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
     static int16_t El_90d;
@@ -323,22 +323,22 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         }
         count++;
 		readQmi8658b();	//读出参数	
-        if(count>70){  //~=1.5s 后校验一次
+        if(count>80){  //~=1.5s 后校验一次  90*30 = 2.7s
             //11-31
             fc->accVxSum += GetACC_X();
             fc->accVySum += GetACC_Y();
             fc->accVzSum += GetACC_Z();
         }
-        if(count>90){   //进来一次1ms*200 = 200ms 矫正加速度值
+        if(count>100){   //进来一次110*30 = 3.3s 矫正加速度值
             fc->xyZero[num] = xynow;
-            fc->hElAngle += 0x80;
+            fc->hElAngle += 0x800;  //30->0x800
         }
     }else if(fc->hElAngle==0x4000){
         El_90d = CalXYAngle(fc,&xynow);      //算出0的角度
-        fc->hElAngle += 0x80;
+        fc->hElAngle += 0x800;  //0x80->0x800
         count = 0;
     }else{
-        fc->hElAngle += 0x80;
+        fc->hElAngle += 0x800;   //65536*2 = 131,072 * 30ms => 1min?
         count = 0;
     }
 }
@@ -518,18 +518,31 @@ int16_t PosPISControl(FOC_Component *fc){
     int16_t hError; //位置误差
     static int16_t hSpeed; //误差对应的速度
     static int16_t posCount=0;  //位置环计次 3次位置环调整一次 速度换每次都调整
+    static int16_t vLastTarErrDir=0;  //上次误差方向
     if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
         hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
         if(hError>0){
-            fc->hAddActTargetAngle += 10;
-            hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
-            if(hError<0)
-                fc->hAddActTargetAngle = fc->hAddTargetAngle;
+            if(vLastTarErrDir<0){
+                //上次误差是- 
+                vLastTarErrDir++;
+            }else{
+                vLastTarErrDir = 150;   //0.16s
+                fc->hAddActTargetAngle += 10;
+                hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
+                if(hError<0)
+                    fc->hAddActTargetAngle = fc->hAddTargetAngle;
+            }
         }else{
-            fc->hAddActTargetAngle -= 10;
-            hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
-            if(hError>0)
-                fc->hAddActTargetAngle = fc->hAddTargetAngle;
+            if(vLastTarErrDir>0){
+                //上次误差是- 
+                vLastTarErrDir--;
+            }else{
+                vLastTarErrDir = -150;   //0.16s
+                fc->hAddActTargetAngle -= 10;
+                hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
+                if(hError>0)
+                    fc->hAddActTargetAngle = fc->hAddTargetAngle;
+            }
         }
         //if(FOC_Component_M1.hAddTargetAngle>FOC_Component_M1.hAddActTargetAngle){
         //    FOC_Component_M1.hAddActTargetAngle += 12;

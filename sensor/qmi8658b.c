@@ -492,6 +492,38 @@ int16_t GetGYRO_Z(void){
 	return GYRO_vZ;
 }
 /***
+ * @brief check ACC Z Over
+ * 
+ * 
+*/
+int8_t CheckACCZErr(void){
+	int vz = (int)ACC_vZ;
+	static uint8_t count=0;
+	static uint8_t ACCOFF=0;
+	int tp=(acc1g*0xe6)>>8;
+	if(vz*vz>tp*tp){
+		if(count>8){
+			ACCOFF = 1;
+			return 0;	//Err
+		}else{
+			count++;
+		}
+	}else{
+		if(ACCOFF==1){
+			count>>=1;
+			if(count==0){
+				ACCOFF = 0;
+				return 1;
+			}
+			else
+				return 0;
+		}else{
+			count = 0;
+			return 1;
+		}
+	}
+}
+/***
  * @brief 解码加速度是否处于匀速/稳定范围 稳定时候占5%比例 不稳定不能用
  * 稳定时候还可以慢慢校准陀螺仪中点
  * 
@@ -597,7 +629,10 @@ int16_t getOrientation_1ms(void){
 		ACC_vY = firstOrderFilter(&accYft,ACC_vY);
 		ACC_vZ = firstOrderFilter(&accZft,ACC_vZ);
 		int gyroA1;
-		if(CheckCorrect()){
+		if(CheckACCZErr()==0){
+			gyroA1 = gyroA;
+		}
+		else if(CheckCorrect()){
 			//启动融合算法 误差越大 越信任陀螺仪 误差越小越信任加速度
 			//accXft.alpha_diff = accFilter;
 			//accXft.alpha_diff_addV = accFilterV;
