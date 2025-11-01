@@ -61,6 +61,7 @@ void initCorePeripherals(void){
 		//readQmi8658b();	//读出参数	
         fScanButton();   //扫描按键功能
     }
+    //PowerEn_Write(0);
 		//EE_WriteFOC(&FOC_Component_M1.lc);
     #ifdef cUartDebugEn
     SWD_Pin_To_PB5_PD5_Configuration();
@@ -168,7 +169,7 @@ void MX_GPIO_Init(void){
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_InitStructure.GPIO_Pin = PowerEn_GPIO_PIN;
 	GPIO_Init(PowerEn_GPIO_PORT, &GPIO_InitStructure);
-    PowerEn_Write(1);
+    PowerEn_Write(0);
     GPIO_InitStructure.GPIO_Pin = LEDR_GPIO_PIN;
 	GPIO_Init(LEDR_GPIO_PORT, &GPIO_InitStructure);
     LEDR_Write(0);

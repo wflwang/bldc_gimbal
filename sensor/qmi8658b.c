@@ -222,6 +222,7 @@ static int16_t lastOriA=0;	//上次计算出的角度
 static uint8_t gyroInitFin=0;	//陀螺仪初始化完成标志
 static int16_t accA = 0;	//本次加速度算出的脚位
 static int gyroA = 0;	//本次陀螺仪算出的脚位
+static uint8_t ACCOFF=0;
 filter_t accXft;
 filter_t accYft;
 filter_t accZft;
@@ -499,7 +500,6 @@ int16_t GetGYRO_Z(void){
 int8_t CheckACCZErr(void){
 	int vz = (int)ACC_vZ;
 	static uint8_t count=0;
-	static uint8_t ACCOFF=0;
 	int tp=(acc1g*0xe6)>>8;
 	if(vz*vz>tp*tp){
 		if(count>8){
@@ -631,6 +631,7 @@ int16_t getOrientation_1ms(void){
 		int gyroA1;
 		if(CheckACCZErr()==0){
 			gyroA1 = gyroA;
+			return lastOriA;
 		}
 		else if(CheckCorrect()){
 			//启动融合算法 误差越大 越信任陀螺仪 误差越小越信任加速度
@@ -724,6 +725,9 @@ int16_t getOrientation_1ms(void){
  * 
  * 
 */
+int16_t GetACCDis(void){
+	return ACCOFF;
+}
 int16_t GetOriGyroA(void){
 	return lastOriA;
 }

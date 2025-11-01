@@ -48,6 +48,7 @@ int8_t CheckCorrect(void);
 void ResetGyroInit(void);
 uint8_t GetGyroFin(void);   //获取陀螺仪完成标志
 int8_t CheckACCZErr(void);  //检测ACC Z 是否倒下来
+int16_t GetACCDis(void);
 
 
 #endif

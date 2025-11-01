@@ -566,20 +566,24 @@ int16_t PosPISControl(FOC_Component *fc){
     //}else{
     //    realyAngle = (realyAngle * 63536) >>16;
     //}
-    if(fc->lc->M_dir){
-        //电角度和物理角度同相变化
-        #ifdef GyroEn
-        hError = realyAngle-GetOriGyroA();
-        #else
-        hError = realyAngle-fc->hMecAngle;
-        #endif
-    }
-    else{
-        #ifdef GyroEn
-        hError = GetOriGyroA() - realyAngle;
-        #else
-        hError = fc->hMecAngle - realyAngle;
-        #endif
+    if(GetACCDis()){
+        hError = 0;
+    }else{
+        if(fc->lc->M_dir){
+            //电角度和物理角度同相变化
+            #ifdef GyroEn
+            hError = realyAngle-GetOriGyroA();
+            #else
+            hError = realyAngle-fc->hMecAngle;
+            #endif
+        }
+        else{
+            #ifdef GyroEn
+            hError = GetOriGyroA() - realyAngle;
+            #else
+            hError = fc->hMecAngle - realyAngle;
+            #endif
+        }
     }
 
     //PID调试 直接误差PWM 输出改为PWM的增量 以上次为基准 增/减
@@ -600,7 +604,12 @@ int16_t PosPISControl(FOC_Component *fc){
     //            lastErr = hError;
     //    }
     //}
-    hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError); //hError
+    if(GetACCDis()){
+        hTorqueReference = 0; //hError
+        PIDPosHandle_M1.wIntegralTerm = 0;
+    }else{
+        hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError); //hError
+    }
     #else
     //不同的角度误差 => 对应不同速度 位置环 
     //速度环 转速熊超过1min 1转 1s->1/6转 err 对应角度的反数 角度期望总是要无限接近0
