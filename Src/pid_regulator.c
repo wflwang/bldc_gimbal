@@ -615,7 +615,7 @@ int16_t PID_Controller( PID_Handle_t * pHandle, int32_t wProcessVarError )
     wDeltaError = wProcessVarError - pHandle->wPrevProcessVarError;
     pHandle->wPreDeltaErr += wDeltaError;
     pHandle->wPreDeltaErr >>= 1;
-    wDifferential_Term = pHandle->hKdGain * pHandle->wPreDeltaErr;  //wDeltaError;  //pHandle->wPreDeltaErr;  //
+    wDifferential_Term = pHandle->hKdGain * wDeltaError;  //pHandle->wPreDeltaErr;  //wDeltaError;  //pHandle->wPreDeltaErr;  //
 
 #ifdef FULL_MISRA_C_COMPLIANCY
     wDifferential_Term /= ( int32_t )pHandle->hKdDivisor;

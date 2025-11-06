@@ -28,7 +28,9 @@ static uint8_t IsMCCompleted = 0;
 static uint8_t RunModeEn = 0;
 
 static uint8_t vPIDInt = cPIDDiff;  //PID间隔时间 
+//#ifndef posLoop
 static int16_t vDeadErr = deadErr; //死区时间
+//#endif
 //static uint16_t vddAD;
 filter_t speedft;   //速度滤波 结构体
 filter_t mecAft;   //物理角度滤波 结构体
@@ -191,7 +193,8 @@ int16_t CalElAngle(FOC_Component *fc){
     int16_t elA1,elA2,tmpA,tmpB;
     uint8_t i=0;  //两个角度值
     uint32_t reA;
-    fc->hMecAngle = MecA_Sample(&mecAft,atmp); //对计算的物理角度一阶滤波
+    //fc->hMecAngle = MecA_Sample(&mecAft,atmp); //对计算的物理角度一阶滤波
+    fc->hMecAngle = atmp;   //直接算出物理角度
     while(1){
         //不同极对有不同的XY->实际角度
         elA1 = fc->lc->ZeroAngle[i];   //换算出当前极对初始角度
@@ -516,32 +519,43 @@ int16_t PosPISControl(FOC_Component *fc){
     //static uint8_t errTime=0;
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
+    static int16_t lastErr; //上次误差
+	#ifndef posLoop
     static int16_t hSpeed; //误差对应的速度
     static int16_t posCount=0;  //位置环计次 3次位置环调整一次 速度换每次都调整
+	#endif
     static int16_t vLastTarErrDir=0;  //上次误差方向
     if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
-        hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
-        if(hError>0){
-            if(vLastTarErrDir<0){
-                //上次误差是- 
-                vLastTarErrDir++;
+        if(GetACCDis()==0){
+            hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
+            if(hError>0){
+                if(vLastTarErrDir<0){
+                    //上次误差是- 
+                    vLastTarErrDir++;
+                }else{
+                    vLastTarErrDir = 150;   //0.16s
+                    if(RunModeEn)
+                    fc->hAddActTargetAngle += 10;
+                    else
+                    fc->hAddActTargetAngle += 30;
+                    hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
+                    if(hError<0)
+                        fc->hAddActTargetAngle = fc->hAddTargetAngle;
+                }
             }else{
-                vLastTarErrDir = 150;   //0.16s
-                fc->hAddActTargetAngle += 10;
-                hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
-                if(hError<0)
-                    fc->hAddActTargetAngle = fc->hAddTargetAngle;
-            }
-        }else{
-            if(vLastTarErrDir>0){
-                //上次误差是- 
-                vLastTarErrDir--;
-            }else{
-                vLastTarErrDir = -150;   //0.16s
-                fc->hAddActTargetAngle -= 10;
-                hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
-                if(hError>0)
-                    fc->hAddActTargetAngle = fc->hAddTargetAngle;
+                if(vLastTarErrDir>0){
+                    //上次误差是- 
+                    vLastTarErrDir--;
+                }else{
+                    vLastTarErrDir = -150;   //0.16s
+                    if(RunModeEn)
+                    fc->hAddActTargetAngle -= 10;
+                    else
+                    fc->hAddActTargetAngle -= 30;
+                    hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
+                    if(hError>0)
+                        fc->hAddActTargetAngle = fc->hAddTargetAngle;
+                }
             }
         }
         //if(FOC_Component_M1.hAddTargetAngle>FOC_Component_M1.hAddActTargetAngle){
@@ -603,6 +617,15 @@ int16_t PosPISControl(FOC_Component *fc){
     //        if(lastErr<hError)
     //            lastErr = hError;
     //    }
+    //}
+    //误差不可能一下变化很大 最大每次变化一个限制值
+    //int16_t hErrDet = hError - lastErr; //两次误差变化值
+    //if(hErrDet>0x100){
+    //    lastErr += 0x100;   //误差变大
+    ////}else if(hErrDet<-0x10){
+    ////    lastErr -= 0x10;
+    //}else{
+    //    lastErr = hError;
     //}
     if(GetACCDis()){
         hTorqueReference = 0; //hError
