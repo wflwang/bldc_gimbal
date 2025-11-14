@@ -17,7 +17,8 @@
 //消抖时间
 #define debouneTime     5
 #define shortLTime      1  //(1+1)*10 = 20ms
-#define shortHTime      40  //41*10 = 410ms
+#define shortHTime      18  //40  //41*10 = 410ms
+#define shortHTimeS     40  //40  //41*10 = 410ms
 //长安开关机时间
 #define longONOFF       150    
 #define longReLearn     300

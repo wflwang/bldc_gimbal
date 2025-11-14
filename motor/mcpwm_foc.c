@@ -23,6 +23,8 @@
 #define cTurnHorRollLen 6
 #define cTurnVerRoll  14
 #define cTurnVerRollLen  7
+#define cTurnVerRoll1  21
+#define cTurnVerRoll1Len  7
 //static uint8_t Aligned_hall = 0;
 static uint8_t IsMCCompleted = 0;
 static uint8_t RunModeEn = 0;
@@ -41,7 +43,8 @@ const int16_t RunModeParam_t[]={ \
     0x4000,0x4000,0x4000,0x4000,\
     -0x4000,-0x4000,-0x4000,-0x4000,\
     -0x4000,-0x2000,0x4000,0x4000,0x4000,-0x6000,\
-    0x2000,-0x4000,-0x4000,-0x2500,0x4500,0x6000,-0x2000
+    0x2000,-0x4000,-0x4000,-0x2500,0x4500,0x6000,-0x2000, \
+    -0x2000,0x4000,0x4000,0x2500,-0x4500,-0x6000,0x2000
 };
 UpRunMode urm={0};
 //xy_Componets *xyc_t;
@@ -67,10 +70,11 @@ const int16_t MecAFilterV[] = {
     //55,85,150,450,900,2000,4500
     //#55,85,130,200,300,550,4500
     //35,65,105,155,205,275,405
-    35,45,55,65,75,85,95
+    //35,45,55,65,75,85,95
+    85,155,450,850,1800,3000,5500
 };
-#define MecA_alp_raw   1000    //当前滤波系数
-#define MecA_alp_min   20   //60   //75    //当前滤波系数
+#define MecA_alp_raw   6000    //当前滤波系数
+#define MecA_alp_min   6000 //20   //60   //75    //当前滤波系数
 #define MecA_alp_max   65535    //当前滤波系数
 //电压滤波
 const int16_t vddFilter[] = {
@@ -512,6 +516,32 @@ void fScanVdd(void){
         }
     }
 }
+//*****************************************************************
+//判断是否有减速节点
+int16_t CheckSlowPoint(UpRunMode *rm,int16_t hErrAdd){
+    int16_t i=0;
+    //int16_t slowdata;
+    if(rm->slowPoint<=0)
+        return 15;
+    for(;i<rm->slowPoint;i++){
+        if(rm->step==rm->slowStep[i]){
+            return AddActRange(hErrAdd);
+        }
+    }
+    return 15;
+}
+//*****************************************************************
+//线性变化范围
+int16_t AddActRange(int16_t hErrAdd){
+    if(hErrAdd<0)
+        hErrAdd = -hErrAdd;
+    hErrAdd = hErrAdd/130;    //每次变化误差的10%
+    if(hErrAdd>15)
+        hErrAdd = 15;
+    if(hErrAdd<5)
+        hErrAdd = 5;
+    return hErrAdd;
+}
 //**************************************************************
 //PID 控制
 int16_t PosPISControl(FOC_Component *fc){
@@ -519,12 +549,19 @@ int16_t PosPISControl(FOC_Component *fc){
     //static uint8_t errTime=0;
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
+    int16_t hErrAdd;    //误差增量
     static int16_t lastErr; //上次误差
 	#ifndef posLoop
     static int16_t hSpeed; //误差对应的速度
     static int16_t posCount=0;  //位置环计次 3次位置环调整一次 速度换每次都调整
 	#endif
     static int16_t vLastTarErrDir=0;  //上次误差方向
+    if(fc->hAddTargetAngle==fc->hAddActTargetAngle){
+        if(RunModeEn){
+            //学习时候自动增加角度功能
+            RunModeEn = UpNextRunModeAngle(&urm);
+        }
+    }
     if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
         if(GetACCDis()==0){
             hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
@@ -534,10 +571,35 @@ int16_t PosPISControl(FOC_Component *fc){
                     vLastTarErrDir++;
                 }else{
                     vLastTarErrDir = 150;   //0.16s
-                    if(RunModeEn)
-                    fc->hAddActTargetAngle += 10;
-                    else
-                    fc->hAddActTargetAngle += 30;
+                    if(RunModeEn){
+                        fc->hAddActTargetAngle += CheckSlowPoint(&urm,hError);
+                        //if(urm.step==(urm.slowStep[0])){
+                        //    hErrAdd = hError/130;    //每次变化误差的10%
+                        //    if(hErrAdd>15)
+                        //        hErrAdd = 15;
+                        //    if(hErrAdd<5)
+                        //        hErrAdd = 5;
+                        //    fc->hAddActTargetAngle += hErrAdd ;
+                        //    //return 0;   //over
+                        //}else
+                        ////if(hError<1000)
+                        /////fc->hAddActTargetAngle += 8;
+                        ////else if(hError<2000)
+                        ////fc->hAddActTargetAngle += 12;
+                        ////else
+                        //fc->hAddActTargetAngle += 15;
+                    }
+                    else{
+                        //if(hError<2500)
+                        //fc->hAddActTargetAngle += 5;
+                        //else
+                        hErrAdd = hError/130;    //每次变化误差的10%
+                        if(hErrAdd>33)
+                            hErrAdd = 33;
+                        if(hErrAdd<5)
+                            hErrAdd = 5;
+                        fc->hAddActTargetAngle += hErrAdd ;
+                    }
                     hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
                     if(hError<0)
                         fc->hAddActTargetAngle = fc->hAddTargetAngle;
@@ -548,10 +610,35 @@ int16_t PosPISControl(FOC_Component *fc){
                     vLastTarErrDir--;
                 }else{
                     vLastTarErrDir = -150;   //0.16s
-                    if(RunModeEn)
-                    fc->hAddActTargetAngle -= 10;
-                    else
-                    fc->hAddActTargetAngle -= 30;
+                    if(RunModeEn){
+                        fc->hAddActTargetAngle -= CheckSlowPoint(&urm,hError);
+                        //if(urm.step==(urm.OverStep)){
+                        //    hErrAdd = hError/130;    //每次变化误差的10%
+                        //    if(hErrAdd<-15)
+                        //        hErrAdd = -15;
+                        //    if(hErrAdd>-5)
+                        //        hErrAdd = -5;
+                        //    fc->hAddActTargetAngle += hErrAdd;
+                        //    //return 0;   //over
+                        //}else
+                        ////if(hError>-1000)
+                        ////fc->hAddActTargetAngle -= 8;
+                        ////else if(hError>-2000)
+                        ////fc->hAddActTargetAngle -= 12;
+                        ////else
+                        //fc->hAddActTargetAngle -= 15;
+                    }
+                    else{
+                        //if(hError>-2500)
+                        //fc->hAddActTargetAngle -= 5;
+                        //else
+                        hErrAdd = hError/130;    //每次变化误差的10%
+                        if(hErrAdd<-33)
+                            hErrAdd = -33;
+                        if(hErrAdd>-5)
+                            hErrAdd = -5;
+                        fc->hAddActTargetAngle += hErrAdd;
+                    }
                     hError = fc->hAddTargetAngle-fc->hAddActTargetAngle;
                     if(hError>0)
                         fc->hAddActTargetAngle = fc->hAddTargetAngle;
@@ -568,10 +655,10 @@ int16_t PosPISControl(FOC_Component *fc){
         //        FOC_Component_M1.hAddActTargetAngle = FOC_Component_M1.hAddTargetAngle;
         //}
     }else{
-        if(RunModeEn){
+        //if(RunModeEn){
             //学习时候自动增加角度功能
-            RunModeEn = UpNextRunModeAngle(&urm);
-        }
+        //    RunModeEn = UpNextRunModeAngle(&urm);
+        //}
     }
     int16_t realyAngle = fc->hAddActTargetAngle;
     //realyAngle += 32768;
@@ -631,6 +718,11 @@ int16_t PosPISControl(FOC_Component *fc){
         hTorqueReference = 0; //hError
         PIDPosHandle_M1.wIntegralTerm = 0;
     }else{
+        //if(hError>10000)
+        //    hError = 10000;
+        //else if(hError<-10000)
+        //    hError = -10000;
+        //检测连续计次误差的变化 算出平均速度 速度在范围内正常 不在范围内限制速度?
         hTorqueReference = PID_Controller(&PIDPosHandle_M1, ( int32_t )hError); //hError
     }
     #else
@@ -911,6 +1003,30 @@ Err_FOC MotorRunControl(FOC_Component *fc){
             //增量算出新扭力?
             //fc->Vqd.qV_Component1 = CalculateAdd16(fc->Vqd.qV_Component1,tpVq);
             //每次更新扭力
+            //int16_t qvNow = PosPISControl(fc);   //当前扭力的增量
+            //int16_t diff;
+            //int32_t diff1;
+            //if(fc->Vqd.qV_Component1>qvNow){
+            //    diff = fc->Vqd.qV_Component1 - qvNow;
+            //    if(diff>0x6000)
+            //        diff = 0x6000;
+            //    //diff1 = (diff*80)>>8;
+            //    //if(diff!=0){
+            //    //    if(diff1==0)
+            //    //    diff = 1;
+            //    //}
+            //    fc->Vqd.qV_Component1 -= diff;
+            //}else{
+            //    diff = qvNow - fc->Vqd.qV_Component1;
+            //    if(diff>0x6000)
+            //        diff = 0x6000;
+            //    //diff1 = (diff*80)>>8;
+            //    //if(diff!=0){
+            //    //    if(diff1==0)
+            //    //    diff = 1aa
+            //    //}
+            //    fc->Vqd.qV_Component1 += diff;
+            //}
             fc->Vqd.qV_Component1 = PosPISControl(fc);   //当前扭力的增量
             fc->Vqd.qV_Component2 = 0;
             if((fc->Vqd.qV_Component1>31550)||(fc->Vqd.qV_Component1<-31550)){
@@ -1102,6 +1218,8 @@ void SetTurnLeftCycle(void){
         RunModeEn = 1;
         urm.step= cTurnLCycle;    //开始位置
         urm.OverStep= cTurnLCycle+cTurnRCycleLen;    
+        urm.slowPoint = 1;
+        urm.slowStep[0] = urm.OverStep;
     }
 }
 /***
@@ -1114,6 +1232,8 @@ void SetTurnRightCycle(void){
         RunModeEn = 1;
         urm.step= cTurnRCycle;    //开始位置
         urm.OverStep= cTurnRCycle+cTurnLCycleLen;
+        urm.slowPoint = 1;
+        urm.slowStep[0] = urm.OverStep;
     }    
 }
 /***
@@ -1124,7 +1244,10 @@ void HorOrVerRoll(void){
     if(FOC_Component_M1.hAddTargetAngle==FOC_Component_M1.lc->GyroInitAngle){
         SetTurnHorRoll();
     }else{
+        if(FOC_Component_M1.hAddTargetAngle==(FOC_Component_M1.lc->GyroInitAngle+0x4000))
         SetTurnVerRoll();
+        else if(FOC_Component_M1.hAddTargetAngle==(FOC_Component_M1.lc->GyroInitAngle-0x4000))
+        SetTurnVerRoll1();
     }
 }
 /***
@@ -1137,6 +1260,10 @@ void SetTurnHorRoll(void){
         RunModeEn = 1;
         urm.step= cTurnHorRoll;    //开始位置
         urm.OverStep= cTurnHorRoll+cTurnHorRollLen;    
+        urm.slowPoint = 3;  
+        urm.slowStep[0] = cTurnHorRoll+2; 
+        urm.slowStep[1] = cTurnHorRoll+5; 
+        urm.slowStep[2] = cTurnHorRoll+6; 
     }
 }
 /***
@@ -1148,6 +1275,28 @@ void SetTurnVerRoll(void){
     if(RunModeEn==0){
         RunModeEn = 1;
         urm.step= cTurnVerRoll;    //开始位置
-        urm.OverStep= cTurnVerRoll+cTurnVerRollLen;    
+        urm.OverStep= cTurnVerRoll+cTurnVerRollLen; 
+        urm.slowPoint = 4;  
+        urm.slowStep[0] = cTurnVerRoll+1; 
+        urm.slowStep[1] = cTurnVerRoll+4; 
+        urm.slowStep[2] = cTurnVerRoll+6; 
+        urm.slowStep[3] = cTurnVerRoll+7; 
+    }
+}
+/***
+ * @brief 垂直时候自定义动作
+ * 反转360度, 每次比当前增加0x1000度 达到再增加 每=
+ * 
+*/
+void SetTurnVerRoll1(void){
+    if(RunModeEn==0){
+        RunModeEn = 1;
+        urm.step= cTurnVerRoll1;    //开始位置
+        urm.OverStep= cTurnVerRoll1+cTurnVerRoll1Len; 
+        urm.slowPoint = 4;  
+        urm.slowStep[0] = cTurnVerRoll1+1; 
+        urm.slowStep[1] = cTurnVerRoll1+4; 
+        urm.slowStep[2] = cTurnVerRoll1+6; 
+        urm.slowStep[3] = cTurnVerRoll1+7; 
     }
 }

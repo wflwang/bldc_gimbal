@@ -39,7 +39,7 @@ void ScanButton(button_t *bt){
             case 0: //都没按下
                 if(bt->BtTime<60000)
                 bt->BtTime++;   //长按计时
-                if((bt->BtTime==shortHTime)&&((bt->BtCount&0xf0))){
+                if((bt->BtTime>=shortHTime)&&((bt->BtCount&0xf0)&&((bt->BtCount&0x0f)==1))){
                     //执行单机动作
                     switch (bt->BtCount&0xf0)
                     {
@@ -66,7 +66,7 @@ void ScanButton(button_t *bt){
                 }
             break;
             case 1: //01 -> 上次有按键本次释放了
-                if((bt->BtTime>shortLTime)&&(bt->BtTime<shortHTime))
+                if((bt->BtTime>shortLTime)&&(bt->BtTime<shortHTimeS))
                 bt->BtCount++;  //记按键次数
                 if((bt->BtCount&0x0f)==2){
                     //双击

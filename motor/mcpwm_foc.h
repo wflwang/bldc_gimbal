@@ -38,6 +38,8 @@ typedef struct
     //FOC_Component *fc;
     int16_t step;    //变化的步骤
     int16_t OverStep;
+    int16_t slowPoint;  //减速节点
+    int16_t slowStep[6];  //减速节点 对应的位置 最多6个
 }UpRunMode;
 
 //typedef struct 
@@ -65,6 +67,7 @@ void SetTurnRightCycle(void);
 void SetTurnHorRoll(void);
 void SetTurnVerRoll(void);
 void HorOrVerRoll(void);
+void SetTurnVerRoll1(void);
 void SetSPIDInterval(int16_t in);
 int16_t GetSpeedRun(void);
 void SetDeadErr(int16_t in);
@@ -89,5 +92,7 @@ int16_t GetAccZoffset(void);
 void fSetGyroInitMid(int16_t in);
 uint8_t fGetLearnXYState(void);
 uint8_t fGetProtectState(void);
+int16_t AddActRange(int16_t hErrAdd);
+int16_t CheckSlowPoint(UpRunMode *rm,int16_t hErrAdd);
 
 #endif

@@ -33,13 +33,13 @@
 #endif
 
 #define accX_alp_raw    1000    //6000    //当前滤波系数
-#define accX_alp_min    200	//120    //6000    //最小滤波系数
+#define accX_alp_min    10	//200	//120    //6000    //最小滤波系数
 #define accX_alp_max    65535    //最大滤波系数
 #define accY_alp_raw    1000    //6000    //当前滤波系数
-#define accY_alp_min    200	//120    //6000    //最小滤波系数
+#define accY_alp_min    10	//200	//120    //6000    //最小滤波系数
 #define accY_alp_max    65535    //最大滤波系数
 #define accZ_alp_raw    1000    //6000    //当前滤波系数
-#define accZ_alp_min    200	//120    //6000    //最小滤波系数
+#define accZ_alp_min    500	//120	//200	//120    //6000    //最小滤波系数
 #define accZ_alp_max    65535    //最大滤波系数
 #define acc_alp_raw    1000    //6000    //当前滤波系数
 #define acc_alp_min    70    //6000    //最小滤波系数
@@ -80,7 +80,27 @@ const int16_t accXYZFilterV[] = {
 	//25,32,41,52,70,90,110
 	//#25,32,50,72,100,130,180
 	//30,37,55,77,102,130,170
-	30,37,44,50,56,61,69
+	//30,37,44,50,56,61,69
+	30,37,44,50,55,60,63
+	//10,11,13,15,25,30,35
+	//20,21,22,23,25,26,27
+	//10,11,12,13,15,16,17
+	//3,4,5,6,7,8,9
+};
+//波动小 和 波动大基本上 系数变化不大 主要还是靠累计误差
+const int16_t accXYZFilterV1[] = {
+    //60,120,200,350,600,800,1000
+    //20,60,100,150,200,300,450
+	//10,15,20,25,35,45,55
+	//25,32,41,52,70,90,110
+	//#25,32,50,72,100,130,180
+	30,37,55,77,102,130,170
+	//30,37,44,50,56,61,69
+	//30,37,44,50,55,60,63
+	//10,11,13,15,25,30,35
+	//20,21,22,23,25,26,27
+	//10,11,12,13,15,16,17
+	//3,4,5,6,7,8,9
 };
 //加速度换算角度的滤波表格
 //角度滤波主要为了实际输出角度的稳定,反应熊太慢
@@ -342,7 +362,7 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	accYft.filter = ACC_vY;
 
 	accZft.alpha_diff = accXYZFilter;
-	accZft.alpha_diff_addV = accXYZFilterV;
+	accZft.alpha_diff_addV = accXYZFilterV1;
 	accZft.alpha_diff_len = sizeof(accXYZFilter)/sizeof(int16_t);
     accZft.alpha_raw = accZ_alp_raw;
     accZft.alpha_min= accZ_alp_min;
@@ -507,6 +527,7 @@ int8_t CheckACCZErr(void){
 			return 0;	//Err
 		}else{
 			count++;
+			return 1;
 		}
 	}else{
 		if(ACCOFF==1){
@@ -672,7 +693,7 @@ int16_t getOrientation_1ms(void){
     			}else if(diff>32767*5625){
     				diff = diff-65536*5625;
     			}
-				gyroA1 = (int)((diff)>>10)+gyroA;
+				gyroA1 = (int)((diff)>>9)+gyroA;
     			//int result = ((diff>>8) * 255)+accA;
     			//保证结果一定是在一个正确的范围内 环形加法 不溢出
     			if(gyroA1<-32768*5625){   //误差 超出最大负数 认为是正向误差
@@ -682,6 +703,8 @@ int16_t getOrientation_1ms(void){
     			}
 			//}
 				//gyroA1 = gyroA;
+			//accInt = accA*5625;
+			//gyroA1 = complementFilter(gyroA,accInt);	//正常范围内 进行融合滤波算法
 		}
     	//int gyroA1 = ((diff * (int)(256-CheckCorrect()))>>8)+gyroA;	//accA;
 		//if(gyroA1<-32768*5625){

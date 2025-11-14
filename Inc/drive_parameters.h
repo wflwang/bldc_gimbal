@@ -236,19 +236,19 @@
 #define SP_KIDIV                       8192  //16384
 #define SP_KDDIV                       256   //512  //8192
 //位置环
-#define PID_Pos_KP_DEFAULT                 0x1930  //0x1200  //0x2630  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 0x150   //0x1250   //0x150 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
-#define PID_Pos_KD_DEFAULT                 0x6300  //0x4200  //0x3200  //0x5200  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
+#define PID_Pos_KP_DEFAULT                 0x2199  //0x1830  //0x1930  //0x1200  //0x2630  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 0x250   //0x150   //0x150   //0x1250   //0x150 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KD_DEFAULT                 0x4800  //0x7f00  //0x4200  //0x3200  //0x5200  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
 /* Speed PID parameter dividers */
 #define Pos_KPDIV                       256   //64
 #define Pos_KIDIV                       8192  //16384
-#define Pos_KDDIV                       128  //512   //512  //8192
+#define Pos_KDDIV                       64   //128  //512   //512  //8192
 
 #define MaxPosSpeed     25000
 //PID 间隔时间
 #define cPIDDiff        1  //2ms once 500Hz
 #define defposcount     3
-#define accBelive       1  //1  //信任加速度判断时间
+#define accBelive       20  //1  //1  //信任加速度判断时间
 #define cProtectWarning   14934        //*3ms ->5s
 #define cProtectOFF     16600       //->45s
 //#define filterFirstOrder      //一阶滤波
@@ -301,7 +301,7 @@
 #define ALIGN_qmiTime             2000   //陀螺仪角度校准时间
 #define ALIGNMENT_DURATION              1500 //800 //800  //500 //700 /*!< milliseconds */
 #define ALIGNMENT_ANGLE_DEG             0  //90 /*!< degrees [0...359] */
-#define FINAL_I_ALIGNMENT               11000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
+#define FINAL_I_ALIGNMENT               8000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I3_ALIGNMENT               5600 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I4_ALIGNMENT               4700 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 // With ALIGNMENT_ANGLE_DEG equal to 90 degrees final alignment 

@@ -347,7 +347,7 @@ void MX_ADC_Init(void){
     // (sampletime+12.5)*ADC CLK
     //ADC_ChannelConfig(ADC, Voltage_ADC_CH, ADC_SampleTime_1_5Cycles);
     //ADC_ChannelConfig(ADC, Hall_x_CH, ADC_SampleTime_1_5Cycles);
-    ADC_ChannelConfig(ADC, Hall_y_CH|Hall_x_CH|Voltage_ADC_CH, ADC_SampleTime_1_5Cycles);
+    ADC_ChannelConfig(ADC, Hall_y_CH|Hall_x_CH|Voltage_ADC_CH, ADC_SampleTime_1_5Cycles);   //ADC_SampleTime_1_5Cycles
     /* Enable the ADC peripheral */
     //ADC_ClearITPendingBit(ADC, ADC_IT_EOC);
     //ADC_Cmd(ADC, ENABLE);
