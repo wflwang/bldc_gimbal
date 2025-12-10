@@ -39,11 +39,11 @@ void ScanButton(button_t *bt){
             case 0: //都没按下
                 if(bt->BtTime<60000)
                 bt->BtTime++;   //长按计时
-                if((bt->BtTime>=shortHTime)&&((bt->BtCount&0xf0)&&((bt->BtCount&0x0f)==1))){
-                    //执行单机动作
-                    switch (bt->BtCount&0xf0)
-                    {
-                        case 0x10:
+                if((bt->BtTime>=shortHTime)&&(bt->BtCount&0xf0)){
+                    //没有按按键超过180ms 判断前面有几个按键按下了
+                    switch(bt->BtCount){
+                        //短按1 2 8 其他无效
+                        case 0x11:
                             //水平和垂直切换
                             if(GetLearnAtt()){
                                 SetLearnAttStart();
@@ -51,60 +51,59 @@ void ScanButton(button_t *bt){
                                 Hor_Turn_Ver();
                             }
                         break;
-                        case 0x20:
+                        case 0x21:
                             //左转90度
                             SetTurnLeft();
                         break;
-                        case 0x30:
+                        case 0x31:
                             //右转90度
                             SetTurnRight();
                         break;
+                        case 0x12:
+                            //特定旋转动作
+                            HorOrVerRoll();
+                        break;
+                        case 0x22:
+                            //左转360度
+                            SetTurnRightCycle();
+                        break;
+                        case 0x32:
+                            //右转360度
+                            SetTurnLeftCycle();
+                        break;
+                        case 0x13:
+                            setLearnEnable();
+                        break;
+                        case 0x18:
+                            MC_initLearn();
+                        break;
                         default:
                         break;
-                    }     
+                    }
+                    //有短按处理完后清除
                     bt->BtCount = 0;
                 }
             break;
             case 1: //01 -> 上次有按键本次释放了
-                if((bt->BtTime>shortLTime)&&(bt->BtTime<shortHTimeS))
-                bt->BtCount++;  //记按键次数
-                if((bt->BtCount&0x0f)==2){
-                    //双击
-                    switch (bt->lastbt)
-                    {
-                        case bt_pwrEn:
-                            //特定旋转动作
-                            HorOrVerRoll();
-                        break;
-                        case bt_LREn:
-                            //左转360度
-                            SetTurnRightCycle();
-                        break;
-                        case bt_RREn:
-                            //右转360度
-                            SetTurnLeftCycle();
-                        break;
-                        default:
-                        break;
-                    }         
-                    bt->BtTime = 0; //清除计时
-                    bt->BtCount = 0;
-                }else if((bt->BtCount&0x0f)==1){
-                    switch (bt->lastbt)
-                    {
-                        case bt_pwrEn:
-                            bt->BtCount |= 0x10;
-                        break;
-                        case bt_LREn:
-                            bt->BtCount |= 0x20;
-                        break;
-                        case bt_RREn:
-                            bt->BtCount |= 0x30;
-                        break;
-                        default:
-                        break;
-                    }     
+                if((bt->BtTime>shortLTime)&&(bt->BtTime<shortHTimeS)){
+                    if((bt->BtCount&0x0f)<15)
+                    bt->BtCount++;  //记按键次数
                 }
+                //记住是哪个按键按下
+                switch (bt->lastbt)
+                {
+                    case bt_pwrEn:
+                        bt->BtCount |= 0x10;
+                    break;
+                    case bt_LREn:
+                        bt->BtCount |= 0x20;
+                    break;
+                    case bt_RREn:
+                        bt->BtCount |= 0x30;
+                    break;
+                    default:
+                    break;
+                }     
                 bt->BtTime = 0; //清除计时
             break;
             case 2:
@@ -125,11 +124,12 @@ void ScanButton(button_t *bt){
                         poweroff(); //关机
                     }
                     break;
-                    case (bt_LREn|bt_RREn):
-                        if(bt->BtTime==longReLearn){
-                            MC_initLearn();
-                        }
-                    break;
+                    //同时按学习功能取消
+                    //case (bt_LREn|bt_RREn):
+                    //    if(bt->BtTime==longReLearn){
+                    //        MC_initLearn();
+                    //    }
+                    //break;
                     case (bt_LREn|bt_RREn|bt_pwrEn):
                         if((GetONOFF()==0)&&(bt->BtTime==longONOFF)){
                             poweron(); //开机

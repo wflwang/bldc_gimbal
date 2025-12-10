@@ -77,6 +77,7 @@ Learn_Componets lcM1 = {
   .M_dir = 0,
   .GyroInitAngle = 0,
   .learnXYFin = 0,
+  .learnEn = 0,
 };
 
 FOC_Component FOC_Component_M1 ={
@@ -102,6 +103,13 @@ FOC_Component FOC_Component_M1 ={
 
 Volt_Components GetVqd(void){
   return FOC_Component_M1.Vqd;
+}
+//允许马达动作和学习
+void setLearnEnable(void){
+  FOC_Component_M1.lc->learnEn = 1;
+}
+int16_t GetLearnEnable(void){
+  return FOC_Component_M1.lc->learnEn;
 }
 //获取学习状态
 uint8_t GetLearnState(void){

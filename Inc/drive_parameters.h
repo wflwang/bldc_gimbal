@@ -249,8 +249,10 @@
 #define cPIDDiff        1  //2ms once 500Hz
 #define defposcount     3
 #define accBelive       20  //1  //1  //信任加速度判断时间
-#define cProtectWarning   14934        //*3ms ->5s
-#define cProtectOFF     16600       //->45s
+#define cProtectWarning   40000/(cPIDDiff+1)    //14934        //*3ms ->5s 进入保护报警事件
+#define cProtectOFF     45000/(cPIDDiff+1)   //16600       //->45s  保护的检测时间
+#define cProtectMax     30550    //保护的持续最大值
+
 //#define filterFirstOrder      //一阶滤波
 //#define filterAV 
 //#define filterAVDeep    32
@@ -301,7 +303,7 @@
 #define ALIGN_qmiTime             2000   //陀螺仪角度校准时间
 #define ALIGNMENT_DURATION              1500 //800 //800  //500 //700 /*!< milliseconds */
 #define ALIGNMENT_ANGLE_DEG             0  //90 /*!< degrees [0...359] */
-#define FINAL_I_ALIGNMENT               8000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
+#define FINAL_I_ALIGNMENT               6000 //8000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I3_ALIGNMENT               5600 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 //#define FINAL_I4_ALIGNMENT               4700 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */
 // With ALIGNMENT_ANGLE_DEG equal to 90 degrees final alignment 

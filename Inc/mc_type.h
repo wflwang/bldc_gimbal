@@ -189,6 +189,7 @@ typedef struct
     int16_t accVy_offset; //acc xy 默认的中点位置
     int16_t accVz_offset;
     int16_t ZeroAngle[POLE_PAIR_NUM]; //每个极对0度时候初始角度
+    int16_t learnEn;    //是否允许更新 1:en 0:dis
 }Learn_Componets; //学习组件
 
 typedef struct 

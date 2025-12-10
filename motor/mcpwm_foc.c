@@ -310,9 +310,9 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         }
         fc->lc->learnXYFin = 1;
         fc->hElAngle = 0;
-        fc->lc->accVx_offset = fc->accVxSum/(POLE_PAIR_NUM*20);
-        fc->lc->accVy_offset = fc->accVySum/(POLE_PAIR_NUM*20);
-        fc->lc->accVz_offset = fc->accVzSum/(POLE_PAIR_NUM*20);
+        fc->lc->accVx_offset = fc->accVxSum/(POLE_PAIR_NUM*cLearnCount);
+        fc->lc->accVy_offset = fc->accVySum/(POLE_PAIR_NUM*cLearnCount);
+        fc->lc->accVz_offset = fc->accVzSum/(POLE_PAIR_NUM*cLearnCount);
         return;
     }
     //每次0度时记录下当前的XY
@@ -330,22 +330,22 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         }
         count++;
 		readQmi8658b();	//读出参数	
-        if(count>80){  //~=1.5s 后校验一次  90*30 = 2.7s
+        if(count>cLearnWaitTime){  //~=1.5s 后校验一次  90*30 = 2.7s
             //11-31
             fc->accVxSum += GetACC_X();
             fc->accVySum += GetACC_Y();
             fc->accVzSum += GetACC_Z();
         }
-        if(count>100){   //进来一次110*30 = 3.3s 矫正加速度值
+        if(count>(cLearnWaitTime+cLearnCount)){   //进来一次110*30 = 3.3s 矫正加速度值
             fc->xyZero[num] = xynow;
-            fc->hElAngle += 0x800;  //30->0x800
+            fc->hElAngle += cLearnEAngOnce;  //30->0x800
         }
     }else if(fc->hElAngle==0x4000){
         El_90d = CalXYAngle(fc,&xynow);      //算出0的角度
-        fc->hElAngle += 0x800;  //0x80->0x800
+        fc->hElAngle += cLearnEAngOnce;  //0x80->0x800
         count = 0;
     }else{
-        fc->hElAngle += 0x800;   //65536*2 = 131,072 * 30ms => 1min?
+        fc->hElAngle += cLearnEAngOnce;   //65536*2 = 131,072 * 30ms => 1min?
         count = 0;
     }
 }
@@ -550,7 +550,7 @@ int16_t PosPISControl(FOC_Component *fc){
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
     int16_t hErrAdd;    //误差增量
-    static int16_t lastErr; //上次误差
+    //static int16_t lastErr; //上次误差
 	#ifndef posLoop
     static int16_t hSpeed; //误差对应的速度
     static int16_t posCount=0;  //位置环计次 3次位置环调整一次 速度换每次都调整
@@ -930,7 +930,9 @@ Err_FOC MotorRunControl(FOC_Component *fc){
         //CalMecAngle(&FOC_Component_M1); //计算出当前的物理角度
         CalElAngle(&FOC_Component_M1);  //计算出电角度顺便计算出物理角度
     }
-    
+    if(fc->lc->learnEn==0){
+        return err_learn;     //没允许学习什么也干不了
+    }
     if(fc->lc->LearnFinish==0){
         //是否没有学习,没有学习要学习角度 给一个固定力旋转
         if(fc->hStepTime<fc->hDurationms){
@@ -1029,7 +1031,7 @@ Err_FOC MotorRunControl(FOC_Component *fc){
             //}
             fc->Vqd.qV_Component1 = PosPISControl(fc);   //当前扭力的增量
             fc->Vqd.qV_Component2 = 0;
-            if((fc->Vqd.qV_Component1>31550)||(fc->Vqd.qV_Component1<-31550)){
+            if((fc->Vqd.qV_Component1>cProtectMax)||(fc->Vqd.qV_Component1<-cProtectMax)){
                 fc->protectCount++; //进来一次1ms
                 if(fc->protectCount>cProtectOFF){
                     //超过45s保护

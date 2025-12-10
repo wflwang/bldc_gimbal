@@ -50,16 +50,20 @@ void LEDControl(void){
             //LEDG_Set();
         }else{  
             //闪烁提示
-            if(GetLearnAtt()){
-                //爆闪
-                if(blinkcount&0x20)
+            if(GetLearnEnable()){
+                if(GetLearnAtt()){
+                    //爆闪
+                    if(blinkcount&0x20)
+                        LEDG_Reset();
+                    else
+                        LEDG_Set();
+                }else if(blinkcount&0x40){
                     LEDG_Reset();
-                else
+                }else{
                     LEDG_Set();
-            }else if(blinkcount&0x40){
-                LEDG_Reset();
+                }
             }else{
-                LEDG_Set();
+                LEDG_Set(); //绿灯常亮
             }
         }
     }else{

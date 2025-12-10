@@ -10,6 +10,12 @@
 #ifdef HK32G003
 #define FIRMWARE_NAME   "gimbal"
 #define FILE_NAME   "bldc_gimbal_singal"
+
+#define cLearnWaitTime  40  //学习等待时间 间隔这个时间后才开始记录位置 每次到一个极点等待速度陀螺仪时间 太快会导致读取数据不准
+#define cLearnCount     16  //学习记录位置的次数
+#define cLearnEAngOnce  0x800   //学习时候每次增加的角度 /65536(0x10000)
+
+
 #define DEAD_TIME   10
 #define HallXY_dir       4  //霍尔XY方向 000(x,y不变) 001(x,-y) 010(-x,y) 011(-x,-y) 100(y,x) 101(y,-x) 110(-y,x) 111(-y,-x)
 #define AccXY_dir   2

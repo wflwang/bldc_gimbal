@@ -45,6 +45,8 @@ void SetTorque(int16_t hTorque);
 void SetFlux(int16_t hFlux);
 void Hor_Turn_Ver(void);  //水平垂直切换
 void MC_initLearn(void);
+void setLearnEnable(void);  //允许学习
+int16_t GetLearnEnable(void); //获取是否允许学习标志
 void SetTurnLeft(void);
 void SetTurnRight(void);
 void SetHorizontal(void);
