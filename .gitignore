@@ -7,3 +7,4 @@
 /MDK/bldc_gimbal.uvoptx
 /MDK/JLinkLog.txt
 .vscode
+MDK/bin/*
