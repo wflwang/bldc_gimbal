@@ -20,10 +20,10 @@ static __IO uint32_t msTick=0;
 static uint8_t filterInit=0;   //一阶滤波是否初始化完成
 #endif
 UartRxBufDef Uart_t;
-filter_t hallXft;
-filter_t hallYft;
-Avfilter_t avfilterHallX;
-Avfilter_t avfilterHallY;
+filter_t hallXft={0};
+filter_t hallYft={0};
+Avfilter_t avfilterHallX={0};
+Avfilter_t avfilterHallY={0};
 //static uint8_t instNum = 0;
 //static uint8_t debugOutCount=0; //输出调试计次
 //static uint8_t debugOutInterval=0;  //调试输出间隔时间   
@@ -311,6 +311,8 @@ void PWMC_ONPWM(void){
     ADC_ITConfig(ADC,ADC_IT_EOSEQ,ENABLE);  
     ADC_ClearITPendingBit(ADC, ADC_IT_EOSEQ);
     ADC_Cmd(ADC, ENABLE);
+    Delay_ms(10);
+    ADC_ClearITPendingBit(ADC, ADC_IT_EOSEQ);
     ADC_StartOfConversion(ADC);
 }
 

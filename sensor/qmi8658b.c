@@ -242,7 +242,7 @@ static int16_t lastOriA=0;	//上次计算出的角度
 static uint8_t gyroInitFin=0;	//陀螺仪初始化完成标志
 static int16_t accA = 0;	//本次加速度算出的脚位
 static int gyroA = 0;	//本次陀螺仪算出的脚位
-static uint8_t ACCOFF=0;
+static uint8_t ACCOFF=1;	//0
 filter_t accXft;
 filter_t accYft;
 filter_t accZft;
@@ -276,7 +276,7 @@ uint8_t qmi8658x_init(GPIO_TypeDef *sda_gpio,uint32_t sda_pin,GPIO_TypeDef *scl_
 	it.scl_pin = scl_pin;
 	it.sda_gpio = sda_gpio;
 	it.sda_pin = sda_pin;
-	it.delay = 0;
+	it.delay = 1;
 	//it.iic_adr = QMI8658B_ADDRESS;
 	//it.len =1;
 	//it.data_adr = QMI8658B_RESET;

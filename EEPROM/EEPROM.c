@@ -52,11 +52,11 @@ int EE_ReadFOC(Learn_Componets *lc){
   lc->M_dir =  (uint8_t)((data>>16)&0xff);
   //lc->xyScaleDir =  (uint8_t)((data>>8)&0xff);
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+4);
-  lc->Max.Hallx = (int16_t)(data>>16);
-  lc->Max.Hally = (int16_t)(data&0xffff);
+  lc->Max.Hallx = (uint16_t)(data>>16);
+  lc->Max.Hally = (uint16_t)(data&0xffff);
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+8);
-  lc->Min.Hallx = (int16_t)(data>>16);
-  lc->Min.Hally = (int16_t)(data&0xffff);
+  lc->Min.Hallx = (uint16_t)(data>>16);
+  lc->Min.Hally = (uint16_t)(data&0xffff);
   data = *(__IO uint32_t *)(ADDR_FLASH_EEPROM_PAGE+12);
   lc->gyroVz_Bais = (int16_t)(data>>16);
   lc->GyroInitAngle = (int16_t)(data&0xffff);

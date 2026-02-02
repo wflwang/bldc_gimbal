@@ -26,6 +26,7 @@
 #define cTurnVerRoll1  21
 #define cTurnVerRoll1Len  7
 //static uint8_t Aligned_hall = 0;
+static int stdelay=0;   //启动延迟
 static uint8_t IsMCCompleted = 0;
 static uint8_t RunModeEn = 0;
 
@@ -127,7 +128,7 @@ int16_t Get_HallAngle(FOC_Component *fc){
     //fc->y_now = hxy.Hally;
     if(fc->lc->LearnFinish==0){
         if(fc->lc->learnXYFin==0){
-            //更新最大最小值
+            //更新最大最小值            
 			uint16_t maxtemp = fc->lc->Max.Hallx;
 			uint16_t mintemp = fc->lc->Min.Hallx;
             MaxMinUpDate(&fc->xy_now.Hallx,&maxtemp,&mintemp);
@@ -547,9 +548,11 @@ int16_t AddActRange(int16_t hErrAdd){
 int16_t PosPISControl(FOC_Component *fc){
     //static int hErrCount=0;
     //static uint8_t errTime=0;
+    static int16_t startupAdd = 0;  //启动缓冲
     int16_t hTorqueReference;   //生成的扭力
     int16_t hError; //位置误差
     int16_t hErrAdd;    //误差增量
+    int16_t tmpadd=0;
     //static int16_t lastErr; //上次误差
 	#ifndef posLoop
     static int16_t hSpeed; //误差对应的速度
@@ -561,6 +564,7 @@ int16_t PosPISControl(FOC_Component *fc){
             //学习时候自动增加角度功能
             RunModeEn = UpNextRunModeAngle(&urm);
         }
+        startupAdd = 0;
     }
     if(fc->hAddTargetAngle!=fc->hAddActTargetAngle){
         if(GetACCDis()==0){
@@ -594,8 +598,20 @@ int16_t PosPISControl(FOC_Component *fc){
                         //fc->hAddActTargetAngle += 5;
                         //else
                         hErrAdd = hError/130;    //每次变化误差的10%
-                        if(hErrAdd>33)
-                            hErrAdd = 33;
+                        if(startupAdd<0x800){
+                            startupAdd += 21;
+                        }
+                        tmpadd = startupAdd/97; //0-21
+                        //if(hError>0x3800){
+                            if(tmpadd<0)
+                                tmpadd = 0;
+                            tmpadd += 12;
+                        if(hErrAdd>tmpadd)
+                            hErrAdd = tmpadd;
+                        //}else{
+                        ////    if(hErrAdd>33)
+                        //        hErrAdd = 33;
+                        //}
                         if(hErrAdd<5)
                             hErrAdd = 5;
                         fc->hAddActTargetAngle += hErrAdd ;
@@ -633,8 +649,23 @@ int16_t PosPISControl(FOC_Component *fc){
                         //fc->hAddActTargetAngle -= 5;
                         //else
                         hErrAdd = hError/130;    //每次变化误差的10%
-                        if(hErrAdd<-33)
-                            hErrAdd = -33;
+                        if(startupAdd<0x800){
+                            startupAdd += 21;
+                        }
+                        tmpadd = startupAdd/97; //0-21
+                        //if(hError<-0x3800){
+                       //     tmpadd = -((hError+0x3800)/97); //21-0
+                            if(tmpadd<0)
+                                tmpadd = 0;
+                            tmpadd = -12-tmpadd;
+                        if(hErrAdd<tmpadd)
+                            hErrAdd = tmpadd;
+                        //}else{
+                        //    if(hErrAdd<-33)
+                        //        hErrAdd = -33;
+                        //}
+                        //if(hErrAdd<-33)
+                        //    hErrAdd = -33;
                         if(hErrAdd>-5)
                             hErrAdd = -5;
                         fc->hAddActTargetAngle += hErrAdd;
@@ -924,6 +955,8 @@ Err_FOC MotorRunControl(FOC_Component *fc){
     //static HallXYs ElAtemp; //一般存储90度
     //uint32_t hElAngle=0;
     HallXYs xynow = fc->xy_now; //采样到的XY值
+    if(IsMCCompleted!=1)
+        return no_err;
 
     if(fc->lc->learnXYFin){
         //学习了XY值后不停计算物理角度 1ms一次并滤波处理
@@ -971,6 +1004,10 @@ Err_FOC MotorRunControl(FOC_Component *fc){
                         fc->lc->GyroInitAngle = GetOriGyroA();
                         fc->lc->LearnFinish  =   1;  //学习完成
                         fc->LearnAttitude = 0;
+                        SetHorizontal();
+                        fc->hAddActTargetAngle = fc->lc->GyroInitAngle;
+                        stdelay = 0;
+                        fc->hStepTime = 0;
                         EE_WriteFOC(fc->lc); //把学习的参数写入EEPROM
                         return no_err;
                     }
@@ -996,6 +1033,15 @@ Err_FOC MotorRunControl(FOC_Component *fc){
         }
     }else{
 		fc->hStepTime++;
+        if(stdelay==0){
+            if(fc->hStepTime<400){
+                fc->Vqd.qV_Component1 = 0;   //当前扭力的增量
+                fc->Vqd.qV_Component2 = 0;
+            }else{
+                stdelay = 1;
+            }
+            return no_err;
+        }
         if(fc->hStepTime>(uint16_t)vPIDInt){
             fc->hStepTime = 0;
             //位置PID 当前角度和 目标角度之间的误差
@@ -1197,6 +1243,7 @@ void mcpwm_foc_init(void) {
     //}
     //PWM 输出刹车
     PWMC_ONPWM();   //开启PWM ADC 采样
+    Delay_ms(400);
     SetHorizontal();
     //EE_WriteFOC(&FOC_Component_M1.lc);
     //EE_ReadFOC(&FOC_Component_M1.lc);

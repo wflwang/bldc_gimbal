@@ -236,8 +236,8 @@
 #define SP_KIDIV                       8192  //16384
 #define SP_KDDIV                       256   //512  //8192
 //位置环
-#define PID_Pos_KP_DEFAULT                 0x2199  //0x1830  //0x1930  //0x1200  //0x2630  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
-#define PID_Pos_KI_DEFAULT                 0x250   //0x150   //0x150   //0x1250   //0x150 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
+#define PID_Pos_KP_DEFAULT                 0x2100  //0x2199  //0x1830  //0x1930  //0x1200  //0x2630  //0x1f00 //0x2745  //0x120   //0xa0 //0x1e45 //3560  //6560 //350  //55   //200 //#1600   //1100   //1500  //3700  //4800  //2700  //3300  //5200  //1200   //1400  //3400  //1800  //2600	//1459
+#define PID_Pos_KI_DEFAULT                 0x350   //0x250   //0x150   //0x150   //0x1250   //0x150 //0x0300 //0x1300 //0x200  //0x10 //2400   //9620  //1800   //#18000   //600   //1200   //1200  //2300  //600   //716
 #define PID_Pos_KD_DEFAULT                 0x4800  //0x7f00  //0x4200  //0x3200  //0x5200  //0x1900 //0x5800  //0x720  //0x6f20  //0xa00  //10200 //31200  //#1500
 /* Speed PID parameter dividers */
 #define Pos_KPDIV                       256   //64
@@ -309,6 +309,8 @@
 // With ALIGNMENT_ANGLE_DEG equal to 90 degrees final alignment 
 // phase current = (FINAL_I_ALIGNMENT * 1.65/ Av)/(32767 * Rshunt)  
 // being Av the voltage gain between Rshunt and A/D input
+
+#define StartMDelay     400   //马达延迟启动时间 电容充电?
 
 /* Sensor-less rev-up sequence */
 #define STARTING_ANGLE_DEG                   90   /*!< degrees [0...359] */
