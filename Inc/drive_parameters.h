@@ -300,7 +300,7 @@
 /* Encoder alignment */
 //-> 这里电流的配置全部直接转换位电压输出控制  大约70%的力 动到0度位置
 #define ALIGN_TimeOnce        30 //20    //每次对齐变化时间
-#define ALIGN_qmiTime             2000   //陀螺仪角度校准时间
+#define ALIGN_qmiTime             2000   //陀螺仪角度校准时间 融合角度校准时间
 #define ALIGNMENT_DURATION              1500 //800 //800  //500 //700 /*!< milliseconds */
 #define ALIGNMENT_ANGLE_DEG             0  //90 /*!< degrees [0...359] */
 #define FINAL_I_ALIGNMENT               6000 //8000 //5000 //23000  //500 //7000 //3000 //9000   //20795 /*!< s16A */

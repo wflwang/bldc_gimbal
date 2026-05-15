@@ -997,7 +997,10 @@ Err_FOC MotorRunControl(FOC_Component *fc){
             if(fc->LearnAttitude==3){
                 if(GetGyroFin()==1){
                     if(CountTime<ALIGN_qmiTime){
-                        CountTime++;
+                        if((GetOriGyroA()>-300)&&(GetOriGyroA()<300)){
+                            CountTime++;
+                        }else
+                            CountTime = 0;
                         return no_err;
                     }else{
                         //获取陀螺仪的静止角度

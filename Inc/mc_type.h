@@ -183,8 +183,8 @@ typedef struct
     //uint16_t x_offset;
     //uint16_t y_offset;
     //uint16_t xy_scale;  //X对应Y的比例关系  
-    int16_t gyroVz_Bais;  //Z轴中点
-    int16_t GyroInitAngle;  //陀螺仪初始角度0度位置 防止陀螺仪偏
+    int16_t gyroVz_Bais;  //Z轴中点  这个是陀螺仪初始角度 静止不动时候陀螺仪的值
+    int16_t GyroInitAngle;  //陀螺仪初始角度0度位置 防止陀螺仪偏  这个是陀螺仪和角速度融合的角度
     int16_t accVx_offset;
     int16_t accVy_offset; //acc xy 默认的中点位置
     int16_t accVz_offset;

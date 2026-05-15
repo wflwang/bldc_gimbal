@@ -417,7 +417,7 @@ void writeQMIreg(i2c_t *it,uint8_t adr,uint8_t dat){
 */
 void calibrationGyro(void){
 	//校准512次 取平均值 如果最大最小值波动小于阈值 校准成功 否则重新校准直到校准成功
-	while(gyroInitFin==0){
+	while((gyroInitFin==0)&&(GetLearnEnable())){
 		//学习时候 G灯闪烁
 		//没有学习成功会一直学习
 		int gyroSum = 0;

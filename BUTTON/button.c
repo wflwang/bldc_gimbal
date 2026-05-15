@@ -45,31 +45,43 @@ void ScanButton(button_t *bt){
                         //短按1 2 8 其他无效
                         case 0x11:
                             //水平和垂直切换
-                            if(GetLearnAtt()){
-                                SetLearnAttStart();
-                            }else{
-                                Hor_Turn_Ver();
-                            }
+                                if(GetLearnAtt()){
+                                    SetLearnAttStart();
+                                }else{
+                                    if(GetLearnState()){
+                                        Hor_Turn_Ver();
+                                    }
+                                }
                         break;
                         case 0x21:
                             //左转90度
-                            SetTurnLeft();
+                            if(GetLearnState()){
+                                SetTurnLeft();
+                            }
                         break;
                         case 0x31:
                             //右转90度
-                            SetTurnRight();
+                            if(GetLearnState()){
+                                SetTurnRight();
+                            }
                         break;
                         case 0x12:
                             //特定旋转动作
-                            HorOrVerRoll();
+                            if(GetLearnState()){
+                                HorOrVerRoll();
+                            }
                         break;
                         case 0x22:
                             //左转360度
-                            SetTurnRightCycle();
+                            if(GetLearnState()){
+                                SetTurnRightCycle();
+                            }
                         break;
                         case 0x32:
                             //右转360度
-                            SetTurnLeftCycle();
+                            if(GetLearnState()){
+                                SetTurnLeftCycle();
+                            }
                         break;
                         case 0x13:
                             setLearnEnable();

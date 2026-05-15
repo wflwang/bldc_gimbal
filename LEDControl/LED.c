@@ -53,11 +53,11 @@ void LEDControl(void){
             if(GetLearnEnable()){
                 if(GetLearnAtt()){
                     //爆闪
-                    if(blinkcount&0x20)
+                    if(blinkcount&0x20) //0x20
                         LEDG_Reset();
                     else
                         LEDG_Set();
-                }else if(blinkcount&0x40){
+                }else if(blinkcount&0x40){  //0x40
                     LEDG_Reset();
                 }else{
                     LEDG_Set();
