@@ -21,6 +21,7 @@ typedef struct
 {
 	uint8_t Data[RX_BUFFER_SIZE];
 	uint8_t Index;
+	uint8_t lastindex;
 	uint8_t Len;
 	uint8_t FinishedFlag;
 }UartRxBufDef;

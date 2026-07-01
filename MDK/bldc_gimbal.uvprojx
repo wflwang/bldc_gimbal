@@ -424,11 +424,6 @@
               <FilePath>..\FLASH\flash_helper.c</FilePath>
             </File>
             <File>
-              <FileName>button.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\BUTTON\button.c</FilePath>
-            </File>
-            <File>
               <FileName>mc_math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Mcu\HK32G003\Src\mc_math.c</FilePath>
@@ -504,11 +499,6 @@
               <FilePath>..\Mcu\HK32G003\Driver\HK32G003_StdPeriph_Driver\src\hk32g003_misc.c</FilePath>
             </File>
             <File>
-              <FileName>LED.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\LEDControl\LED.c</FilePath>
-            </File>
-            <File>
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\drv\filter.c</FilePath>
@@ -529,5 +519,14 @@
     <components/>
     <files/>
   </RTE>
+
+  <LayerInfo>
+    <Layers>
+      <Layer>
+        <LayName>bldc_gimbal</LayName>
+        <LayPrjMark>1</LayPrjMark>
+      </Layer>
+    </Layers>
+  </LayerInfo>
 
 </Project>

@@ -79,7 +79,7 @@ int EE_ReadFOC(Learn_Componets *lc){
   if(lc->LearnFinish!=1){
     lc->LearnFinish = 0;
     lc->learnXYFin = 0;
-    lc->learnEn = 0;  //什么也无法干; 3击解除
+    lc->learnEn = 1;  //什么也无法干; 3击解除
     return -1;
   }else{
     lc->learnXYFin = 1;

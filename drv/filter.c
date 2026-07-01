@@ -122,10 +122,11 @@ uint16_t AvFilter(Avfilter_t *aft,uint16_t raw){
     if(aft->avFilterInitFin){
         //选出最大最小值
         aft->sum += (uint32_t)raw;
-        aft->sum -= (uint32_t)aft->buff[aft->index];
-        aft->buff[aft->index++] = raw;    
+        aft->index++;
         if(aft->index>=avFilterDeep)
             aft->index = 0;
+        aft->sum -= (uint32_t)aft->buff[aft->index];
+        aft->buff[aft->index] = raw;    
         uint32_t sum = aft->sum;
         sum >>= LOG2(avFilterDeep);
         return (uint16_t)sum;

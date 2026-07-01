@@ -5,11 +5,11 @@
  * @author: MaxwellWang
  */
 #include    "main.h"
-#include "button.h"
+//#include "button.h"
 #include "peripherals.h"
 #include "mcpwm_foc.h"
 #include    "qmi8658b.h"
-#include "LED.h"
+//#include "LED.h"
 //#include    "ADC.h" 
 //#include    "IO.h"
 //#include    "common.h"
@@ -62,9 +62,9 @@ int main(void){
           //LEDR_Set();
           //Delay_ms(1);  //增加延迟方便SWD debug
           //getOrientation_1ms();
-          fScanButton();   //扫描按键功能
-          LEDControl();   //LED控制
-          fScanVdd(); //扫描VDD电压
+          //fScanButton();   //扫描按键功能
+          //LEDControl();   //LED控制
+          //fScanVdd(); //扫描VDD电压
 		      #ifdef cUartDebugEn
           GetUartDebug(); //获取串口调试数据
           #endif
@@ -84,11 +84,11 @@ uint8_t GetONOFF(){
 }
 void poweron(void){
     mainState_t.IspowerON = 1;
-    PowerEn_Set();  //开机
+    //PowerEn_Set();  //开机
 }
 void poweroff(void){
     mainState_t.IspowerON = 0;
-    PowerEn_Reset();    //关机
+    //PowerEn_Reset();    //关机
 }
 #ifdef  USE_FULL_ASSERT
 /**

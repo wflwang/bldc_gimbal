@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>README.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="单轴云台">单轴云台</h1>
+<h2 id="使用说明">使用说明</h2>
+<p>MDK 工程文件可以编译</p>
+<p>drive_paramters.h  马达参数配置
+deadErr: 设置死区大小
+PID 可以调节速度环和位置环 和PID调整间隔
+targets.h  IO 和一些功能配置
+可以选择 GyroEn 开启陀螺仪 否则直接固定位置 方便调PID分离陀螺仪干扰影响</p>
+<p>串口115200 可以调参</p>
+<p>MCU/HK32G003/Inc/peripherals.h 可以看可以调哪些参数</p>
+<h3 id="自动学习">自动学习</h3>
+<p>在新的结构或第一次下载程序时候 需要自动学习,没有学习过的云台没有功能
+学习错误的云台功能错乱</p>
+<h5 id="学习步骤">学习步骤</h5>
+<ol>
+<li>开机前云台需要水平放在水平的桌面上,开口朝上</li>
+<li>长按 L M R 三个按键3s开机,识别到云台水平朝上放置时候会开机并进入自动学习模式</li>
+<li>绿灯快速闪烁svpwm慢慢逐个输出不同角度 一直到经历8个极对,实际7极对(主要学习霍尔最大最小值)</li>
+<li>通过旋转一圈求出最大最小值换算出霍尔的中点值,继续旋转
+绿灯慢闪 表示进入下一步矫正</li>
+<li>把云台垂直放置在桌面上,按键朝上,短按按键绿灯快闪进入第二步学习</li>
+<li>绿灯快速闪烁检测陀螺仪是否处于静止,静止时候矫正陀螺仪和加速度</li>
+</ol>
+<h5 id="修改学习步骤">修改学习步骤</h5>
+<ol>
+<li>7极对电机需要学习7组数据 xy max min 需要对应不同极对里
+记录每个极对x范围和y范围 后面查询的时候直接定位到根据x查询到哪个极对范围 再用y最后筛选
+换算出不同的 x_offset y_offset x_Amp y_Amp(求出xy 增益的比例,不同)</li>
+</ol>
+<h5 id="q32学习步骤">Q32学习步骤</h5>
+<p>自动学习 电角度归0 读当前 XYAD 数据 慢慢移动角度 看数据变化 如果 XY 都没有变化 说明卡到了角度边缘
+读取当前XY AD 再反向动作 读 XYAD 如果XYAD有动作 说明前面不动的点是一边边缘 记住前面的点XYAD 再慢慢反向加角度 直到没有变化 认为达到另一边的边缘 记录变化过程中 XAD YAD 他们周期里 最大最小 算出X&amp;Y的中间 算出XY的夹角</p>
+<h4 id="q32演示模式">Q32演示模式</h4>
+<h5 id="上电学习">上电学习</h5>
+<p>演示模式上电时候默认会左转一下右转一下学习行程 此时不要打扰他 等他左转一下右转一下再回到中间不动时候可以操作</p>
+<h5 id="控制方法">控制方法</h5>
+<ol>
+<li>通过串口控制 波特率115200 8bit 无校验 1bitstop 的标准</li>
+<li>发送数据 AA0232xx55 (十六进制数) 其中xx 代表控制数 0-0xff 不同大小值 对应电机动作到不同位置 左对应的是0xff 右对应的是0 值的平均分布这个范围</li>
+<li>例如AA02328055 电机运行到中间; AA0232FF55 电机运行到最左边; AA02320055 电机运行到最右边;</li>
+</ol>
+<h3 id="改动说明">改动说明</h3>
+<h5 id="2026515">2026/5/15:</h5>
+<p>修改几点要尽量做到和以前一样 工人生产时候才不容易误判</p>
+<ol>
+<li>我们现在开机灯亮时候按按键无效果 要等灯常量后按按键才有效果 要改为绿灯亮起来按按键就有效果   ----&gt;&gt;&gt;    改善</li>
+<li>在学习过程中有长按动作 没有关机 造成工人以为管不了机的问题         ----&gt;&gt;&gt;          没发现问题</li>
+<li>学习校准陀螺仪的时候应该要检测到正面朝上时候才能学习 会成学习时候校准陀螺仪的方向不对 所以改为角度在+-8度以内才能学习 正常不可能偏超过8度   ----&gt;&gt;&gt; 改善</li>
+</ol>
+<h3 id="关于">关于</h3>
+<p>flash 32个word 256byte 一个 page 共 64 个page 第1&amp;2个page 作为bootloader  最后2个page作为EEPROM(存储磁编每一个角度值(256byte*2) 和上次陀螺仪的校准值)
+中间 60个page 作为flash 程序空间</p>
+<h2 id="历史">历史</h2>
+<h2 id="版本">版本</h2>
+<h2 id="邮箱">邮箱</h2>
+<ul>
+<li><a href="https://B5106D@Outlook.com">email</a></li>
+</ul>
+<h2 id="仓库">仓库</h2>
+<ul>
+<li><a href="https://gitee.com/szdctek/bldc_gimbal.git">Gitee</a></li>
+<li><a href="https://github.com/wflwang/bldc_gimbal.git">Github</a></li>
+</ul>
+
+</body>
+</html>

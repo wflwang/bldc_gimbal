@@ -231,6 +231,7 @@ typedef struct
     //#ifndef posLoop //有速度环时候有效
     int16_t posCount; //速度换计次
     int protectCount; //堵转保护时间
+    uint32_t targetAngle; //目标角度
     //#endif
     //int16_t hx[filterAVDeep];
     //int16_t hy[filterAVDeep];

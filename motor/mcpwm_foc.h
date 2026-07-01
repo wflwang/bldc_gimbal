@@ -94,5 +94,6 @@ uint8_t fGetLearnXYState(void);
 uint8_t fGetProtectState(void);
 int16_t AddActRange(int16_t hErrAdd);
 int16_t CheckSlowPoint(UpRunMode *rm,int16_t hErrAdd);
+void setTargetAngle(uint32_t pro);
 
 #endif

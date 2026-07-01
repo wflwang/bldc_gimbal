@@ -82,9 +82,9 @@ Learn_Componets lcM1 = {
   .ZeroAngle[1] = 0,
   .ZeroAngle[2] = 0,
   .ZeroAngle[3] = 0,
-  .ZeroAngle[4] = 0,
-  .ZeroAngle[5] = 0,
-  .ZeroAngle[6] = 0,
+  //.ZeroAngle[4] = 0,
+  //.ZeroAngle[5] = 0,
+  //.ZeroAngle[6] = 0,
 };
 
 FOC_Component FOC_Component_M1 ={

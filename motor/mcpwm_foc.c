@@ -29,6 +29,8 @@
 static int stdelay=0;   //启动延迟
 static uint8_t IsMCCompleted = 0;
 static uint8_t RunModeEn = 0;
+static uint32_t lastEangmin = 0x7fffffff;    //最小电角度
+static uint32_t lastEangmax = 0;    //最大电角度
 
 static uint8_t vPIDInt = cPIDDiff;  //PID间隔时间 
 //#ifndef posLoop
@@ -274,14 +276,27 @@ int16_t CalElAngle(FOC_Component *fc){
     //return 0; //没有检测到相应的角度
 }
 /**
+ * @brief set target angle
+ * @param pro  0-100%
+ */
+void setTargetAngle(uint32_t pro){
+    FOC_Component_M1.targetAngle = ((lastEangmax-lastEangmin) * pro >> 8) + lastEangmin;
+}
+/**
  * @brief 极对中角度信息学习
  * 30ms once
 */
 void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
     static int16_t El_90d;
     static int16_t count=0;
+    static HallXYs lastxy;
+    static uint16_t countKeep=0;
+    static uint8_t rundir = 0;
+    static uint8_t runWait = 3;
+    int xtemp,ytemp;
     //int16_t Err1,Err2;
     uint8_t num = (fc->hElAngle>>16);
+    #if 0
     if(num>=fc->PolePairNum){
         num -= fc->PolePairNum;
 
@@ -316,12 +331,18 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         fc->lc->accVz_offset = fc->accVzSum/(POLE_PAIR_NUM*cLearnCount);
         return;
     }
+    #endif
     //每次0度时记录下当前的XY
     if((fc->hElAngle&0xffff)==0){
         //每次电角度0度时候先延迟1s 校准加速度 再存入XY值
         //->只能记住XY 全部结束后才可以记忆角度
         //fc->lc->ZeroAngle[num] = CalXYAngle(fc,&xynow);      //算出0的角度
+		if(count==0)
+			runWait++;
         if((fc->hElAngle==0)&&(count==0)){
+            lastxy = xynow;
+            countKeep = 0;
+            //rundir = 0;
             //开始学习赋值最大最小值 更新第一个极对的极值
             fc->lc->Max = xynow;
             fc->lc->Min = xynow;    //第一次直接赋值最大最小值
@@ -331,22 +352,89 @@ void LearnPolePairAngle(FOC_Component *fc,HallXYs xynow){
         }
         count++;
 		readQmi8658b();	//读出参数	
-        if(count>cLearnWaitTime){  //~=1.5s 后校验一次  90*30 = 2.7s
-            //11-31
-            fc->accVxSum += GetACC_X();
-            fc->accVySum += GetACC_Y();
-            fc->accVzSum += GetACC_Z();
-        }
-        if(count>(cLearnWaitTime+cLearnCount)){   //进来一次110*30 = 3.3s 矫正加速度值
+        //if(count>cLearnWaitTime){  //~=1.5s 后校验一次  90*30 = 2.7s
+        //    //11-31
+        //    fc->accVxSum += GetACC_X();
+        //    fc->accVySum += GetACC_Y();
+        //    fc->accVzSum += GetACC_Z();
+        //}
+        //if(count>(cLearnWaitTime+cLearnCount)){   //进来一次110*30 = 3.3s 矫正加速度值
+        //    fc->xyZero[num] = xynow;
+        //    if(rundir==0)
+        //    fc->hElAngle += cLearnEAngOnce;  //30->0x800
+        //    else{
+        //        fc->hElAngle -= cLearnEAngOnce;  //30->0x800
+        //        if(fc->hElAngle&0x80000000){
+        //            fc->hElAngle = (fc->hElAngle&0xffff)|0x00030000;
+        //        }
+        //    }
+        //}
+		if(count>(cLearnCount)){   //进来一次110*30 = 3.3s 矫正加速度值
             fc->xyZero[num] = xynow;
+            if(rundir==0)
             fc->hElAngle += cLearnEAngOnce;  //30->0x800
+            else{
+                fc->hElAngle -= cLearnEAngOnce;  //30->0x800
+                if(fc->hElAngle&0x80000000){
+                    fc->hElAngle = (fc->hElAngle&0xffff)|0x00030000;
+                }
+            }
         }
-    }else if(fc->hElAngle==0x4000){
-        El_90d = CalXYAngle(fc,&xynow);      //算出0的角度
-        fc->hElAngle += cLearnEAngOnce;  //0x80->0x800
-        count = 0;
+   //}else if(fc->hElAngle==0x4000){
+    //    El_90d = CalXYAngle(fc,&xynow);      //算出电角度90度时候 对应的XYAD
+    //    fc->hElAngle += cLearnEAngOnce;  //0x80->0x800
+    //    count = 0;
     }else{
-        fc->hElAngle += cLearnEAngOnce;   //65536*2 = 131,072 * 30ms => 1min?
+        xtemp = (int)xynow.Hallx-(int)lastxy.Hallx;
+        if(xtemp<0)
+            xtemp = -xtemp;
+        ytemp = (int)xynow.Hally-(int)lastxy.Hally;
+        if(ytemp<0)
+            ytemp = -ytemp;
+        if(((xtemp>1200)||(ytemp>1200))){
+            //有变化 x y AD 都应该有20极的变化 因为增加了3%->128/4096 所以至少要有这么多变化
+			if(rundir==0){
+                if((lastEangmax!=0x7fffffff)&&(fc->hElAngle==(((lastEangmax-lastEangmin)>>1)+lastEangmin))){
+                    fc->lc->learnXYFin = 1; //退出学习
+                    fc->targetAngle = fc->hElAngle; //目标角度设置到中点
+                }else
+                fc->hElAngle += cLearnEAngOnce;   //65536*2 = 131,072 * 30ms => 1min?
+            }
+            else{
+                fc->hElAngle -= cLearnEAngOnce;  //30->0x800
+                if(fc->hElAngle&0x80000000){
+                    fc->hElAngle = (fc->hElAngle&0xffff)|0x00030000;
+                }
+            }
+            lastxy = xynow;
+            countKeep = 0;
+        }else{
+            //数据和上次没有什么变化 就再等一个周期
+            countKeep++;
+            if(countKeep>20){   //30ms*10 = 0.3s 没有变化 变化超时 反转
+				countKeep = 0;
+				lastxy = xynow;
+                if(runWait>=3){
+                    rundir ^= 1;    //第一次反向点 记住的是0点 下一次反向点记住的是max-0xff点
+                    runWait = 0;
+                    if(rundir==1){
+                        lastEangmin = fc->hElAngle = (fc->hElAngle&0xffff);   //归0 最大4极对
+                        lastEangmin = fc->hElAngle |= 0x40000;  //同步到最大极对位置 4,2,3,1,0(备用循环位置)
+                    }
+                }
+				if(rundir==0){
+                    lastEangmin = fc->hElAngle; //保存最大电角度
+					fc->hElAngle += cLearnEAngOnce;   //65536*2 = 131,072 * 30ms => 1min?
+				}else{
+                    lastEangmax = fc->hElAngle;
+					fc->hElAngle -= cLearnEAngOnce;  //30->0x800
+					if(fc->hElAngle&0x80000000){
+						fc->hElAngle = (fc->hElAngle&0xffff)|0x00030000;
+					}
+				}
+				
+            }
+        }
         count = 0;
     }
 }
@@ -947,6 +1035,7 @@ int16_t Speed_Sample(filter_t *ft,int16_t raw){
 */
 Err_FOC MotorRunControl(FOC_Component *fc){
     static uint16_t CountTime=0;
+    uint32_t temp=0;
     //static int16_t  offsetErr1;
     //static int16_t  offsetErr2;
     //static int32_t  offsetErrTmp1=0; 
@@ -958,11 +1047,11 @@ Err_FOC MotorRunControl(FOC_Component *fc){
     if(IsMCCompleted!=1)
         return no_err;
 
-    if(fc->lc->learnXYFin){
+    //if(fc->lc->learnXYFin){
         //学习了XY值后不停计算物理角度 1ms一次并滤波处理
         //CalMecAngle(&FOC_Component_M1); //计算出当前的物理角度
-        CalElAngle(&FOC_Component_M1);  //计算出电角度顺便计算出物理角度
-    }
+    //    CalElAngle(&FOC_Component_M1);  //计算出电角度顺便计算出物理角度
+    //}
     if(fc->lc->learnEn==0){
         return err_learn;     //没允许学习什么也干不了
     }
@@ -1027,10 +1116,28 @@ Err_FOC MotorRunControl(FOC_Component *fc){
                 if(fc->lc->learnXYFin==0){
                     LearnPolePairAngle(fc,xynow);
                 }else{
-                    fc->LearnAttitude = 1;      //开始学习姿态 马达停止输出
-                    fc->Vqd.qV_Component2 = 0;
-                    fc->Vqd.qV_Component1 = 0;
-                    //EE_WriteFOC(&fc->lc); //把学习的参数写入EEPROM
+                    if(fc->targetAngle>fc->hElAngle){
+                        temp = (fc->hElAngle + cLearnEAngOnce);
+                        if(fc->targetAngle<temp){
+                            fc->hElAngle  = fc->targetAngle;
+                        }else{
+                            fc->hElAngle  = temp;
+                        }
+                    }else if(fc->targetAngle<fc->hElAngle){
+                        if(fc->hElAngle > cLearnEAngOnce)
+                        temp = fc->hElAngle - cLearnEAngOnce;
+                        else
+                        temp = 0;
+                        if(fc->targetAngle>temp){
+                            fc->hElAngle  = fc->targetAngle;
+                        }else{
+                            fc->hElAngle  = temp;
+                        }
+                    }
+                    //第一步位置学完,跟着串口走位置
+                    //fc->LearnAttitude = 1;      //开始学习姿态 马达停止输出
+                    //fc->Vqd.qV_Component2 = 0;
+                    //fc->Vqd.qV_Component1 = 0;
                 }
             }
         }

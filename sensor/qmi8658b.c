@@ -11,7 +11,7 @@
 #include "mc_math.h"
 #include "mc_config.h"
 #include	"i2c.h"
-#include 	"button.h"
+//#include 	"button.h"
 #include 	"mcpwm_foc.h"
 
 #if AccXY_dir == 0
@@ -430,12 +430,12 @@ void calibrationGyro(void){
 		}
 		for(int i=0;i<514;i++){
 			Delay_ms(1);		//1ms读一次陀螺仪 最快0.5s校准
-			fScanButton();
-			readQmi8658b();	
-			if(i&0x80)
-                LEDG_Reset();
-			else
-                LEDG_Set();
+			//fScanButton();
+			//readQmi8658b();	
+			//if(i&0x80)
+            //    LEDG_Reset();
+			//else
+            //    LEDG_Set();
 			//ACC_vX = firstOrderFilter(&accXft,ACC_vX);
 			//ACC_vY = firstOrderFilter(&accYft,ACC_vY);
 			GYRO_vZ = firstOrderFilter(&gyroZft,GYRO_vZ);
@@ -462,7 +462,7 @@ void calibrationGyro(void){
 		//	}
 		//}
 	}
-	LEDG_Set();	//结束时候绿灯亮
+	//LEDG_Set();	//结束时候绿灯亮
 		//校准完了算出当前初始角度 直接角速度角度为初始角度
 		//重新算出初始角度
 	lastOriA = (int)arctan(ACCXY);	//算出加速度角度

@@ -6,7 +6,7 @@
 
 #include "peripherals.h"
 #include "main.h"
-#include "button.h"
+//#include "button.h"
 #include    "mcpwm_foc.h"
 #include "filter.h"
 #include "mc_config.h"
@@ -53,18 +53,19 @@ void initCorePeripherals(void){
     //EE_Read();
     MX_GPIO_Init();
 	EE_ReadFOC(FOC_Component_M1.lc);   //读取存储的FOC 参数
+    poweron(); //开机
     //qmi8658x_init(GYPO_SDA_GPIO_PORT,GYPO_SDA_GPIO_PIN,GYPO_SCL_GPIO_PORT,GYPO_SCL_GPIO_PIN);
 
-    while(GetONOFF()==0){
-        //LEDG_Xor();
-        Delay_ms(1);
-		//readQmi8658b();	//读出参数	
-        fScanButton();   //扫描按键功能
-    }
+    //while(GetONOFF()==0){
+    //    //LEDG_Xor();
+    //    Delay_ms(1);
+	//	//readQmi8658b();	//读出参数	
+    //    fScanButton();   //扫描按键功能
+    //}
     //PowerEn_Write(0);
 		//EE_WriteFOC(&FOC_Component_M1.lc);
     #ifdef cUartDebugEn
-    SWD_Pin_To_PB5_PD5_Configuration();
+    //SWD_Pin_To_PB5_PD5_Configuration();
     MX_Uart_Init();
     #endif
     MX_ADC_Init();
@@ -161,29 +162,24 @@ void SystemClock_Config(void)
 */
 void MX_GPIO_Init(void){
     GPIO_InitTypeDef GPIO_InitStructure;
-    RCC_AHBPeriphClockCmd(Button_PWR_GPIO_CLK|Button_LR_GPIO_CLK|Button_RR_GPIO_CLK|PowerEn_GPIO_CLK|LEDG_GPIO_CLK|LEDR_GPIO_CLK, ENABLE);
+    RCC_AHBPeriphClockCmd(DrvSleepEn_CLK|PWMAEn_CLK|PWMBEn_CLK|PWMCEn_CLK, ENABLE);
     /* Configure Button pin as input */
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_InitStructure.GPIO_Pin = PowerEn_GPIO_PIN;
-	GPIO_Init(PowerEn_GPIO_PORT, &GPIO_InitStructure);
-    PowerEn_Write(0);
-    GPIO_InitStructure.GPIO_Pin = LEDR_GPIO_PIN;
-	GPIO_Init(LEDR_GPIO_PORT, &GPIO_InitStructure);
-    LEDR_Write(0);
-    GPIO_InitStructure.GPIO_Pin = LEDG_GPIO_PIN;
-	GPIO_Init(LEDG_GPIO_PORT, &GPIO_InitStructure);
-    LEDR_Write(0);
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-    GPIO_InitStructure.GPIO_Pin = Button_PWR_GPIO_PIN;
-    GPIO_Init(Button_PWR_GPIO_PORT, &GPIO_InitStructure); 
-    GPIO_InitStructure.GPIO_Pin = Button_LR_GPIO_PIN;
-    GPIO_Init(Button_LR_GPIO_PORT, &GPIO_InitStructure); 
-    GPIO_InitStructure.GPIO_Pin = Button_RR_GPIO_PIN;
-    GPIO_Init(Button_RR_GPIO_PORT, &GPIO_InitStructure); 
+    GPIO_InitStructure.GPIO_Pin = PWMAEn_PIN;
+	GPIO_Init(PWMAEn_PORT, &GPIO_InitStructure);
+    PWMAEn_Write(1);
+    GPIO_InitStructure.GPIO_Pin = PWMBEn_PIN;
+	GPIO_Init(PWMBEn_PORT, &GPIO_InitStructure);
+    PWMBEn_Write(1);
+    GPIO_InitStructure.GPIO_Pin = PWMCEn_PIN;
+	GPIO_Init(PWMCEn_PORT, &GPIO_InitStructure);
+    PWMCEn_Write(1);
+    GPIO_InitStructure.GPIO_Pin = DrvSleepEn_PIN;
+	GPIO_Init(DrvSleepEn_PORT, &GPIO_InitStructure);
+    DrvSleepDis();
 }
 
 /**
@@ -438,9 +434,11 @@ void MX_Uart_Init(void){
     UART_InitStructure.UART_Parity = UART_Parity_No;
     UART_InitStructure.UART_Mode = UART_Mode_Rx | UART_Mode_Tx;
     UART_Init(UART1, &UART_InitStructure);
+	UART_ClearITPendingBit(UART1, UART_IT_RXNE);
     UART_ITConfig(UART1, UART_IT_RXNE, ENABLE);
     UART_ITConfig(UART1, UART_IT_IDLE, DISABLE);
     Uart_t.Index = 0;
+    Uart_t.lastindex =0;
     Uart_t.Len = 0;
     Uart_t.FinishedFlag = RESET;
     //Uart1Rx.Index = 0;
@@ -465,7 +463,7 @@ void TIM2_IRQHandler(void)
     {
         // 处理更新中断
         TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-        getOrientation_1ms();   //读取一次陀螺仪值
+        //getOrientation_1ms();   //读取一次陀螺仪值
     }
 }
 /**
@@ -543,127 +541,171 @@ void UartSendDatas(uint8_t *p, uint8_t len)
  * 
 */
 void GetUartDebug(void){
-    uint8_t len = 0;
+    uint8_t datalen = 0;
     uint8_t data[32];
     //if(Uart_t.FinishedFlag == SET){
     //    Uart_t.FinishedFlag = RESET;
     //    UartSendDatas(Uart_t.Data, Uart_t.Len);
     //}
-    if((Uart_t.FinishedFlag == SET)&&(Uart_t.Data[0]==0xaa)&&(Uart_t.Data[Uart_t.Len-1]==0x55)){
-        //表示收到一帧完整信号解码调试内容
-            //
-            len = Uart_t.Data[1];   //指令数量  获取/设置 获取可以多个一次输出 设置设置一个?
-            //data[0] = 0xbb;
-            //data[1] = len;
-            uint8_t index = 0;
-            int16_t param = 0;
-            for(uint8_t i=0;i<len;i++){
-                switch(Uart_t.Data[i+2]){
-                    case GetGyroAngle:  //获取陀螺仪物理角度
-                        data[index++] = 0xbb;
-                        param = GetOriGyroA();
-                    break;
-                    case GetMecAngle:
-                        data[index++] = 0xaa;
-                        param = GetMecA();
-                    break;
-                    case GetElAngle:
-                        data[index++] = 0xcc;
-                        param = GetElA();
-                    break;
-                    case GetMecAngleAcc:
-                        data[index++] = 0xa1;
-                        param = GetAccA();
-                    break;
-                    case GetMecAngleGyro:
-                        data[index++] = 0xa2;
-                        param = GetGyroA();
-                    break;
-                    case GetMotorSpeed:
-                        data[index++] = 0xa0;
-                        param = GetSpeedRun();
-                    break;
-                    case GetTorq:
-                        data[index++] = 0xa3;
-                        param = GetTorque();
-                    break;
-                    case GetMHdir:  //获取马达和霍尔方向关系=1 同向 =0 反向
-                        data[index++] = 0xa4;
-                        param = fGetMHdir();
-                    break;
-                    case GetGyroMid:  //获取陀螺仪中点
-                        data[index++] = 0xa5;
-                        param = GetGyroZero();
-                    break;
-                    case SetPosPID_P:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetPosPIDKp(param);
-                        i += 2;
-                    break;
-                    case SetPosPID_I:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetPosPIDKi(param);
-                        i += 2;
-                    break;
-                    case SetPosPID_D:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetPosPIDKd(param);
-                        i += 2;
-                    break;
-                    case SetSpeedPID_P:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetSpeedPIDKp(param);
-                        i += 2;
-                    break;
-                    case SetSpeedPID_I:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetSpeedPIDKi(param);
-                        i += 2;
-                    break;
-                    case SetSpeedPID_D:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetSpeedPIDKd(param);
-                        i += 2;
-                    break;
-                    case SetPIDInt: //设置PID调整间隔
-                        param = (int8_t)Uart_t.Data[i+3];
-                        SetSPIDInterval(param);
-                        i += 1;
-                    break;
-                    case SetDead_Err:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetDeadErr(param);
-                        i += 2;
-                    break;
-                    case SetPosLoopCount:
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        SetPosLoopInv(param);
-                        i += 2;
-                    break;
-                    case SetGyroMid:    //设置陀螺仪中点
-                        param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
-                        fSetGyroInitMid(param);
-                        i += 2;
-                    break;
-                }
-                data[index++] = (uint8_t)((param>>8)&0xff);
-                if(index>31)
-                    break;
-                data[index++] = (uint8_t)((param)&0xff);
-                if(index>31)
-                    break;
-            }
-            //index=0;
-            //data[index++] = 0xaa;
-            //param = GetSpeedRun();
-            //data[index++] = (uint8_t)((param>>8)&0xff);
-            //data[index++] = (uint8_t)((param)&0xff);
-            //param = GetTorque();
-            //data[index++] = (uint8_t)((param>>8)&0xff);
-            //data[index++] = (uint8_t)((param)&0xff);
-            UartSendDatas(data,index);
+    //uint8_t tmp = Uart_t.Index - Uart_t.lastindex;
+    //if(tmp>32)
+    //    tmp += 32;
+    //if(tmp>=5){
+    //    uint8_t head = Uart_t.lastindex;
+    //    if(head>31)
+    //        head -= 32;
+    //    uint8_t tail = Uart_t.lastindex+4;
+    //    if(tail>31)
+    //        tail -= 32;
+    //    Uart_t.lastindex += 5;
+    //    if(Uart_t.lastindex>31)
+    //        Uart_t.lastindex -= 32;
+    //    if((Uart_t.Data[head]==0xaa)&&(Uart_t.Data[tail]==0x55)){
+    //        head += 1;
+    //        if(head>31)
+    //            head -= 32;
+    //        if(Uart_t.Data[head]!=2)
+    //            return;
+    //        head += 1;
+    //        if(head>31)
+    //            head -= 32;
+    //        if(Uart_t.Data[head]!=0x32)
+    //            return;
+    //        head += 1;
+    //        if(head>31)
+    //            head -= 32;
+    //        setTargetAngle((uint32_t)Uart_t.Data[head]);
+    //    }
+    //}
+    if(Uart_t.FinishedFlag == SET){
+        //有数据更新
         Uart_t.FinishedFlag = RESET;
+        if(Uart_t.Len>32)
+            Uart_t.Len = 31;
+        if((Uart_t.Data[0]==0xaa)&&(Uart_t.Data[Uart_t.Len-1]==0x55)){
+            datalen = Uart_t.Data[1];
+            switch(Uart_t.Data[2]){
+                case 0x32:  //0xaa 0x02 0x32 ? 0x55
+                    setTargetAngle((uint32_t)Uart_t.Data[3]);
+                break;
+            }
+        }
     }
+    //if((Uart_t.FinishedFlag == SET)&&(Uart_t.Data[0]==0xaa)&&(Uart_t.Data[Uart_t.Len-1]==0x55)){
+    //    //表示收到一帧完整信号解码调试内容
+    //        //
+    //        datalen = Uart_t.Data[1];   //指令数量  获取/设置 获取可以多个一次输出 设置设置一个?
+    //        //data[0] = 0xbb;
+    //        //data[1] = len;
+    //        uint8_t index = 0;
+    //        int16_t param = 0;
+    //        for(uint8_t i=0;i<datalen;i++){
+    //            switch(Uart_t.Data[i+2]){
+    //                case GetGyroAngle:  //获取陀螺仪物理角度
+    //                    data[index++] = 0xbb;
+    //                    param = GetOriGyroA();
+    //                break;
+    //                case GetMecAngle:
+    //                    data[index++] = 0xaa;
+    //                    param = GetMecA();
+    //                break;
+    //                case GetElAngle:
+    //                    data[index++] = 0xcc;
+    //                    param = GetElA();
+    //                break;
+    //                case GetMecAngleAcc:
+    //                    data[index++] = 0xa1;
+    //                    param = GetAccA();
+    //                break;
+    //                case GetMecAngleGyro:
+    //                    data[index++] = 0xa2;
+    //                    param = GetGyroA();
+    //                break;
+    //                case GetMotorSpeed:
+    //                    data[index++] = 0xa0;
+    //                    param = GetSpeedRun();
+    //                break;
+    //                case GetTorq:
+    //                    data[index++] = 0xa3;
+    //                    param = GetTorque();
+    //                break;
+    //                case GetMHdir:  //获取马达和霍尔方向关系=1 同向 =0 反向
+    //                    data[index++] = 0xa4;
+    //                    param = fGetMHdir();
+    //                break;
+    //                case GetGyroMid:  //获取陀螺仪中点
+    //                    data[index++] = 0xa5;
+    //                    param = GetGyroZero();
+    //                break;
+    //                case SetPosPID_P:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetPosPIDKp(param);
+    //                    i += 2;
+    //                break;
+    //                case SetPosPID_I:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetPosPIDKi(param);
+    //                    i += 2;
+    //                break;
+    //                case SetPosPID_D:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetPosPIDKd(param);
+    //                    i += 2;
+    //                break;
+    //                case SetSpeedPID_P:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetSpeedPIDKp(param);
+    //                    i += 2;
+    //                break;
+    //                case SetSpeedPID_I:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetSpeedPIDKi(param);
+    //                    i += 2;
+    //                break;
+    //                case SetSpeedPID_D:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetSpeedPIDKd(param);
+    //                    i += 2;
+    //                break;
+    //                case SetPIDInt: //设置PID调整间隔
+    //                    param = (int8_t)Uart_t.Data[i+3];
+    //                    SetSPIDInterval(param);
+    //                    i += 1;
+    //                break;
+    //                case SetDead_Err:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetDeadErr(param);
+    //                    i += 2;
+    //                break;
+    //                case SetPosLoopCount:
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    SetPosLoopInv(param);
+    //                    i += 2;
+    //                break;
+    //                case SetGyroMid:    //设置陀螺仪中点
+    //                    param = ((int16_t)Uart_t.Data[i+3]<<8)|((int16_t)Uart_t.Data[i+4]);
+    //                    fSetGyroInitMid(param);
+    //                    i += 2;
+    //                break;
+    //            }
+    //            data[index++] = (uint8_t)((param>>8)&0xff);
+    //            if(index>31)
+    //                break;
+    //            data[index++] = (uint8_t)((param)&0xff);
+    //            if(index>31)
+    //                break;
+    //        }
+    //        //index=0;
+    //        //data[index++] = 0xaa;
+    //        //param = GetSpeedRun();
+    //        //data[index++] = (uint8_t)((param>>8)&0xff);
+    //        //data[index++] = (uint8_t)((param)&0xff);
+    //        //param = GetTorque();
+    //        //data[index++] = (uint8_t)((param>>8)&0xff);
+    //        //data[index++] = (uint8_t)((param)&0xff);
+    //        UartSendDatas(data,index);
+    //    Uart_t.FinishedFlag = RESET;
+    //}
 }
 /**
  * 发送串口启动
@@ -793,7 +835,7 @@ void MX_NVIC_init(void)
     /* UART1 IRQ Channel configuration */
     #ifdef cUartDebugEn
     NVIC_InitStruct.NVIC_IRQChannel = UART1_IRQn;
-    NVIC_InitStruct.NVIC_IRQChannelPriority = 0x01;
+    NVIC_InitStruct.NVIC_IRQChannelPriority = 2;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;		
     NVIC_Init(&NVIC_InitStruct);
     #endif

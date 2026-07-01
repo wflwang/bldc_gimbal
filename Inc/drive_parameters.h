@@ -24,7 +24,7 @@
 
 
 /***************** MOTOR ELECTRICAL PARAMETERS  ******************************/
-#define POLE_PAIR_NUM          7 //4 //7 //4 /* Number of motor pole pairs */
+#define POLE_PAIR_NUM          4 //4 //7 //4 /* Number of motor pole pairs */
 #define RS                     0.561   //0.465   //3.806 //0.031   //3.08 /* Stator resistance , ohm*/
 #define LS                     0.0003  //0.0002304  //0.0023 //@0.000022   //0.00061 
 /* Stator inductance, H
@@ -218,7 +218,7 @@
 
 //#define testQMI //仅仅测试陀螺仪
 #define GyroEn  //陀螺仪功能使能
-//#define cUartDebugEn    //开启串口调试功能
+#define cUartDebugEn    //开启串口调试功能
 //#define debug_int
 /* Speed control loop */ 
 #define SPEED_LOOP_FREQUENCY_HZ       1000   //300 

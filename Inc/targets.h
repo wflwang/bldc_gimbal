@@ -96,61 +96,96 @@
 #define SetGYPO_SCL(x)      ((x)?GYPO_SCL_Set():GYPO_SCL_Reset())
 
 //按键定义
-#define Button_PWR_GPIO_PIN     GPIO_Pin_5
-#define Button_PWR_GPIO_PORT    GPIOC
-#define Button_PWR_GPIO_CLK     RCC_AHBPeriph_GPIOC
-#define Button_PWR_SOURCE       GPIO_PinSource5
-#define GetButonPWR()   GPIO_ReadInputDataBit(Button_PWR_GPIO_PORT,Button_PWR_GPIO_PIN)   
-//左旋
-#define Button_LR_GPIO_PIN     GPIO_Pin_4
-#define Button_LR_GPIO_PORT    GPIOD
-#define Button_LR_GPIO_CLK     RCC_AHBPeriph_GPIOD
-#define Button_LR_SOURCE       GPIO_PinSource4
-#define GetButonLR()   GPIO_ReadInputDataBit(Button_LR_GPIO_PORT,Button_LR_GPIO_PIN)   
-//右旋
-#define Button_RR_GPIO_PIN     GPIO_Pin_3
-#define Button_RR_GPIO_PORT    GPIOA
-#define Button_RR_GPIO_CLK     RCC_AHBPeriph_GPIOA
-#define Button_RR_SOURCE       GPIO_PinSource3
-#define GetButonRR()   GPIO_ReadInputDataBit(Button_RR_GPIO_PORT,Button_RR_GPIO_PIN)   
+//#define Button_PWR_GPIO_PIN     GPIO_Pin_5
+//#define Button_PWR_GPIO_PORT    GPIOC
+//#define Button_PWR_GPIO_CLK     RCC_AHBPeriph_GPIOC
+//#define Button_PWR_SOURCE       GPIO_PinSource5
+//#define GetButonPWR()   GPIO_ReadInputDataBit(Button_PWR_GPIO_PORT,Button_PWR_GPIO_PIN)   
+////左旋
+//#define Button_LR_GPIO_PIN     GPIO_Pin_4
+//#define Button_LR_GPIO_PORT    GPIOD
+//#define Button_LR_GPIO_CLK     RCC_AHBPeriph_GPIOD
+//#define Button_LR_SOURCE       GPIO_PinSource4
+//#define GetButonLR()   GPIO_ReadInputDataBit(Button_LR_GPIO_PORT,Button_LR_GPIO_PIN)   
+////右旋
+//#define Button_RR_GPIO_PIN     GPIO_Pin_3
+//#define Button_RR_GPIO_PORT    GPIOA
+//#define Button_RR_GPIO_CLK     RCC_AHBPeriph_GPIOA
+//#define Button_RR_SOURCE       GPIO_PinSource3
+//#define GetButonRR()   GPIO_ReadInputDataBit(Button_RR_GPIO_PORT,Button_RR_GPIO_PIN)   
+
+//drver ETA86321 sleep set
+#define DrvSleepEn_PIN      GPIO_Pin_5
+#define DrvSleepEn_PORT     GPIOC
+#define DrvSleepEn_CLK      RCC_AHBPeriph_GPIOC
+#define DrvSleepEn_SOURCE   GPIO_PinSource5
+#define DrvSleepEn_Set()          (DrvSleepEn_PORT->BSRR = DrvSleepEn_PIN)
+#define DrvSleepEn_Reset()        (DrvSleepEn_PORT->BRR = DrvSleepEn_PIN)
+#define DrvSleepEn_Write(x)       ((x)?DrvSleepEn_Set():DrvSleepEn_Reset())
+#define DrvSleepEn()            DrvSleepEn_Reset()
+#define DrvSleepDis()           DrvSleepEn_Set()
+//PWMAEn
+#define PWMAEn_PIN      GPIO_Pin_3
+#define PWMAEn_PORT     GPIOC
+#define PWMAEn_CLK      RCC_AHBPeriph_GPIOC
+#define PWMAEn_SOURCE   GPIO_PinSource3
+#define PWMAEn_Set()          (PWMAEn_PORT->BSRR = PWMAEn_PIN)
+#define PWMAEn_Reset()        (PWMAEn_PORT->BRR = PWMAEn_PIN)
+#define PWMAEn_Write(x)       ((x)?PWMAEn_Set():PWMAEn_Reset())
+//PWMBEn
+#define PWMBEn_PIN      GPIO_Pin_4
+#define PWMBEn_PORT     GPIOB
+#define PWMBEn_CLK      RCC_AHBPeriph_GPIOB
+#define PWMBEn_SOURCE   GPIO_PinSource4
+#define PWMBEn_Set()          (PWMBEn_PORT->BSRR = PWMBEn_PIN)
+#define PWMBEn_Reset()        (PWMBEn_PORT->BRR = PWMBEn_PIN)
+#define PWMBEn_Write(x)       ((x)?PWMBEn_Set():PWMBEn_Reset())
+//PWMCEn
+#define PWMCEn_PIN      GPIO_Pin_3
+#define PWMCEn_PORT     GPIOA
+#define PWMCEn_CLK      RCC_AHBPeriph_GPIOA
+#define PWMCEn_SOURCE   GPIO_PinSource3
+#define PWMCEn_Set()          (PWMCEn_PORT->BSRR = PWMCEn_PIN)
+#define PWMCEn_Reset()        (PWMCEn_PORT->BRR = PWMCEn_PIN)
+#define PWMCEn_Write(x)       ((x)?PWMCEn_Set():PWMCEn_Reset())
 
 //灯和控制脚定义
-#define PowerEn_GPIO_PIN        GPIO_Pin_1
-#define PowerEn_GPIO_PORT       GPIOD
-#define PowerEn_GPIO_CLK        RCC_AHBPeriph_GPIOD
-#define PowerEn_GPIO_SOURCE     GPIO_PinSource1
-#define PowerEn_Set()       (PowerEn_GPIO_PORT->BSRR = PowerEn_GPIO_PIN)
-#define PowerEn_Reset()     (PowerEn_GPIO_PORT->BRR  = PowerEn_GPIO_PIN)
-#define PowerEn_Write(x)    ((x) ? PowerEn_Set() : PowerEn_Reset())
+//#define PowerEn_GPIO_PIN        GPIO_Pin_1
+//#define PowerEn_GPIO_PORT       GPIOD
+//#define PowerEn_GPIO_CLK        RCC_AHBPeriph_GPIOD
+//#define PowerEn_GPIO_SOURCE     GPIO_PinSource1
+//#define PowerEn_Set()       (PowerEn_GPIO_PORT->BSRR = PowerEn_GPIO_PIN)
+//#define PowerEn_Reset()     (PowerEn_GPIO_PORT->BRR  = PowerEn_GPIO_PIN)
+//#define PowerEn_Write(x)    ((x) ? PowerEn_Set() : PowerEn_Reset())
 //lamp R
-#define LEDR_GPIO_PIN           GPIO_Pin_3       
-#define LEDR_GPIO_PORT          GPIOC
-#define LEDR_GPIO_CLK           RCC_AHBPeriph_GPIOC
-#define LEDR_GPIO_SOURCE        GPIO_PinSource3
-#define LEDR_Xor()          GPIO_Toggle(LEDR_GPIO_PORT,LEDR_GPIO_PIN)
-#define LEDR_Set()          (LEDR_GPIO_PORT->BSRR = LEDR_GPIO_PIN)
-#define LEDR_Reset()        (LEDR_GPIO_PORT->BRR = LEDR_GPIO_PIN)
-#define LEDR_Write(x)       ((x)?LEDR_Set():LEDR_Reset())
-//lamp G
-#define LEDG_GPIO_PIN           GPIO_Pin_4       
-#define LEDG_GPIO_PORT          GPIOB
-#define LEDG_GPIO_CLK           RCC_AHBPeriph_GPIOB
-#define LEDG_GPIO_SOURCE        GPIO_PinSource4
-#define LEDG_Xor()          GPIO_Toggle(LEDG_GPIO_PORT,LEDG_GPIO_PIN)
-#define LEDG_Set()          (LEDG_GPIO_PORT->BSRR = LEDG_GPIO_PIN)
-#define LEDG_Reset()        (LEDG_GPIO_PORT->BRR = LEDG_GPIO_PIN)
-#define SetLEDG(x)          ((x)?LEDG_Set():LEDG_Reset())
+//#define LEDR_GPIO_PIN           GPIO_Pin_3       
+//#define LEDR_GPIO_PORT          GPIOC
+//#define LEDR_GPIO_CLK           RCC_AHBPeriph_GPIOC
+//#define LEDR_GPIO_SOURCE        GPIO_PinSource3
+//#define LEDR_Xor()          GPIO_Toggle(LEDR_GPIO_PORT,LEDR_GPIO_PIN)
+//#define LEDR_Set()          (LEDR_GPIO_PORT->BSRR = LEDR_GPIO_PIN)
+//#define LEDR_Reset()        (LEDR_GPIO_PORT->BRR = LEDR_GPIO_PIN)
+//#define LEDR_Write(x)       ((x)?LEDR_Set():LEDR_Reset())
+////lamp G
+//#define LEDG_GPIO_PIN           GPIO_Pin_4       
+//#define LEDG_GPIO_PORT          GPIOB
+//#define LEDG_GPIO_CLK           RCC_AHBPeriph_GPIOB
+//#define LEDG_GPIO_SOURCE        GPIO_PinSource4
+//#define LEDG_Xor()          GPIO_Toggle(LEDG_GPIO_PORT,LEDG_GPIO_PIN)
+//#define LEDG_Set()          (LEDG_GPIO_PORT->BSRR = LEDG_GPIO_PIN)
+//#define LEDG_Reset()        (LEDG_GPIO_PORT->BRR = LEDG_GPIO_PIN)
+//#define SetLEDG(x)          ((x)?LEDG_Set():LEDG_Reset())
 
-#define UartTX_PIN      GPIO_Pin_5
+#define UartTX_PIN      GPIO_Pin_4
 #define UartTX_PORT     GPIOD
 #define UartTX_CLK      RCC_AHBPeriph_GPIOD
-#define UartTX_SOURCE   GPIO_PinSource5
+#define UartTX_SOURCE   GPIO_PinSource4
 #define UartTX_GPIO_AF     GPIO_AF_1
 
-#define UartRX_PIN      GPIO_Pin_5
-#define UartRX_PORT     GPIOB
-#define UartRX_CLK      RCC_AHBPeriph_GPIOB
-#define UartRX_SOURCE   GPIO_PinSource5
+#define UartRX_PIN      GPIO_Pin_7
+#define UartRX_PORT     GPIOD
+#define UartRX_CLK      RCC_AHBPeriph_GPIOD
+#define UartRX_SOURCE   GPIO_PinSource7
 #define UartRX_GPIO_AF     GPIO_AF_1
 
 #define bps_rate        115200
