@@ -14,6 +14,16 @@
 #define cLearnWaitTime  40  //学习等待时间 间隔这个时间后才开始记录位置 每次到一个极点等待速度陀螺仪时间 太快会导致读取数据不准
 #define cLearnCount     16  //学习记录位置的次数
 #define cLearnEAngOnce  0x800   //学习时候每次增加的角度 /65536(0x10000)
+#define cMaxEAngOnce    0x1000  //最大一次变化的角度
+#define cMaxOpenCurrent 10000     //开环动作的电流大小设置
+#define cIncCurrent     300     //每次增加的电流大小
+#define cOpenCurrent    5500    //开环时候电流大小
+
+//盗梦空间动作控制
+#define cLRTurnMin      30
+#define cLRTurnMax      230
+#define cLRTurnEnd      128
+#define cLRTurnSpeed    0x400
 
 
 #define DEAD_TIME   10

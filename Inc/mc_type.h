@@ -232,6 +232,9 @@ typedef struct
     int16_t posCount; //速度换计次
     int protectCount; //堵转保护时间
     uint32_t targetAngle; //目标角度
+    uint32_t Runspeed; //运行的角度 其实就是每次变化增加的角度
+    uint32_t OpenCurrent; //开环电流
+    uint32_t LRTurnStatus;  //LR动作的状态
     //#endif
     //int16_t hx[filterAVDeep];
     //int16_t hy[filterAVDeep];

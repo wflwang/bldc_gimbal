@@ -12,6 +12,7 @@
 //#include "mc_parameters.h"
 #include "mc_config.h"
 #include "mcpwm_foc.h"
+#include "targets.h"
 //#include "enc_KTH7823.h"
 
 //#ifndef HALL_En
@@ -100,8 +101,10 @@ FOC_Component FOC_Component_M1 ={
   //.lc->learnXYFin = 0,
   .hElAngle = 0,
   .hStepTime = 0,  //增加时间
-  .hFinalTorque    =	FINAL_I_ALIGNMENT,            
+  .hFinalTorque    =	cOpenCurrent, //FINAL_I_ALIGNMENT,            
   .hDurationms     =	ALIGNMENT_DURATION,   
+  .Runspeed = cLearnEAngOnce, //初始设置的速度 每次变化的角度
+  .OpenCurrent = cOpenCurrent, //开环时候的电流大小
   .hAddActTargetAngle = 0,
   .hAddTargetAngle = gyroMidDiff,
   .posCount = defposcount,

@@ -95,5 +95,8 @@ uint8_t fGetProtectState(void);
 int16_t AddActRange(int16_t hErrAdd);
 int16_t CheckSlowPoint(UpRunMode *rm,int16_t hErrAdd);
 void setTargetAngle(uint32_t pro);
+void setRunSpeed(uint32_t pro); //set run speed
+void setOpenCurrent(uint32_t pro);  //set run current
+void setLRTurnWork(void);   //盗梦空间功能
 
 #endif

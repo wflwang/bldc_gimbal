@@ -283,6 +283,29 @@ void setTargetAngle(uint32_t pro){
     FOC_Component_M1.targetAngle = ((lastEangmax-lastEangmin) * pro >> 8) + lastEangmin;
 }
 /**
+ * @brief set run speed
+ * @param pro  0-100% 最大一次变化的角度是 ->0x1000->480ms 0x2000->240ms(最快)  原始0x800 32次完成?*30 = 960ms最快
+ *  
+ */
+void setRunSpeed(uint32_t pro){
+    FOC_Component_M1.Runspeed = ((cMaxEAngOnce * pro) >> 8);
+}
+/**
+ * @brief set open current ->duty
+ * @param pro  0-100%
+ */
+void setOpenCurrent(uint32_t pro){
+    FOC_Component_M1.OpenCurrent = ((cMaxOpenCurrent * pro) >> 8);
+}
+/**
+ * @brief 左右转换 盗梦空间功能
+ * @param pro  0-100%
+ */
+void setLRTurnWork(void){
+    if(FOC_Component_M1.LRTurnStatus==0)
+    FOC_Component_M1.LRTurnStatus = 3;
+}
+/**
  * @brief 极对中角度信息学习
  * 30ms once
 */
@@ -1116,22 +1139,72 @@ Err_FOC MotorRunControl(FOC_Component *fc){
                 if(fc->lc->learnXYFin==0){
                     LearnPolePairAngle(fc,xynow);
                 }else{
-                    if(fc->targetAngle>fc->hElAngle){
-                        temp = (fc->hElAngle + cLearnEAngOnce);
-                        if(fc->targetAngle<temp){
-                            fc->hElAngle  = fc->targetAngle;
+                    uint32_t speedtmp = fc->Runspeed;
+                    uint32_t tartgettmp = fc->targetAngle;
+                    uint32_t OpenCurrtmp = fc->OpenCurrent;
+                    switch(fc->LRTurnStatus){
+                        case 1:
+                            tartgettmp = ((lastEangmax-lastEangmin)>>1)+lastEangmin;
+                            fc->targetAngle = tartgettmp;
+                            speedtmp = cLRTurnSpeed;
+                            OpenCurrtmp = cOpenCurrent;
+                        break;
+                        case 2: //goto Left
+                            tartgettmp = lastEangmax;
+                            speedtmp = cLRTurnSpeed;
+                            OpenCurrtmp = cOpenCurrent;
+                        break;
+                        case 3: //goto Left
+                            tartgettmp = lastEangmin;
+                            speedtmp = cLRTurnSpeed;
+                            OpenCurrtmp = cOpenCurrent;
+                        break;
+                        case 0:
+                        default:
+                        break;
+                    }
+                    if(OpenCurrtmp>fc->Vqd.qV_Component2){
+                        temp = (fc->Vqd.qV_Component2 + cIncCurrent);
+                        if(OpenCurrtmp<temp){
+                            fc->Vqd.qV_Component2  = OpenCurrtmp;
+                        }else{
+                            fc->Vqd.qV_Component2  = temp;
+                        }
+                    }else if(OpenCurrtmp<fc->Vqd.qV_Component2){
+                        if(fc->Vqd.qV_Component2 > cIncCurrent)
+                        temp = fc->Vqd.qV_Component2 - cIncCurrent; //cLearnEAngOnce;
+                        else
+                        temp = 0;
+                        if(OpenCurrtmp>temp){
+                            fc->Vqd.qV_Component2  = OpenCurrtmp;
+                        }else{
+                            fc->Vqd.qV_Component2 = temp;
+						}
+                    }
+                    //
+
+                    //判断是否
+                    if(tartgettmp>fc->hElAngle){
+                        temp = (fc->hElAngle + speedtmp);
+                        if(tartgettmp<temp){
+                            fc->hElAngle  = tartgettmp;
                         }else{
                             fc->hElAngle  = temp;
                         }
-                    }else if(fc->targetAngle<fc->hElAngle){
-                        if(fc->hElAngle > cLearnEAngOnce)
-                        temp = fc->hElAngle - cLearnEAngOnce;
+                    }else if(tartgettmp<fc->hElAngle){
+                        if(fc->hElAngle > speedtmp)
+                        temp = fc->hElAngle - speedtmp; //cLearnEAngOnce;
                         else
                         temp = 0;
-                        if(fc->targetAngle>temp){
-                            fc->hElAngle  = fc->targetAngle;
+                        if(tartgettmp>temp){
+                            fc->hElAngle  = tartgettmp;
                         }else{
                             fc->hElAngle  = temp;
+                        }
+                    }else{
+                        //达到目标
+                        if(fc->LRTurnStatus!=0){
+                            fc->LRTurnStatus--;
                         }
                     }
                     //第一步位置学完,跟着串口走位置
@@ -1355,6 +1428,8 @@ void mcpwm_foc_init(void) {
     PWMC_ONPWM();   //开启PWM ADC 采样
     Delay_ms(400);
     SetHorizontal();
+    //FOC_Component_M1.Runspeed = cLearnEAngOnce; 
+    //FOC_Component_M1.OpenCurrent = OpenCurrent; 
     //EE_WriteFOC(&FOC_Component_M1.lc);
     //EE_ReadFOC(&FOC_Component_M1.lc);
     IsMCCompleted = 1;

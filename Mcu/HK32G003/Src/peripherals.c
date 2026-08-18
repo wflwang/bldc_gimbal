@@ -542,7 +542,7 @@ void UartSendDatas(uint8_t *p, uint8_t len)
 */
 void GetUartDebug(void){
     uint8_t datalen = 0;
-    uint8_t data[32];
+    //uint8_t data[32];
     //if(Uart_t.FinishedFlag == SET){
     //    Uart_t.FinishedFlag = RESET;
     //    UartSendDatas(Uart_t.Data, Uart_t.Len);
@@ -587,6 +587,15 @@ void GetUartDebug(void){
             switch(Uart_t.Data[2]){
                 case 0x32:  //0xaa 0x02 0x32 ? 0x55
                     setTargetAngle((uint32_t)Uart_t.Data[3]);
+                break;
+                case 0x33:
+                    setRunSpeed((uint32_t)Uart_t.Data[3]);
+                break;
+                case 0x34:
+                    setOpenCurrent((uint32_t)Uart_t.Data[3]);
+                break;
+                case 0x35:
+                    setLRTurnWork();
                 break;
             }
         }
